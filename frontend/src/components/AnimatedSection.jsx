@@ -1,5 +1,5 @@
-import { motion } from "framer-motion"
-import { useRef } from "react"
+import { motion } from "framer-motion";
+import { useRef } from "react";
 
 const AnimatedSection = ({
   children,
@@ -10,38 +10,38 @@ const AnimatedSection = ({
   staggerChildren = 0.1,
   ...props
 }) => {
-  const ref = useRef(null)
+  const ref = useRef(null);
 
   const getVariants = () => {
     const variants = {
       hidden: {},
       visible: {},
-    }
+    };
 
     switch (direction) {
       case "up":
-        variants.hidden = { opacity: 0, y: 50 }
-        variants.visible = { opacity: 1, y: 0 }
-        break
+        variants.hidden = { opacity: 0, y: 50 };
+        variants.visible = { opacity: 1, y: 0 };
+        break;
       case "down":
-        variants.hidden = { opacity: 0, y: -50 }
-        variants.visible = { opacity: 1, y: 0 }
-        break
+        variants.hidden = { opacity: 0, y: -50 };
+        variants.visible = { opacity: 1, y: 0 };
+        break;
       case "left":
-        variants.hidden = { opacity: 0, x: -50 }
-        variants.visible = { opacity: 1, x: 0 }
-        break
+        variants.hidden = { opacity: 0, x: -50 };
+        variants.visible = { opacity: 1, x: 0 };
+        break;
       case "right":
-        variants.hidden = { opacity: 0, x: 50 }
-        variants.visible = { opacity: 1, x: 0 }
-        break
+        variants.hidden = { opacity: 0, x: 50 };
+        variants.visible = { opacity: 1, x: 0 };
+        break;
       default:
-        variants.hidden = { opacity: 0 }
-        variants.visible = { opacity: 1 }
+        variants.hidden = { opacity: 0 };
+        variants.visible = { opacity: 1 };
     }
 
-    return variants
-  }
+    return variants;
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -52,7 +52,7 @@ const AnimatedSection = ({
         delayChildren: delay,
       },
     },
-  }
+  };
 
   const itemVariants = {
     ...getVariants(),
@@ -62,7 +62,7 @@ const AnimatedSection = ({
         duration,
       },
     },
-  }
+  };
 
   return (
     <motion.div
@@ -84,7 +84,7 @@ const AnimatedSection = ({
         <motion.div variants={itemVariants}>{children}</motion.div>
       )}
     </motion.div>
-  )
-}
+  );
+};
 
-export default AnimatedSection
+export default AnimatedSection;

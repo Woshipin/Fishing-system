@@ -1,10 +1,8 @@
-"use client";
-
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronUp, Search, PlusCircle } from "lucide-react";
 import AnimatedSection from "../components/AnimatedSection";
-
+import PageHeader from "../components/PageHeader"
 const ContactPage = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -163,20 +161,11 @@ const ContactPage = () => {
     <div className="min-h-screen">
       
       {/* Hero Section */}
-      <section className="relative py-20 md:py-32">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-300 via-blue-400 to-blue-100 z-0"></div>
-        <div className="container mx-auto px-4 relative z-10">
-          <AnimatedSection className="max-w-4xl mx-auto text-center text-white">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-              Get in Touch
-            </h1>
-            <p className="text-lg md:text-xl mb-8">
-              We'd love to hear from you. Reach out to us with any questions,
-              feedback, or inquiries.
-            </p>
-          </AnimatedSection>
-        </div>
-      </section>
+      <PageHeader
+        title="Get in Touch"
+        description="We'd love to hear from you. Reach out to us with any questions,
+              feedback, or inquiries."
+      />
 
       {/* Contact Form Section */}
       <section
@@ -192,7 +181,7 @@ const ContactPage = () => {
 
         <div className="container mx-auto px-4 relative">
           <div className="grid md:grid-cols-2 gap-12 lg:gap-20 items-start">
-            <AnimatedSection direction="left" className="space-y-8">
+            <AnimatedSection className="space-y-8">
               <div>
                 <span className="text-blue-600 font-semibold">
                   Contact Form
@@ -359,7 +348,7 @@ const ContactPage = () => {
                           >
                             <path
                               fillRule="evenodd"
-                              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 011.414-1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
                               clipRule="evenodd"
                             />
                           </svg>
@@ -374,7 +363,6 @@ const ContactPage = () => {
 
             <AnimatedSection
               id="contact-info"
-              direction="right"
               className="space-y-8"
             >
               <div>
@@ -867,7 +855,7 @@ const ContactPage = () => {
 
       {/* FAQ Section */}
       <section className="py-20 relative overflow-hidden">
-        {/* 背景装饰 */}
+        {/* Background decorations */}
         <div className="absolute inset-0 bg-gradient-to-br from-secondary/10 via-white to-primary/10 z-0"></div>
         <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-secondary/5 rounded-full blur-3xl"></div>
@@ -887,7 +875,7 @@ const ContactPage = () => {
             </p>
           </AnimatedSection>
 
-          {/* 搜索框 */}
+          {/* Search box */}
           <AnimatedSection className="max-w-xl mx-auto mb-10">
             <div className="relative">
               <input
@@ -904,7 +892,7 @@ const ContactPage = () => {
             </div>
           </AnimatedSection>
 
-          {/* FAQ列表 */}
+          {/* FAQ list */}
           <AnimatedSection
             className="max-w-3xl mx-auto space-y-4"
             direction="up"
@@ -931,7 +919,7 @@ const ContactPage = () => {
             )}
           </AnimatedSection>
 
-          {/* 联系信息 */}
+          {/* Contact information */}
           <AnimatedSection className="text-center mt-16">
             <p className="text-gray-600">
               Have more questions? Please

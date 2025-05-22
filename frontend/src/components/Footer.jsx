@@ -105,9 +105,9 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-gray-800 mt-8 pt-6 text-center text-gray-400">
+        {/* <div className="border-t border-gray-800 mt-8 pt-6 text-center text-gray-400">
           <p>&copy; {new Date().getFullYear()} BrandName. All rights reserved.</p>
-        </div>
+        </div> */}
       </div>
     </footer>
   )

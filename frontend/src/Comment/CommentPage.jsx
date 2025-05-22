@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, MessageCircle, Send, X, ThumbsUp, Award, Clock, MoreHorizontal } from "lucide-react";
@@ -212,6 +210,7 @@ const CommentPage = () => {
       <div className="container mx-auto px-4 py-16">
         <AnimatedSection className="max-w-4xl mx-auto">
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+            
             {/* Header */}
             <div className="p-8 bg-gradient-to-r from-blue-300 via-blue-400 to-blue-100 text-white relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -mr-32 -mt-32"></div>
@@ -308,7 +307,7 @@ const CommentPage = () => {
                         <div className="flex-shrink-0">
                           <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
                             <img
-                              src={comment.user.avatar || "/placeholder.svg"}
+                              src="/assets/About/about-us.png"
                               alt={`${comment.user.name}'s Avatar`}
                               className="w-full h-full object-cover"
                             />
@@ -423,7 +422,7 @@ const CommentPage = () => {
                                   <div className="flex-shrink-0">
                                     <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200">
                                       <img
-                                        src={reply.user.avatar || "/placeholder.svg"}
+                                        src="/assets/About/about-us.png"
                                         alt={`${reply.user.name}'s Avatar`}
                                         className="w-full h-full object-cover"
                                       />

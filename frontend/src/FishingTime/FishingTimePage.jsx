@@ -1,8 +1,7 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import AnimatedSection from "../components/AnimatedSection"
+import PageHeader from "../components/PageHeader"
 
 const FishingTimePage = () => {
   // Mock data for fishing users
@@ -148,49 +147,46 @@ const FishingTimePage = () => {
   const sortedUsers = filteredUsers().sort((a, b) => a.endTime - b.endTime)
 
   return (
-    <div className="min-h-screen pt-20">
+    <div className="min-h-screen">
+      
       {/* Hero Section */}
-      <section className="relative py-12 md:py-20">
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-blue-500 z-0"></div>
-        <div className="container mx-auto px-4 relative z-10">
-          <AnimatedSection className="max-w-4xl mx-auto text-center">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-white">Fishing Time Tracker</h1>
-            <p className="text-lg md:text-xl text-white mb-6">Monitor remaining fishing time for all active users</p>
-            <div className="flex flex-wrap justify-center gap-3">
-              <button
-                onClick={() => setFilterOption("all")}
-                className={`px-4 py-2 rounded-full transition-all duration-300 ${
-                  filterOption === "all"
-                    ? "bg-white text-blue-600 font-medium"
-                    : "bg-blue-600/30 text-white hover:bg-blue-600/50"
-                }`}
-              >
-                All Users
-              </button>
-              <button
-                onClick={() => setFilterOption("critical")}
-                className={`px-4 py-2 rounded-full transition-all duration-300 ${
-                  filterOption === "critical"
-                    ? "bg-white text-red-600 font-medium"
-                    : "bg-blue-600/30 text-white hover:bg-blue-600/50"
-                }`}
-              >
-                Critical Time (≤ 10 min)
-              </button>
-              <button
-                onClick={() => setFilterOption("normal")}
-                className={`px-4 py-2 rounded-full transition-all duration-300 ${
-                  filterOption === "normal"
-                    ? "bg-white text-cyan-600 font-medium"
-                    : "bg-blue-600/30 text-white hover:bg-blue-600/50"
-                }`}
-              >
-                Normal Time (&gt; 10 min)
-              </button>
-            </div>
-          </AnimatedSection>
+      <PageHeader 
+        title="Fishing Time Tracker" 
+        description="Monitor remaining fishing time for all active users"
+      >
+        <div className="flex flex-wrap justify-center gap-3 mt-6">
+          <button
+            onClick={() => setFilterOption("all")}
+            className={`px-4 py-2 rounded-full transition-all duration-300 ${
+              filterOption === "all"
+                ? "bg-white text-blue-600 font-medium"
+                : "bg-blue-600/30 text-white hover:bg-blue-600/50"
+            }`}
+          >
+            All Users
+          </button>
+          <button
+            onClick={() => setFilterOption("critical")}
+            className={`px-4 py-2 rounded-full transition-all duration-300 ${
+              filterOption === "critical"
+                ? "bg-white text-red-600 font-medium"
+                : "bg-blue-600/30 text-white hover:bg-blue-600/50"
+            }`}
+          >
+            Critical Time (≤ 10 min)
+          </button>
+          <button
+            onClick={() => setFilterOption("normal")}
+            className={`px-4 py-2 rounded-full transition-all duration-300 ${
+              filterOption === "normal"
+                ? "bg-white text-cyan-600 font-medium"
+                : "bg-blue-600/30 text-white hover:bg-blue-600/50"
+            }`}
+          >
+            Normal Time (&gt; 10 min)
+          </button>
         </div>
-      </section>
+      </PageHeader>
 
       {/* Fishing Time Cards */}
       <section className="py-12">
@@ -227,7 +223,7 @@ const FishingTimePage = () => {
                   <div className="relative p-6 bg-white bg-opacity-90 backdrop-blur-sm">
                     <div className="flex items-center mb-4">
                       <img
-                        src={user.avatar || "/placeholder.svg"}
+                        src="/assets/About/about-us.png"
                         alt={user.name}
                         className="w-12 h-12 rounded-full object-cover mr-4 border-2 border-white shadow-md"
                       />

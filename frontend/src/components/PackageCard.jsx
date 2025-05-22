@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 const PackageCard = ({
   title,
   description,
-  imageUrl,
   buttonLink = "#",
   category,
   price,
@@ -27,13 +26,13 @@ const PackageCard = ({
 
   return (
     <motion.div
-      className="bg-white border border-gray-200 shadow overflow-hidden transition-all duration-300 flex flex-col rounded-3xl h-[500px] w-full"
-      whileHover={{ y: -4, boxShadow: "0 10px 20px rgba(0, 0, 0, 0.1)" }}
+      className="bg-white border border-blue-200/70 shadow-blue-100/40 overflow-hidden transition-all duration-300 flex flex-col rounded-3xl h-[500px] w-full"
+      whileHover={{ y: -4, boxShadow: "0 10px 20px rgba(59, 130, 246, 0.15)" }}
     >
-      {/* Image Section - 70% */}
-      <div className="relative h-[350px] overflow-hidden">
+      {/* Image Section - Fixed height */}
+      <div className="relative h-[50%] overflow-hidden">
         <img
-          src={imageUrl || "/api/placeholder/400/320"}
+          src="/assets/About/about-us.png"
           alt={title}
           className="w-full h-full object-cover"
         />
@@ -47,31 +46,33 @@ const PackageCard = ({
         )}
       </div>
 
-      {/* Content Section - 30% */}
-      <div className="p-4 flex flex-col h-[150px] overflow-hidden">
-        <div className="flex flex-col sm:flex-row justify-between items-start gap-1 mb-2">
-          <h3 className="text-lg font-bold text-gray-800 truncate max-w-full sm:max-w-[70%]">
+      {/* Content Section - Fixed height */}
+      <div className="p-4 flex flex-col h-[50%] overflow-auto" style={{ scrollbarWidth: 'thin' }}>
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-3">
+          <h3 className="text-lg font-bold text-gray-800 line-clamp-2 max-w-full sm:max-w-[70%]">
             {title}
           </h3>
-          <div className="flex self-start sm:self-center">
+          <div className="flex self-start sm:self-center shrink-0">
             {renderStars(rating)}
           </div>
         </div>
 
-        <p className="text-gray-700 mb-2 line-clamp-2 text-sm overflow-hidden">
-          {description}
-        </p>
+        <div className="flex-grow overflow-auto mb-3">
+          <p className="text-gray-700 text-sm">
+            {description}
+          </p>
+        </div>
 
-        <div className="flex items-center justify-between mt-auto">
+        <div className="flex items-center justify-between pt-2 border-t border-gray-100 mt-auto">
           <div className="flex">
-            <span className="bg-green-100 text-green-800 px-2 py-1 rounded-md text-xs">
+            <span className="bg-green-100 text-green-800 px-2 py-1 rounded-md text-xs whitespace-nowrap">
               In Stock
             </span>
           </div>
           <a
             href={buttonLink || "/products"}
-            className="px-4 py-2 rounded-full transition-all duration-300 bg-blue-600 text-white hover:bg-blue-700
-            shadow-md hover:shadow-lg transform hover:-translate-y-1 text-sm"
+            className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full transition-all duration-300 bg-blue-600 text-white hover:bg-blue-700
+            shadow-md hover:shadow-lg transform hover:-translate-y-1 text-xs sm:text-sm whitespace-nowrap ml-2"
           >
             View Details
           </a>

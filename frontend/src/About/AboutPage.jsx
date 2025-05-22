@@ -1,7 +1,6 @@
-"use client";
-
 import { motion } from "framer-motion";
 import AnimatedSection from "../components/AnimatedSection";
+import PageHeader from "../components/PageHeader";
 
 const AboutPage = () => {
   const teamMembers = [
@@ -64,20 +63,10 @@ const AboutPage = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative py-8 md:py-16 lg:py-20">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-300 via-blue-400 to-blue-100 z-0"></div>
-        <div className="container mx-auto px-4 relative z-10">
-          <AnimatedSection className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-white">
-              About Our Company
-            </h1>
-            <p className="text-lg md:text-xl text-white mb-8">
-              We're on a mission to transform the industry with innovative
-              solutions and exceptional service.
-            </p>
-          </AnimatedSection>
-        </div>
-      </section>
+      <PageHeader
+        title="About Our Company"
+        description="We're on a mission to transform the industry with innovative solutions and exceptional service."
+      />
 
       {/* Our Story Section */}
       <section className="py-16">
@@ -87,7 +76,8 @@ const AboutPage = () => {
               <img
                 src="assets/About/about-us.png"
                 alt="Our Story"
-                className="rounded-2xl shadow-lg w-full max-w-md mx-auto h-auto object-cover"
+                className="rounded-2xl shadow-lg border border-blue-200/70 shadow-blue-100/40 w-full max-w-md mx-auto h-auto object-cover box-shadow-glow"
+                style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
               />
             </AnimatedSection>
 
@@ -129,7 +119,8 @@ const AboutPage = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
               {/* Simple Rectangle */}
-              <div className="bg-white p-6 rounded-2xl shadow-lg">
+              <div className="bg-white p-6 rounded-2xl shadow-lg border border-blue-200/70 shadow-blue-100/40"
+                   style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -156,7 +147,8 @@ const AboutPage = () => {
               </div>
 
               {/* Rectangle with Border */}
-              <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-300">
+              <div className="bg-white p-6 rounded-2xl shadow-lg border border-blue-300/50 shadow-blue-100/40"
+                   style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -183,7 +175,8 @@ const AboutPage = () => {
               </div>
 
               {/* Rectangle with Dashed Border */}
-              <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-dashed border-gray-300">
+              <div className="bg-white p-6 rounded-2xl shadow-lg border border-dashed border-blue-300/50 shadow-blue-100/40"
+                   style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -228,11 +221,12 @@ const AboutPage = () => {
             {teamMembers.map((member, index) => (
               <div
                 key={index}
-                className="bg-white rounded-2xl shadow-lg border border-blue-300/30 overflow-hidden flex flex-col h-96"
+                className="bg-white rounded-2xl shadow-lg border border-blue-300/50 overflow-hidden flex flex-col h-96"
+                style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
               >
                 <div className="h-1/2 overflow-hidden">
                   <img
-                    src={member.image || "/placeholder.svg"}
+                    src="assets/About/about-us.png"
                     alt={member.name}
                     className="w-full h-full object-cover"
                   />
@@ -307,9 +301,9 @@ const AboutPage = () => {
                   filter="drop-shadow(0 2px 4px rgba(59, 130, 246, 0.5))"
                   variants={{
                     hidden: { pathLength: 0 },
-                    visible: { 
+                    visible: {
                       pathLength: 1,
-                      transition: { 
+                      transition: {
                         duration: 6,
                         ease: "easeInOut",
                         type: "spring",
@@ -323,7 +317,7 @@ const AboutPage = () => {
             </div>
 
             {/* Timeline components */}
-            <motion.div 
+            <motion.div
               className="relative"
               initial="hidden"
               whileInView="visible"
@@ -338,7 +332,7 @@ const AboutPage = () => {
               }}
             >
               {/* 2010 Milestone - Right side */}
-              <motion.div 
+              <motion.div
                 className="mb-32 flex flex-col md:flex-row items-center relative"
                 variants={{
                   hidden: { opacity: 0 },
@@ -346,43 +340,44 @@ const AboutPage = () => {
                 }}
               >
                 <div className="md:w-1/2 order-2 md:order-1"></div>
-                <motion.div 
-                className="order-1 md:order-2 mb-6 md:mb-0"
-                variants={{
-                  hidden: { scale: 0 },
-                  visible: { 
-                    scale: 1,
-                    transition: {
-                      type: "spring",
-                      stiffness: 260,
-                      damping: 20
-                    } 
-                  }
-                }}
-              >
-                <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold mb-4 md:mb-0 mx-auto z-20 relative shadow-lg border-4 border-white overflow-hidden">
-                  <motion.div 
-                    className="absolute inset-0 bg-blue-400 rounded-full"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ 
-                      delay: 0.3, 
-                      duration: 0.8,
-                      type: "spring",
-                      stiffness: 200,
-                      damping: 15
-                    }}
-                    style={{ originX: 0, originY: 1 }}
-                  />
-                  <span className="relative z-10">2010</span>
-                </div>
-              </motion.div>
-                <motion.div 
+                <motion.div
+                  className="order-1 md:order-2 mb-6 md:mb-0"
+                  variants={{
+                    hidden: { scale: 0 },
+                    visible: {
+                      scale: 1,
+                      transition: {
+                        type: "spring",
+                        stiffness: 260,
+                        damping: 20
+                      }
+                    }
+                  }}
+                >
+                  <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold mb-4 md:mb-0 mx-auto z-20 relative shadow-lg border-4 border-blue-300/50 overflow-hidden"
+                       style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
+                    <motion.div
+                      className="absolute inset-0 bg-blue-400 rounded-full"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{
+                        delay: 0.3,
+                        duration: 0.8,
+                        type: "spring",
+                        stiffness: 200,
+                        damping: 15
+                      }}
+                      style={{ originX: 0, originY: 1 }}
+                    />
+                    <span className="relative z-10">2010</span>
+                  </div>
+                </motion.div>
+                <motion.div
                   className="md:w-1/2 md:pl-10 order-3"
                   variants={{
                     hidden: { x: 100, opacity: 0 },
-                    visible: { 
-                      x: 0, 
+                    visible: {
+                      x: 0,
                       opacity: 1,
                       transition: {
                         type: "spring",
@@ -392,12 +387,13 @@ const AboutPage = () => {
                     }
                   }}
                 >
-                  <motion.div 
+                  <motion.div
                     className="bg-white p-6 rounded-2xl shadow-lg transform transition-all hover:shadow-xl"
-                    whileHover={{ 
+                    whileHover={{
                       scale: 1.03,
-                      boxShadow: "0 10px 25px rgba(0, 0, 0, 0.1)"
+                      boxShadow: "0 0 20px rgba(59, 130, 246, 0.7)"
                     }}
+                    style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
                   >
                     <h3 className="text-2xl font-bold mb-2 text-gray-800">
                       Company Founded
@@ -410,19 +406,19 @@ const AboutPage = () => {
               </motion.div>
 
               {/* 2013 Milestone - Left side */}
-              <motion.div 
+              <motion.div
                 className="mb-32 flex flex-col md:flex-row items-center relative"
                 variants={{
                   hidden: { opacity: 0 },
                   visible: { opacity: 1 }
                 }}
               >
-                <motion.div 
+                <motion.div
                   className="md:w-1/2 md:pr-10 order-3 md:order-1"
                   variants={{
                     hidden: { x: -100, opacity: 0 },
-                    visible: { 
-                      x: 0, 
+                    visible: {
+                      x: 0,
                       opacity: 1,
                       transition: {
                         type: "spring",
@@ -432,12 +428,13 @@ const AboutPage = () => {
                     }
                   }}
                 >
-                  <motion.div 
+                  <motion.div
                     className="bg-white p-6 rounded-2xl shadow-lg transform transition-all hover:shadow-xl"
-                    whileHover={{ 
+                    whileHover={{
                       scale: 1.03,
-                      boxShadow: "0 10px 25px rgba(0, 0, 0, 0.1)"
+                      boxShadow: "0 0 20px rgba(59, 130, 246, 0.7)"
                     }}
+                    style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
                   >
                     <h3 className="text-2xl font-bold mb-2 text-gray-800">
                       First Major Product Launch
@@ -447,42 +444,43 @@ const AboutPage = () => {
                     </p>
                   </motion.div>
                 </motion.div>
-                <motion.div 
-                className="order-1 md:order-2 mb-6 md:mb-0"
-                variants={{
-                  hidden: { scale: 0 },
-                  visible: { 
-                    scale: 1,
-                    transition: {
-                      type: "spring",
-                      stiffness: 260,
-                      damping: 20
-                    } 
-                  }
-                }}
-              >
-                <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold mb-4 md:mb-0 mx-auto z-20 relative shadow-lg border-4 border-white overflow-hidden">
-                  <motion.div 
-                    className="absolute inset-0 bg-blue-400 rounded-full"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ 
-                      delay: 0.5, 
-                      duration: 0.8,
-                      type: "spring",
-                      stiffness: 200,
-                      damping: 15
-                    }}
-                    style={{ originX: 1, originY: 1 }}
-                  />
-                  <span className="relative z-10">2013</span>
-                </div>
-              </motion.div>
+                <motion.div
+                  className="order-1 md:order-2 mb-6 md:mb-0"
+                  variants={{
+                    hidden: { scale: 0 },
+                    visible: {
+                      scale: 1,
+                      transition: {
+                        type: "spring",
+                        stiffness: 260,
+                        damping: 20
+                      }
+                    }
+                  }}
+                >
+                  <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold mb-4 md:mb-0 mx-auto z-20 relative shadow-lg border-4 border-blue-300/50 overflow-hidden"
+                       style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
+                    <motion.div
+                      className="absolute inset-0 bg-blue-400 rounded-full"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{
+                        delay: 0.5,
+                        duration: 0.8,
+                        type: "spring",
+                        stiffness: 200,
+                        damping: 15
+                      }}
+                      style={{ originX: 1, originY: 1 }}
+                    />
+                    <span className="relative z-10">2013</span>
+                  </div>
+                </motion.div>
                 <div className="md:w-1/2 order-2 md:order-3"></div>
               </motion.div>
 
               {/* 2016 Milestone - Right side */}
-              <motion.div 
+              <motion.div
                 className="mb-32 flex flex-col md:flex-row items-center relative"
                 variants={{
                   hidden: { opacity: 0 },
@@ -490,27 +488,28 @@ const AboutPage = () => {
                 }}
               >
                 <div className="md:w-1/2 order-2 md:order-1"></div>
-                <motion.div 
+                <motion.div
                   className="order-1 md:order-2 mb-6 md:mb-0"
                   variants={{
                     hidden: { scale: 0 },
-                    visible: { 
+                    visible: {
                       scale: 1,
                       transition: {
                         type: "spring",
                         stiffness: 260,
                         damping: 20
-                      } 
+                      }
                     }
                   }}
                 >
-                  <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold mb-4 md:mb-0 mx-auto z-20 relative shadow-lg border-4 border-white overflow-hidden">
-                    <motion.div 
+                  <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold mb-4 md:mb-0 mx-auto z-20 relative shadow-lg border-4 border-blue-300/50 overflow-hidden"
+                       style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
+                    <motion.div
                       className="absolute inset-0 bg-blue-400 rounded-full"
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      transition={{ 
-                        delay: 0.7, 
+                      transition={{
+                        delay: 0.7,
                         duration: 0.8,
                         type: "spring",
                         stiffness: 200,
@@ -521,12 +520,12 @@ const AboutPage = () => {
                     <span className="relative z-10">2016</span>
                   </div>
                 </motion.div>
-                <motion.div 
+                <motion.div
                   className="md:w-1/2 md:pl-10 order-3"
                   variants={{
                     hidden: { x: 100, opacity: 0 },
-                    visible: { 
-                      x: 0, 
+                    visible: {
+                      x: 0,
                       opacity: 1,
                       transition: {
                         type: "spring",
@@ -536,12 +535,13 @@ const AboutPage = () => {
                     }
                   }}
                 >
-                  <motion.div 
+                  <motion.div
                     className="bg-white p-6 rounded-2xl shadow-lg transform transition-all hover:shadow-xl"
-                    whileHover={{ 
+                    whileHover={{
                       scale: 1.03,
-                      boxShadow: "0 10px 25px rgba(0, 0, 0, 0.1)"
+                      boxShadow: "0 0 20px rgba(59, 130, 246, 0.7)"
                     }}
+                    style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
                   >
                     <h3 className="text-2xl font-bold mb-2 text-gray-800">
                       International Expansion
@@ -554,19 +554,19 @@ const AboutPage = () => {
               </motion.div>
 
               {/* 2020 Milestone - Left side */}
-              <motion.div 
+              <motion.div
                 className="mb-32 flex flex-col md:flex-row items-center relative"
                 variants={{
                   hidden: { opacity: 0 },
                   visible: { opacity: 1 }
                 }}
               >
-                <motion.div 
+                <motion.div
                   className="md:w-1/2 md:pr-10 order-3 md:order-1"
                   variants={{
                     hidden: { x: -100, opacity: 0 },
-                    visible: { 
-                      x: 0, 
+                    visible: {
+                      x: 0,
                       opacity: 1,
                       transition: {
                         type: "spring",
@@ -576,12 +576,13 @@ const AboutPage = () => {
                     }
                   }}
                 >
-                  <motion.div 
+                  <motion.div
                     className="bg-white p-6 rounded-2xl shadow-lg transform transition-all hover:shadow-xl"
-                    whileHover={{ 
+                    whileHover={{
                       scale: 1.03,
-                      boxShadow: "0 10px 25px rgba(0, 0, 0, 0.1)"
+                      boxShadow: "0 0 20px rgba(59, 130, 246, 0.7)"
                     }}
+                    style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
                   >
                     <h3 className="text-2xl font-bold mb-2 text-gray-800">
                       Digital Transformation
@@ -592,21 +593,22 @@ const AboutPage = () => {
                     </p>
                   </motion.div>
                 </motion.div>
-                <motion.div 
+                <motion.div
                   className="order-1 md:order-2 mb-6 md:mb-0"
                   variants={{
                     hidden: { scale: 0 },
-                    visible: { 
+                    visible: {
                       scale: 1,
                       transition: {
                         type: "spring",
                         stiffness: 260,
                         damping: 20
-                      } 
+                      }
                     }
                   }}
                 >
-                  <div className="w-20 h-20 bg-black rounded-full flex items-center justify-center text-white text-xl font-bold mb-4 md:mb-0 mx-auto z-20 relative shadow-lg border-4 border-white">
+                  <div className="w-20 h-20 bg-black rounded-full flex items-center justify-center text-white text-xl font-bold mb-4 md:mb-0 mx-auto z-20 relative shadow-lg border-4 border-blue-300/50"
+                       style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
                     2020
                   </div>
                 </motion.div>
@@ -614,7 +616,7 @@ const AboutPage = () => {
               </motion.div>
 
               {/* 2023 Milestone - Right side */}
-              <motion.div 
+              <motion.div
                 className="mb-12 flex flex-col md:flex-row items-center relative"
                 variants={{
                   hidden: { opacity: 0 },
@@ -622,30 +624,31 @@ const AboutPage = () => {
                 }}
               >
                 <div className="md:w-1/2 order-2 md:order-1"></div>
-                <motion.div 
+                <motion.div
                   className="order-1 md:order-2 mb-6 md:mb-0"
                   variants={{
                     hidden: { scale: 0 },
-                    visible: { 
+                    visible: {
                       scale: 1,
                       transition: {
                         type: "spring",
                         stiffness: 260,
                         damping: 20
-                      } 
+                      }
                     }
                   }}
                 >
-                  <div className="w-20 h-20 bg-black rounded-full flex items-center justify-center text-white text-xl font-bold mb-4 md:mb-0 mx-auto z-20 relative shadow-lg border-4 border-white">
+                  <div className="w-20 h-20 bg-black rounded-full flex items-center justify-center text-white text-xl font-bold mb-4 md:mb-0 mx-auto z-20 relative shadow-lg border-4 border-blue-300/50"
+                       style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
                     2023
                   </div>
                 </motion.div>
-                <motion.div 
+                <motion.div
                   className="md:w-1/2 md:pl-10 order-3"
                   variants={{
                     hidden: { x: 100, opacity: 0 },
-                    visible: { 
-                      x: 0, 
+                    visible: {
+                      x: 0,
                       opacity: 1,
                       transition: {
                         type: "spring",
@@ -655,12 +658,13 @@ const AboutPage = () => {
                     }
                   }}
                 >
-                  <motion.div 
+                  <motion.div
                     className="bg-white p-6 rounded-2xl shadow-lg transform transition-all hover:shadow-xl"
-                    whileHover={{ 
+                    whileHover={{
                       scale: 1.03,
-                      boxShadow: "0 10px 25px rgba(0, 0, 0, 0.1)"
+                      boxShadow: "0 0 20px rgba(59, 130, 246, 0.7)"
                     }}
+                    style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
                   >
                     <h3 className="text-2xl font-bold mb-2 text-gray-800">
                       Sustainability Initiative
@@ -676,7 +680,7 @@ const AboutPage = () => {
           </div>
 
           {/* Timeline-themed icons at the bottom */}
-          <motion.div 
+          <motion.div
             className="flex justify-center mt-12 space-x-6"
             initial="hidden"
             whileInView="visible"
@@ -690,12 +694,12 @@ const AboutPage = () => {
               }
             }}
           >
-            <motion.div 
+            <motion.div
               className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center shadow-md cursor-pointer overflow-hidden"
               variants={{
                 hidden: { y: 20, opacity: 0 },
-                visible: { 
-                  y: 0, 
+                visible: {
+                  y: 0,
                   opacity: 1,
                   transition: {
                     type: "spring",
@@ -704,12 +708,13 @@ const AboutPage = () => {
                   }
                 }
               }}
-              whileHover={{ 
-                scale: 1.1, 
-                boxShadow: "0 0 15px rgba(59, 130, 246, 0.5)",
+              whileHover={{
+                scale: 1.1,
+                boxShadow: "0 0 20px rgba(59, 130, 246, 0.7)",
                 rotate: 5
               }}
               whileTap={{ scale: 0.95 }}
+              style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
             >
               <motion.svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -729,12 +734,12 @@ const AboutPage = () => {
                 />
               </motion.svg>
             </motion.div>
-            <motion.div 
+            <motion.div
               className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center shadow-md cursor-pointer overflow-hidden"
               variants={{
                 hidden: { y: 20, opacity: 0 },
-                visible: { 
-                  y: 0, 
+                visible: {
+                  y: 0,
                   opacity: 1,
                   transition: {
                     type: "spring",
@@ -743,12 +748,13 @@ const AboutPage = () => {
                   }
                 }
               }}
-              whileHover={{ 
-                scale: 1.1, 
-                boxShadow: "0 0 15px rgba(59, 130, 246, 0.5)",
+              whileHover={{
+                scale: 1.1,
+                boxShadow: "0 0 20px rgba(59, 130, 246, 0.7)",
                 rotate: -5
               }}
               whileTap={{ scale: 0.95 }}
+              style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
             >
               <motion.svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -768,12 +774,12 @@ const AboutPage = () => {
                 />
               </motion.svg>
             </motion.div>
-            <motion.div 
+            <motion.div
               className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center shadow-md cursor-pointer overflow-hidden"
               variants={{
                 hidden: { y: 20, opacity: 0 },
-                visible: { 
-                  y: 0, 
+                visible: {
+                  y: 0,
                   opacity: 1,
                   transition: {
                     type: "spring",
@@ -782,12 +788,13 @@ const AboutPage = () => {
                   }
                 }
               }}
-              whileHover={{ 
-                scale: 1.1, 
-                boxShadow: "0 0 15px rgba(59, 130, 246, 0.5)",
+              whileHover={{
+                scale: 1.1,
+                boxShadow: "0 0 20px rgba(59, 130, 246, 0.7)",
                 rotate: 5
               }}
               whileTap={{ scale: 0.95 }}
+              style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
             >
               <motion.svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -810,20 +817,20 @@ const AboutPage = () => {
           </motion.div>
 
           {/* Footer tagline */}
-          <motion.div 
+          <motion.div
             className="text-center mt-12"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.5 }}
             viewport={{ once: true }}
           >
-            <motion.p 
+            <motion.p
               className="text-2xl font-bold text-gray-700"
               whileHover={{ scale: 1.05, color: "#3b82f6" }}
             >
               2025
             </motion.p>
-            <motion.p 
+            <motion.p
               className="text-sm tracking-wider text-gray-600 mt-1"
               initial={{ letterSpacing: "0.1em" }}
               whileHover={{ letterSpacing: "0.3em", transition: { duration: 0.3 } }}
@@ -832,8 +839,6 @@ const AboutPage = () => {
             </motion.p>
           </motion.div>
         </div>
-
-        {/* 使用framer-motion实现动画，不再需要CSS动画 */}
       </section>
     </div>
   );

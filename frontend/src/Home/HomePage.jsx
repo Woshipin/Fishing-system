@@ -1,16 +1,16 @@
 import { motion } from "framer-motion";
 import AnimatedSection from "../components/AnimatedSection";
 import CTA from "../components/CTA";
-import PackageCard from "../components/PackageCard";
+import PackageCard from "../components/PackageCard"; 
 
 const HomePage = () => {
   const featuredProducts = [
     {
       id: 1,
-      title: "Product 1",
+      title: "Product 1,orem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor...，orem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor...Product 1,orem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor...，orem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor...Product 1,orem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor...，orem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor...",
       subtitle:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor...",
-      imageUrl: "/api/placeholder/400/320",
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor...，orem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor...,consectetur adipiscing elit. Sed do eiusmod tempor...,consectetur adipiscing elit. Sed do eiusmod tempor...,consectetur adipiscing elit. Sed do eiusmod tempor...",
+      imageUrl: "/assets/About/about-us.png",
       price: "26",
       category: "Electronics",
       rating: 5,
@@ -20,7 +20,7 @@ const HomePage = () => {
       title: "Product 10",
       subtitle:
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor...",
-      imageUrl: "/api/placeholder/400/320",
+      imageUrl: "/assets/About/about-us.png",
       price: "112",
       category: "Home",
       rating: 3,
@@ -30,7 +30,7 @@ const HomePage = () => {
       title: "Product 8",
       subtitle:
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor...",
-      imageUrl: "/api/placeholder/400/320",
+      imageUrl: "/assets/About/about-us.png",
       price: "129",
       category: "Home",
       rating: 2,
@@ -40,7 +40,7 @@ const HomePage = () => {
       title: "Product 5",
       subtitle:
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor...",
-      imageUrl: "/api/placeholder/400/320",
+      imageUrl: "/assets/About/about-us.png",
       price: "89",
       category: "Office",
       rating: 4,
@@ -50,7 +50,7 @@ const HomePage = () => {
       title: "Product 12",
       subtitle:
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor...",
-      imageUrl: "/api/placeholder/400/320",
+      imageUrl: "/assets/About/about-us.png",
       price: "199",
       category: "Electronics",
       rating: 5,
@@ -60,7 +60,7 @@ const HomePage = () => {
       title: "Product 7",
       subtitle:
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor...",
-      imageUrl: "/api/placeholder/400/320",
+      imageUrl: "/assets/About/about-us.png",
       price: "75",
       category: "Home",
       rating: 3,
@@ -70,7 +70,7 @@ const HomePage = () => {
       title: "Product 3",
       subtitle:
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor...",
-      imageUrl: "/api/placeholder/400/320",
+      imageUrl: "/assets/About/about-us.png",
       price: "45",
       category: "Office",
       rating: 4,
@@ -80,7 +80,7 @@ const HomePage = () => {
       title: "Product 9",
       subtitle:
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor...",
-      imageUrl: "/api/placeholder/400/320",
+      imageUrl: "/assets/About/about-us.png",
       price: "149",
       category: "Electronics",
       rating: 5,
@@ -89,6 +89,7 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen">
+
       {/* Hero Section */}
       <section className="relative h-screen flex items-center">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-blue-300 to-blue-100 z-0"></div>
@@ -169,27 +170,30 @@ const HomePage = () => {
       {/* About Section */}
       <section className="py-16 bg-gradient-to-br from-blue-50 to-white">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <AnimatedSection direction="left">
-              <div className="relative overflow-hidden rounded-lg shadow-lg max-w-lg mx-auto">
+          <div className="text-center mb-6">
+            <h2 className="text-3xl md:text-4xl font-bold text-black inline-block relative">
+              About Our Company
+              <span className="block h-1 w-32 bg-blue-600 mt-2 mx-auto"></span>
+            </h2>
+          </div>
+          
+          <div className="flex flex-col md:flex-row gap-4 items-center bg-white/60 rounded-xl p-6 shadow-lg backdrop-blur-sm">
+            <div className="md:w-2/5">
+              <div className="relative overflow-hidden rounded-xl shadow-md">
                 <img
                   src="assets/About/about-us.png"
                   alt="About Us"
-                  className="w-full h-auto object-cover transform hover:scale-105 transition-transform duration-500"
+                  className="w-full h-auto object-cover rounded-xl"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-blue-900/40 to-transparent opacity-50"></div>
-              </div>
-            </AnimatedSection>
-
-            <AnimatedSection direction="right">
-              <div className="space-y-6 p-4">
-                <div className="inline-block">
-                  <h2 className="text-3xl md:text-4xl font-bold text-black relative">
-                    About Our Company
-                    <span className="block h-1 w-24 bg-blue-600 mt-2"></span>
-                  </h2>
+                <div className="absolute inset-0 bg-gradient-to-t from-blue-600/20 to-transparent"></div>
+                <div className="absolute bottom-0 left-0 right-0 p-4 text-center">
+                  <span className="inline-block bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-bold uppercase tracking-wider">About Us</span>
                 </div>
-
+              </div>
+            </div>
+            
+            <div className="md:w-3/5 md:pl-8">
+              <div className="space-y-4">
                 <p className="text-gray-700 leading-relaxed">
                   We are a team of passionate professionals dedicated to
                   providing the best products and services to our clients. With
@@ -198,49 +202,21 @@ const HomePage = () => {
                   help them succeed.
                 </p>
 
-                <div className="p-4 bg-white rounded-lg shadow-sm border-l-4 border-blue-500 my-6">
+                <div className="p-4 bg-blue-50 rounded-lg shadow-sm border-l-4 border-blue-500">
                   <p className="text-gray-700 italic">
                     "Our mission is to empower businesses with innovative tools
                     and strategies that drive growth and create lasting value."
                   </p>
                 </div>
 
-                <div className="flex items-center space-x-4 mt-8">
-                  <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6 text-blue-600"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 10V3L4 14h7v7l9-11h-7z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg">
-                      Innovative Thinking
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      We constantly explore new methods to provide cutting-edge
-                      solutions
-                    </p>
-                  </div>
-                </div>
-
                 <a
                   href="/about"
-                  className="inline-block mt-4 px-6 py-3 rounded-full transition-all duration-300 bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg transform hover:-translate-y-1"
+                  className="inline-block mt-2 px-6 py-3 rounded-full bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg transition-all duration-300"
                 >
                   Learn More About Us
                 </a>
               </div>
-            </AnimatedSection>
+            </div>
           </div>
         </div>
       </section>
