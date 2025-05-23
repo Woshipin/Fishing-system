@@ -1,9 +1,8 @@
-import { motion } from "framer-motion";
 import AnimatedSection from "./AnimatedSection";
 
-const PageHeader = ({ title, description, className, children }) => {
+const PageHeader = ({ title, description, className = "", children }) => {
   return (
-    <section className={`relative py-8 md:py-16 lg:py-20 ${className || ""}`}>
+    <section className={`relative py-8 md:py-16 lg:py-20 ${className}`}>
       <div className="absolute inset-0 bg-gradient-to-r from-blue-300 via-blue-400 to-blue-100 z-0"></div>
       <div className="container mx-auto px-4 sm:px-6 relative z-10">
         <AnimatedSection className="max-w-4xl mx-auto text-center text-white">

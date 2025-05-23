@@ -1,5 +1,6 @@
-import { motion } from "framer-motion";
-import { useRef } from "react";
+import { motion, useAnimation } from "framer-motion";
+import { useRef, useEffect, useMemo } from "react";
+import { useInView } from "framer-motion";
 
 const AnimatedSection = ({
   children,
@@ -11,39 +12,48 @@ const AnimatedSection = ({
   ...props
 }) => {
   const ref = useRef(null);
+  const controls = useAnimation();
+  const inView = useInView(ref, { once: true, margin: "-100px" });
 
-  const getVariants = () => {
-    const variants = {
-      hidden: {},
-      visible: {},
-    };
+  useEffect(() => {
+    if (inView) controls.start("visible");
+  }, [inView, controls]);
+
+  const getVariants = useMemo(() => {
+    const base = { opacity: 0 };
+    const visible = { opacity: 1 };
 
     switch (direction) {
       case "up":
-        variants.hidden = { opacity: 0, y: 50 };
-        variants.visible = { opacity: 1, y: 0 };
+        base.y = 50;
+        visible.y = 0;
         break;
       case "down":
-        variants.hidden = { opacity: 0, y: -50 };
-        variants.visible = { opacity: 1, y: 0 };
+        base.y = -50;
+        visible.y = 0;
         break;
       case "left":
-        variants.hidden = { opacity: 0, x: -50 };
-        variants.visible = { opacity: 1, x: 0 };
+        base.x = -50;
+        visible.x = 0;
         break;
       case "right":
-        variants.hidden = { opacity: 0, x: 50 };
-        variants.visible = { opacity: 1, x: 0 };
+        base.x = 50;
+        visible.x = 0;
         break;
       default:
-        variants.hidden = { opacity: 0 };
-        variants.visible = { opacity: 1 };
+        break;
     }
 
-    return variants;
-  };
+    return {
+      hidden: base,
+      visible: {
+        ...visible,
+        transition: { duration },
+      },
+    };
+  }, [direction, duration]);
 
-  const containerVariants = {
+  const containerVariants = useMemo(() => ({
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -52,36 +62,27 @@ const AnimatedSection = ({
         delayChildren: delay,
       },
     },
-  };
-
-  const itemVariants = {
-    ...getVariants(),
-    visible: {
-      ...getVariants().visible,
-      transition: {
-        duration,
-      },
-    },
-  };
+  }), [delay, staggerChildren]);
 
   return (
     <motion.div
       ref={ref}
       className={className}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-100px" }}
       variants={containerVariants}
+      initial="hidden"
+      animate={controls}
       {...props}
     >
       {Array.isArray(children) ? (
-        children.map((child, index) => (
-          <motion.div key={index} variants={itemVariants}>
+        children.map((child, i) => (
+          <motion.div key={i} variants={getVariants}>
             {child}
           </motion.div>
         ))
       ) : (
-        <motion.div variants={itemVariants}>{children}</motion.div>
+        <motion.div variants={getVariants}>
+          {children}
+        </motion.div>
       )}
     </motion.div>
   );

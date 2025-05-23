@@ -1,21 +1,15 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const location = useLocation();
+  const [activeLink, setActiveLink] = useState("/");
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 20) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
-    };
-
+    const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -31,25 +25,13 @@ const Navbar = () => {
     { name: "Contact", path: "/contact" },
   ];
 
-  // Icon links
   const iconLinks = [
     {
       name: "Cart",
       path: "/cart",
       icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-          />
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
       ),
     },
@@ -57,178 +39,220 @@ const Navbar = () => {
       name: "Order",
       path: "/orders",
       icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-          />
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
         </svg>
       ),
     },
   ];
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => activeLink === path;
+
+  const handleLinkClick = (path) => {
+    setActiveLink(path);
+    setIsOpen(false);
+    navigate(path); // ✅ 添加这行实现跳转
+  };
 
   return (
     <motion.nav
       className={`fixed w-full z-50 transition-all duration-300 ${
-        scrolled ? "bg-white shadow-sm py-2" : "bg-white py-3 sm:py-4"
+        scrolled 
+          ? "bg-white/95 backdrop-blur-md shadow-lg border-b border-blue-100/50 py-2" 
+          : "bg-white/90 backdrop-blur-sm py-3 sm:py-4"
       }`}
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="container mx-auto px-3 sm:px-4 max-w-7xl">
+      <div className="container mx-auto px-4 sm:px-6 max-w-7xl">
         <div className="flex justify-between items-center">
-          {/* Logo - moved to left side (already was) */}
-          <Link
-            to="/"
-            className="text-xl sm:text-2xl font-bold text-blue-500 flex-shrink-0"
+          {/* Logo */}
+          <motion.div
+            className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent flex-shrink-0"
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: "spring", stiffness: 400, damping: 10 }}
           >
             ModernSite
-          </Link>
+          </motion.div>
 
           {/* Desktop Navigation */}
-          <div className="hidden xl:flex space-x-1 xl:space-x-4 overflow-x-auto flex-grow justify-center mx-2 xl:mx-4">
-            {navLinks.map((link) => (
-              <Link
+          <div className="hidden xl:flex space-x-1 xl:space-x-6 overflow-x-auto flex-grow justify-center mx-4 xl:mx-8">
+            {navLinks.map((link, index) => (
+              <motion.button
                 key={link.path}
-                to={link.path}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                onClick={() => handleLinkClick(link.path)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 whitespace-nowrap relative ${
                   isActive(link.path)
-                    ? "text-blue-600 bg-blue-50"
-                    : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+                    ? "text-blue-600 bg-blue-50/80 shadow-md border border-blue-200/60"
+                    : "text-gray-700 hover:text-blue-600 hover:bg-blue-50/50 hover:shadow-sm"
                 }`}
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
               >
                 {link.name}
-              </Link>
-            ))}
-          </div>
-
-          {/* Icon Links - Only visible on desktop (xl) */}
-          <div className="hidden xl:flex items-center space-x-1">
-            {iconLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`p-2 rounded-full transition-colors ${
-                  isActive(link.path)
-                    ? "text-blue-600 bg-blue-50"
-                    : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                }`}
-                aria-label={link.name}
-              >
-                {link.icon}
-              </Link>
-            ))}
-
-            {/* Login/Profile Button - Only visible on large screens (xl) */}
-            <Link
-              to="/login"
-              className="ml-2 px-4 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm hover:shadow-md text-sm font-medium"
-            >
-              Login
-            </Link>
-            <Link
-              to="/register"
-              className="ml-2 px-4 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm hover:shadow-md text-sm font-medium"
-            >
-              Register
-            </Link>
-          </div>
-
-          {/* Mobile and tablet menu button and icons */}
-          <div className="xl:hidden flex items-center space-x-1">
-            {/* Cart and Order icons for tablet and mobile */}
-            {iconLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`p-2 transition-colors ${
-                  isActive(link.path)
-                    ? "text-blue-600 bg-blue-50"
-                    : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                }`}
-                aria-label={link.name}
-              >
-                {link.icon}
-              </Link>
-            ))}
-
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="p-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 focus:outline-none"
-              aria-label="Toggle menu"
-            >
-              <svg
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                {isOpen ? (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                ) : (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
+                {isActive(link.path) && (
+                  <motion.div
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"
+                    layoutId="activeIndicator"
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   />
                 )}
+              </motion.button>
+            ))}
+          </div>
+
+          {/* Desktop Icons and Auth */}
+          <div className="hidden xl:flex items-center space-x-3">
+            {iconLinks.map((link) => (
+              <motion.button
+                key={link.path}
+                onClick={() => handleLinkClick(link.path)}
+                className={`p-2.5 rounded-xl transition-all duration-300 ${
+                  isActive(link.path)
+                    ? "text-blue-600 bg-blue-50/80 shadow-md border border-blue-200/60"
+                    : "text-gray-700 hover:text-blue-600 hover:bg-blue-50/50 hover:shadow-sm"
+                }`}
+                whileHover={{ scale: 1.1, y: -2 }}
+                whileTap={{ scale: 0.9 }}
+                aria-label={link.name}
+              >
+                {link.icon}
+              </motion.button>
+            ))}
+            
+            {/* Beautiful Auth Buttons */}
+            <div className="flex items-center space-x-2 ml-4">
+              <motion.button
+                onClick={() => handleLinkClick("/login")}
+                className="px-5 py-2.5 rounded-xl text-sm font-semibold text-blue-600 bg-white/80 backdrop-blur-sm border border-blue-200/60 hover:border-blue-300/80 shadow-lg hover:shadow-xl transition-all duration-300 hover:bg-blue-50/50"
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                style={{
+                  boxShadow: "0 4px 15px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1)"
+                }}
+              >
+                Login
+              </motion.button>
+              <motion.button
+                onClick={() => handleLinkClick("/register")}
+                className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shadow-lg hover:shadow-xl transition-all duration-300 border border-blue-500/20"
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                style={{
+                  boxShadow: "0 4px 15px rgba(59, 130, 246, 0.3), 0 0 0 1px rgba(59, 130, 246, 0.2)"
+                }}
+              >
+                Register
+              </motion.button>
+            </div>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <div className="xl:hidden flex items-center space-x-2">
+            {iconLinks.map((link) => (
+              <motion.button
+                key={link.path}
+                onClick={() => handleLinkClick(link.path)}
+                className={`p-2 rounded-xl transition-all duration-300 ${
+                  isActive(link.path)
+                    ? "text-blue-600 bg-blue-50/80 shadow-md border border-blue-200/60"
+                    : "text-gray-700 hover:text-blue-600 hover:bg-blue-50/50"
+                }`}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                aria-label={link.name}
+              >
+                {link.icon}
+              </motion.button>
+            ))}
+            <motion.button
+              onClick={() => setIsOpen(!isOpen)}
+              className="p-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50/50 rounded-xl transition-all duration-300 focus:outline-none"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              aria-label="Toggle menu"
+            >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {isOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
               </svg>
-            </button>
+            </motion.button>
           </div>
         </div>
 
-        {/* Mobile menu */}
-        <div
-          className={`${isOpen ? "block" : "hidden"} xl:hidden mt-4 pb-4`}
+        {/* Mobile Menu Content */}
+        <motion.div
+          className="xl:hidden overflow-hidden"
+          initial={false}
+          animate={{ height: isOpen ? "auto" : 0 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
         >
-          <div className="flex flex-col space-y-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`px-4 py-2 rounded-md text-base font-medium transition-colors ${
-                  isActive(link.path)
-                    ? "text-blue-600 bg-blue-50"
-                    : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                }`}
-                onClick={() => setIsOpen(false)}
+          <div className="pt-4 pb-6 space-y-3">
+            {/* Navigation Links with Beautiful Cards */}
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-blue-200/60 shadow-lg p-2" 
+                 style={{
+                   boxShadow: "0 8px 25px rgba(59, 130, 246, 0.1), 0 0 0 1px rgba(59, 130, 246, 0.05)"
+                 }}>
+              {navLinks.map((link, index) => (
+                <motion.button
+                  key={link.path}
+                  onClick={() => handleLinkClick(link.path)}
+                  className={`w-full text-left px-4 py-3 rounded-xl text-base font-medium transition-all duration-300 ${
+                    isActive(link.path)
+                      ? "text-blue-600 bg-blue-50/80 shadow-md border border-blue-200/60"
+                      : "text-gray-700 hover:text-blue-600 hover:bg-blue-50/50 hover:shadow-sm"
+                  }`}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: isOpen ? 1 : 0, x: isOpen ? 0 : -20 }}
+                  transition={{ delay: index * 0.05 }}
+                  whileHover={{ scale: 1.02, x: 4, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {link.name}
+                </motion.button>
+              ))}
+            </div>
+            
+            {/* Mobile Auth Buttons */}
+            <div className="space-y-3">
+              <motion.button
+                onClick={() => handleLinkClick("/login")}
+                className="w-full px-4 py-3 rounded-xl text-base font-semibold text-blue-600 bg-white/90 backdrop-blur-sm border border-blue-200/60 hover:border-blue-300/80 shadow-lg hover:shadow-xl transition-all duration-300 hover:bg-blue-50/60"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: isOpen ? 1 : 0, y: isOpen ? 0 : 20 }}
+                transition={{ delay: 0.2 }}
+                whileHover={{ scale: 1.02, y: -3 }}
+                whileTap={{ scale: 0.98 }}
+                style={{
+                  boxShadow: "0 4px 15px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1)"
+                }}
               >
-                {link.name}
-              </Link>
-            ))}
-            <Link
-              to="/login"
-              className="mt-2 px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm text-base font-medium"
-              onClick={() => setIsOpen(false)}
-            >
-              Login
-            </Link>
-            <Link
-              to="/register"
-              className="mt-2 px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm text-base font-medium"
-              onClick={() => setIsOpen(false)}
-            >
-              Register
-            </Link>
+                Login
+              </motion.button>
+              <motion.button
+                onClick={() => handleLinkClick("/register")}
+                className="w-full px-4 py-3 rounded-xl text-base font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shadow-lg hover:shadow-xl transition-all duration-300 border border-blue-500/20"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: isOpen ? 1 : 0, y: isOpen ? 0 : 20 }}
+                transition={{ delay: 0.25 }}
+                whileHover={{ scale: 1.02, y: -3 }}
+                whileTap={{ scale: 0.98 }}
+                style={{
+                  boxShadow: "0 4px 15px rgba(59, 130, 246, 0.3), 0 0 0 1px rgba(59, 130, 246, 0.2)"
+                }}
+              >
+                Register
+              </motion.button>
+            </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </motion.nav>
   );

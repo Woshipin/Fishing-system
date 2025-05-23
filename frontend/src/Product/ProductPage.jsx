@@ -14,6 +14,7 @@ const ProductPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("featured");
   const [isLoading, setIsLoading] = useState(true);
+  const [showFilters, setShowFilters] = useState(false); // 控制移动设备上过滤器的显示/隐藏
 
   // Simulate fetching products from an API
   useEffect(() => {
@@ -122,18 +123,46 @@ const ProductPage = () => {
       {/* Filter and Products Section */}
       <section className="py-4 md:py-8 lg:py-16">
         <div className="container mx-auto px-2 sm:px-4">
+          {/* Mobile Filter Toggle Button - Always at the top */}
+          <div className="lg:hidden mb-4">
+            <button 
+              onClick={() => setShowFilters(!showFilters)}
+              className="w-full flex items-center justify-between bg-blue-500 text-white px-4 py-3 rounded-lg shadow-md hover:bg-blue-600 transition-all duration-300"
+            >
+              <span className="font-medium">筛选条件</span>
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                className={`h-5 w-5 transition-transform duration-300 ${showFilters ? 'rotate-180' : ''}`} 
+                viewBox="0 0 20 20" 
+                fill="currentColor"
+              >
+                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+          
           <div className="flex flex-col lg:flex-row gap-4 md:gap-8">
             {/* Sidebar Filters */}
-            <div className="lg:w-1/4 w-full">
+            <div className={`lg:w-1/4 w-full ${showFilters ? 'block' : 'hidden lg:block'}`}>
               <AnimatedSection
                 direction="left"
                 className="bg-white rounded-2xl shadow-lg border-2 border-blue-200 shadow-md p-4 md:p-6 sticky top-4 md:top-24 hover:border-blue-300 transition-all duration-300"
               >
-                <h2 className="text-lg md:text-xl font-bold mb-4 md:mb-6">Filters</h2>
+                <div className="flex justify-between items-center mb-4 md:mb-6">
+                  <h2 className="text-lg md:text-xl font-bold">筛选</h2>
+                  <button 
+                    onClick={() => setShowFilters(false)} 
+                    className="lg:hidden p-1 rounded-full hover:bg-gray-100"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
 
                 {/* Categories */}
                 <div className="mb-4 md:mb-8">
-                  <h3 className="font-semibold mb-2 md:mb-3">Fish Species</h3>
+                  <h3 className="font-semibold mb-2 md:mb-3">鱼类种类</h3>
                   <div className="space-y-1 md:space-y-2">
                     <div className="flex items-center">
                       <input
@@ -145,7 +174,7 @@ const ProductPage = () => {
                         className="w-4 h-4 text-blue-500 focus:ring-blue-300 border-blue-200"
                       />
                       <label htmlFor="all" className="ml-2 text-gray-700">
-                        All Species
+                        所有种类
                       </label>
                     </div>
                     {categories.map((category) => (
@@ -171,7 +200,7 @@ const ProductPage = () => {
 
                 {/* Price Range */}
                 <div className="mb-4 md:mb-8">
-                  <h3 className="font-semibold mb-2 md:mb-3">Price Range</h3>
+                  <h3 className="font-semibold mb-2 md:mb-3">价格范围</h3>
                   <div className="space-y-1 md:space-y-2">
                     <div className="flex items-center">
                       <input
@@ -183,7 +212,7 @@ const ProductPage = () => {
                         className="w-4 h-4 text-blue-500 focus:ring-blue-300 border-blue-200"
                       />
                       <label htmlFor="price-all" className="ml-2 text-gray-700">
-                        All Prices
+                        所有价格
                       </label>
                     </div>
                     <div className="flex items-center">
@@ -196,7 +225,7 @@ const ProductPage = () => {
                         className="w-4 h-4 text-blue-500 focus:ring-blue-300 border-blue-200"
                       />
                       <label htmlFor="price-low" className="ml-2 text-gray-700">
-                        Price: Low to High
+                        价格: 从低到高
                       </label>
                     </div>
                     <div className="flex items-center">
@@ -212,7 +241,7 @@ const ProductPage = () => {
                         htmlFor="price-high"
                         className="ml-2 text-gray-700"
                       >
-                        Price: High to Low
+                        价格: 从高到低
                       </label>
                     </div>
                   </div>
@@ -220,7 +249,7 @@ const ProductPage = () => {
 
                 {/* Rating */}
                 <div>
-                  <h3 className="font-semibold mb-2 md:mb-3">Rating</h3>
+                  <h3 className="font-semibold mb-2 md:mb-3">评分</h3>
                   <div className="space-y-1 md:space-y-2">
                     <div className="flex items-center">
                       <input
@@ -232,7 +261,7 @@ const ProductPage = () => {
                         className="w-4 h-4 text-blue-500 focus:ring-blue-300 border-blue-200"
                       />
                       <label htmlFor="rating" className="ml-2 text-gray-700">
-                        Highest Rated
+                        最高评分
                       </label>
                     </div>
                   </div>
@@ -242,18 +271,35 @@ const ProductPage = () => {
 
             {/* Products Grid */}
             <div className="lg:w-3/4 w-full">
-              {/* Search and Sort Options */}
-              <div className="flex flex-wrap justify-between items-center mb-4 md:mb-8">
+              {/* Mobile View: First show product count, then sort options, search box at the end */}
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-8 gap-3">
                 <p className="text-gray-600 text-sm md:text-base">
-                  Showing {filteredProducts.length} fish species out of{" "}
-                  {products.length}
+                  显示 {filteredProducts.length} 种鱼类，共 {products.length} 种
                 </p>
-                <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                  {/* Search Box */}
-                  <div className="relative w-full sm:w-64">
+                <div className="w-full md:w-auto flex flex-col md:flex-row items-stretch md:items-center gap-3 md:space-x-4">
+                  {/* Sort Dropdown - Moved up for mobile */}
+                  <div className="flex items-center w-full md:w-auto order-1 md:order-2">
+                    <label htmlFor="sort" className="mr-2 text-gray-600 text-sm md:text-base whitespace-nowrap">
+                      排序方式:
+                    </label>
+                    <select
+                      id="sort"
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="flex-grow md:flex-grow-0 border-2 border-blue-200 rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 shadow-sm hover:border-blue-300 transition-all duration-300"
+                    >
+                      <option value="featured">推荐</option>
+                      <option value="price-low">价格: 从低到高</option>
+                      <option value="price-high">价格: 从高到低</option>
+                      <option value="rating">最高评分</option>
+                    </select>
+                  </div>
+
+                  {/* Search Box - Moved to bottom for mobile */}
+                  <div className="relative flex-grow order-2 md:order-1">
                     <input
                       type="text"
-                      placeholder="Search fish species..."
+                      placeholder="搜索鱼类..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="w-full px-3 py-2 pl-10 rounded-lg border-2 border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 shadow-sm hover:border-blue-300 transition-all duration-300"
@@ -272,24 +318,6 @@ const ProductPage = () => {
                         d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 014 12.66M16.9 17.9l1.93 1.93"
                       />
                     </svg>
-                  </div>
-
-                  {/* Sort Dropdown */}
-                  <div className="flex items-center">
-                    <label htmlFor="sort" className="mr-2 text-gray-600 text-sm md:text-base">
-                      Sort by:
-                    </label>
-                    <select
-                      id="sort"
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                      className="border-2 border-blue-200 rounded-lg px-2 py-1 md:px-3 md:py-2 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 shadow-sm hover:border-blue-300 transition-all duration-300"
-                    >
-                      <option value="featured">Featured</option>
-                      <option value="price-low">Price: Low to High</option>
-                      <option value="price-high">Price: High to Low</option>
-                      <option value="rating">Highest Rated</option>
-                    </select>
                   </div>
                 </div>
               </div>
@@ -332,13 +360,13 @@ const ProductPage = () => {
                         footer={
                           <div className="flex justify-between items-center">
                             <span className="bg-green-100 text-green-800 px-2 py-1 rounded-md text-xs">
-                              {product.inStock ? "In Stock" : "Out of Stock"}
+                              {product.inStock ? "有货" : "缺货"}
                             </span>
                             <Link
                               to={`/products/${product.id}`}
                               className="px-3 py-1 md:px-4 md:py-2 rounded-full transition-all duration-300 bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg transform hover:-translate-y-1 text-xs md:text-sm"
                             >
-                              View Details
+                              查看详情
                             </Link>
                           </div>
                         }
@@ -352,7 +380,7 @@ const ProductPage = () => {
               <div className="mt-8 md:mt-12 flex justify-center">
                 <nav className="flex items-center space-x-1 md:space-x-2">
                   <button className="px-2 py-1 md:px-3 md:py-2 rounded-lg border-2 border-blue-200 text-gray-600 hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 shadow-sm text-sm md:text-base">
-                    Previous
+                    上一页
                   </button>
                   <button className="px-2 py-1 md:px-3 md:py-2 rounded-lg bg-blue-500 text-white border-2 border-blue-500 shadow-md text-sm md:text-base">
                     1
@@ -364,7 +392,7 @@ const ProductPage = () => {
                     3
                   </button>
                   <button className="px-2 py-1 md:px-3 md:py-2 rounded-lg border-2 border-blue-200 text-gray-600 hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 shadow-sm text-sm md:text-base">
-                    Next
+                    下一页
                   </button>
                 </nav>
               </div>
@@ -378,9 +406,9 @@ const ProductPage = () => {
         <div className="absolute inset-0 bg-gradient-to-l from-primary/10 to-secondary/10 z-0"></div>
         <div className="container mx-auto px-2 sm:px-4 relative z-10">
           <AnimatedSection className="text-center mb-6 md:mb-12">
-            <h2 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4">Featured Fish Species</h2>
+            <h2 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4">精选鱼类</h2>
             <p className="text-gray-700 max-w-xl md:max-w-2xl mx-auto text-sm md:text-base">
-              Check out our most popular fish species among fishing enthusiasts.
+              查看我们最受钓鱼爱好者欢迎的鱼类。
             </p>
           </AnimatedSection>
 
@@ -403,13 +431,13 @@ const ProductPage = () => {
                   footer={
                     <div className="flex justify-between items-center">
                       <span className="bg-green-100 text-green-800 px-2 py-1 rounded-md text-xs">
-                        {product.inStock ? "In Stock" : "Out of Stock"}
+                        {product.inStock ? "有货" : "缺货"}
                       </span>
                       <Link
                         to={`/products/${product.id}`}
                         className="px-3 py-1 md:px-4 md:py-2 rounded-full transition-all duration-300 bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg transform hover:-translate-y-1 text-xs md:text-sm"
                       >
-                        View Details
+                        查看详情
                       </Link>
                     </div>
                   }

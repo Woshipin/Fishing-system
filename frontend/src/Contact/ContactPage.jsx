@@ -172,10 +172,8 @@ const ContactPage = () => {
         id="form"
         className="py-20 relative bg-gradient-to-br from-blue-50 via-white to-indigo-50"
       >
-        {/* Background decorative elements */}
+        {/* 简化背景装饰元素 */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-10 w-64 h-64 rounded-full bg-blue-100 opacity-30 blur-3xl"></div>
-          <div className="absolute bottom-20 right-10 w-80 h-80 rounded-full bg-indigo-100 opacity-40 blur-3xl"></div>
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-purple-100 opacity-20 blur-3xl"></div>
         </div>
 
@@ -199,15 +197,13 @@ const ContactPage = () => {
 
               <form
                 onSubmit={handleSubmit}
-                className="space-y-6 bg-white rounded-2xl p-6 lg:p-8 shadow-2xl border border-gray-100 backdrop-blur-sm bg-white/80 relative overflow-hidden"
+                className="space-y-6 bg-white rounded-2xl p-6 lg:p-8 shadow-2xl border border-blue-200 backdrop-blur-sm bg-white/80 relative overflow-hidden"
                 style={{
                   boxShadow:
-                    "0 10px 40px -10px rgba(0, 0, 100, 0.1), 0 5px 20px -5px rgba(0, 0, 100, 0.2)",
+                    "0 10px 40px -10px rgba(0, 0, 100, 0.1), 0 5px 20px -5px rgba(0, 0, 100, 0.2), 0 0 15px rgba(59, 130, 246, 0.5)",
                 }}
               >
-                {/* Form background decorative elements */}
-                <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-blue-50 opacity-70"></div>
-                <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-indigo-50 opacity-60"></div>
+                {/* 简化表单背景装饰元素 */}
 
                 <div className="grid sm:grid-cols-2 gap-6">
                   <div>
@@ -224,8 +220,8 @@ const ContactPage = () => {
                       value={formData.name}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition shadow-sm hover:shadow-md"
-                      placeholder="John Doe"
+                      className="w-full px-4 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-blue-100/40"
+                      style={{ boxShadow: '0 0 8px rgba(59, 130, 246, 0.3)' }}
                     />
                   </div>
 
@@ -243,8 +239,8 @@ const ContactPage = () => {
                       value={formData.email}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition shadow-sm hover:shadow-md"
-                      placeholder="john@example.com"
+                      className="w-full px-4 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-blue-100/40"
+                      style={{ boxShadow: '0 0 8px rgba(59, 130, 246, 0.3)' }}
                     />
                   </div>
                 </div>
@@ -263,8 +259,8 @@ const ContactPage = () => {
                     value={formData.subject}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-3.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition shadow-sm hover:shadow-md"
-                    placeholder="How can we help you?"
+                    className="w-full px-4 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-blue-100/40"
+                    style={{ boxShadow: '0 0 8px rgba(59, 130, 246, 0.3)' }}
                   />
                 </div>
 
@@ -282,7 +278,8 @@ const ContactPage = () => {
                     onChange={handleChange}
                     required
                     rows="5"
-                    className="w-full px-4 py-3.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none shadow-sm hover:shadow-md"
+                    className="w-full px-4 py-3.5 rounded-xl border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none shadow-blue-100/40"
+                    style={{ boxShadow: '0 0 8px rgba(59, 130, 246, 0.3)' }}
                     placeholder="Your message here..."
                   ></textarea>
                 </div>
@@ -380,15 +377,13 @@ const ContactPage = () => {
               </div>
 
               <div
-                className="space-y-6 bg-white rounded-2xl p-6 lg:p-8 shadow-2xl border border-gray-100 relative overflow-hidden backdrop-blur-sm bg-white/80"
+                className="space-y-6 bg-white rounded-2xl p-6 lg:p-8 shadow-2xl border border-blue-200 relative overflow-hidden backdrop-blur-sm bg-white/80"
                 style={{
                   boxShadow:
-                    "0 10px 40px -10px rgba(0, 0, 100, 0.1), 0 5px 20px -5px rgba(0, 0, 100, 0.2)",
+                    "0 10px 40px -10px rgba(0, 0, 100, 0.1), 0 5px 20px -5px rgba(0, 0, 100, 0.2), 0 0 15px rgba(59, 130, 246, 0.5)",
                 }}
               >
-                {/* Contact info background decorative elements */}
-                <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-blue-50 opacity-70"></div>
-                <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full bg-indigo-50 opacity-60"></div>
+                {/* 简化联系信息背景装饰元素 */}
 
                 <div className="flex items-start space-x-5 relative z-10">
                   <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-xl shadow-lg transform hover:-translate-y-1 transition duration-300">
@@ -489,9 +484,7 @@ const ContactPage = () => {
                   boxShadow: "0 10px 30px -5px rgba(0, 0, 100, 0.15)",
                 }}
               >
-                {/* Business hours decorative elements */}
-                <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-blue-200 opacity-30 blur-xl"></div>
-                <div className="absolute -bottom-10 -right-10 w-40 h-40 rounded-full bg-indigo-200 opacity-30 blur-xl"></div>
+                {/* 简化Business hours装饰元素 */}
 
                 <h3 className="text-xl font-semibold mb-4 text-gray-800 relative z-10">
                   Business Hours
@@ -599,17 +592,6 @@ const ContactPage = () => {
         {/* Enhanced background with gradient and decorative elements */}
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-indigo-50 z-0"></div>
 
-        {/* Decorative background elements */}
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-          <div className="absolute top-20 left-10 w-64 h-64 rounded-full bg-blue-100 opacity-30 blur-3xl"></div>
-          <div className="absolute bottom-40 right-20 w-80 h-80 rounded-full bg-indigo-100 opacity-40 blur-3xl"></div>
-          <div className="absolute top-1/2 left-1/3 w-72 h-72 rounded-full bg-purple-100 opacity-20 blur-3xl"></div>
-        </div>
-
-        {/* Abstract shapes */}
-        <div className="absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-br from-blue-300/20 to-transparent rounded-full blur-2xl"></div>
-        <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-gradient-to-tr from-indigo-300/20 to-transparent rounded-full blur-2xl"></div>
-
         {/* Content container */}
         <div className="container mx-auto px-4 relative z-10">
           <AnimatedSection className="text-center mb-16">
@@ -638,10 +620,6 @@ const ContactPage = () => {
                       "0 10px 40px -10px rgba(0, 0, 100, 0.1), 0 5px 20px -5px rgba(0, 0, 100, 0.15)",
                   }}
                 >
-                  {/* Decorative corner element */}
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-blue-100 to-transparent rounded-bl-[100px] -z-0 opacity-70"></div>
-                  <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-indigo-50 opacity-60 -z-0"></div>
-
                   {/* City badge */}
                   <div className="inline-block px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-xl shadow-lg mb-4 transform transition-transform group-hover:scale-105">
                     {office.city}
@@ -783,8 +761,7 @@ const ContactPage = () => {
                   </div>
                 </div>
 
-                {/* Card glow effect on hover */}
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-400/0 via-indigo-500/0 to-purple-500/0 group-hover:from-blue-400/10 group-hover:via-indigo-500/10 group-hover:to-purple-500/10 rounded-2xl blur-xl transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
+                {/* 删除卡片光效果 */}
               </div>
             ))}
           </AnimatedSection>
@@ -798,8 +775,7 @@ const ContactPage = () => {
                   "0 10px 40px -10px rgba(0, 0, 100, 0.1), 0 5px 20px -5px rgba(0, 0, 100, 0.2)",
               }}
             >
-              <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-blue-50 opacity-70"></div>
-              <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full bg-indigo-50 opacity-60"></div>
+              {/* 简化装饰元素 */}
 
               <h3 className="text-2xl font-bold mb-4 relative z-10">
                 Need Help Finding Us?
@@ -831,34 +807,12 @@ const ContactPage = () => {
       </section>
 
       {/* Map Section */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <AnimatedSection className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Find Us</h2>
-            <p className="text-gray-700 max-w-2xl mx-auto">
-              Visit our headquarters located in the heart of the city.
-            </p>
-          </AnimatedSection>
-
-          <AnimatedSection>
-            <div className="rounded-2xl shadow-lg overflow-hidden h-96 border border-blue-300/30">
-              {/* Replace with actual map implementation */}
-              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                <p className="text-gray-500">
-                  Interactive Map Would Be Displayed Here
-                </p>
-              </div>
-            </div>
-          </AnimatedSection>
-        </div>
-      </section>
+      {/* 删除未使用的Map Section */}
 
       {/* FAQ Section */}
       <section className="py-20 relative overflow-hidden">
-        {/* Background decorations */}
+        {/* Background decorations - 简化 */}
         <div className="absolute inset-0 bg-gradient-to-br from-secondary/10 via-white to-primary/10 z-0"></div>
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-secondary/5 rounded-full blur-3xl"></div>
 
         <div className="container mx-auto px-4 relative z-10">
           <AnimatedSection className="text-center mb-12">

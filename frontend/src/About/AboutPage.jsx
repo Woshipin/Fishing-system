@@ -77,7 +77,7 @@ const AboutPage = () => {
                 src="assets/About/about-us.png"
                 alt="Our Story"
                 className="rounded-2xl shadow-lg border border-blue-200/70 shadow-blue-100/40 w-full max-w-md mx-auto h-auto object-cover box-shadow-glow"
-                style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
+                style={{ boxShadow: "0 0 15px rgba(59, 130, 246, 0.5)" }}
               />
             </AnimatedSection>
 
@@ -119,8 +119,10 @@ const AboutPage = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
               {/* Simple Rectangle */}
-              <div className="bg-white p-6 rounded-2xl shadow-lg border border-blue-200/70 shadow-blue-100/40"
-                   style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
+              <div
+                className="bg-white p-6 rounded-2xl shadow-lg border border-blue-200/70 shadow-blue-100/40"
+                style={{ boxShadow: "0 0 15px rgba(59, 130, 246, 0.5)" }}
+              >
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -147,8 +149,10 @@ const AboutPage = () => {
               </div>
 
               {/* Rectangle with Border */}
-              <div className="bg-white p-6 rounded-2xl shadow-lg border border-blue-300/50 shadow-blue-100/40"
-                   style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
+              <div
+                className="bg-white p-6 rounded-2xl shadow-lg border border-blue-300/50 shadow-blue-100/40"
+                style={{ boxShadow: "0 0 15px rgba(59, 130, 246, 0.5)" }}
+              >
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -175,8 +179,10 @@ const AboutPage = () => {
               </div>
 
               {/* Rectangle with Dashed Border */}
-              <div className="bg-white p-6 rounded-2xl shadow-lg border border-dashed border-blue-300/50 shadow-blue-100/40"
-                   style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
+              <div
+                className="bg-white p-6 rounded-2xl shadow-lg border border-dashed border-blue-300/50 shadow-blue-100/40"
+                style={{ boxShadow: "0 0 15px rgba(59, 130, 246, 0.5)" }}
+              >
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -222,7 +228,7 @@ const AboutPage = () => {
               <div
                 key={index}
                 className="bg-white rounded-2xl shadow-lg border border-blue-300/50 overflow-hidden flex flex-col h-96"
-                style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
+                style={{ boxShadow: "0 0 15px rgba(59, 130, 246, 0.5)" }}
               >
                 <div className="h-1/2 overflow-hidden">
                   <img
@@ -308,9 +314,9 @@ const AboutPage = () => {
                         ease: "easeInOut",
                         type: "spring",
                         stiffness: 30,
-                        damping: 10
-                      }
-                    }
+                        damping: 10,
+                      },
+                    },
                   }}
                 />
               </motion.svg>
@@ -326,9 +332,9 @@ const AboutPage = () => {
                 hidden: {},
                 visible: {
                   transition: {
-                    staggerChildren: 0.3
-                  }
-                }
+                    staggerChildren: 0.3,
+                  },
+                },
               }}
             >
               {/* 2010 Milestone - Right side */}
@@ -336,7 +342,7 @@ const AboutPage = () => {
                 className="mb-32 flex flex-col md:flex-row items-center relative"
                 variants={{
                   hidden: { opacity: 0 },
-                  visible: { opacity: 1 }
+                  visible: { opacity: 1 },
                 }}
               >
                 <div className="md:w-1/2 order-2 md:order-1"></div>
@@ -349,13 +355,15 @@ const AboutPage = () => {
                       transition: {
                         type: "spring",
                         stiffness: 260,
-                        damping: 20
-                      }
-                    }
+                        damping: 20,
+                      },
+                    },
                   }}
                 >
-                  <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold mb-4 md:mb-0 mx-auto z-20 relative shadow-lg border-4 border-blue-300/50 overflow-hidden"
-                       style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
+                  <div
+                    className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold mb-4 md:mb-0 mx-auto z-20 relative shadow-lg border-4 border-blue-300/50 overflow-hidden"
+                    style={{ boxShadow: "0 0 15px rgba(59, 130, 246, 0.5)" }}
+                  >
                     <motion.div
                       className="absolute inset-0 bg-blue-400 rounded-full"
                       initial={{ scale: 0 }}
@@ -365,7 +373,7 @@ const AboutPage = () => {
                         duration: 0.8,
                         type: "spring",
                         stiffness: 200,
-                        damping: 15
+                        damping: 15,
                       }}
                       style={{ originX: 0, originY: 1 }}
                     />
@@ -382,18 +390,18 @@ const AboutPage = () => {
                       transition: {
                         type: "spring",
                         stiffness: 100,
-                        damping: 20
-                      }
-                    }
+                        damping: 20,
+                      },
+                    },
                   }}
                 >
                   <motion.div
                     className="bg-white p-6 rounded-2xl shadow-lg transform transition-all hover:shadow-xl"
                     whileHover={{
                       scale: 1.03,
-                      boxShadow: "0 0 20px rgba(59, 130, 246, 0.7)"
+                      boxShadow: "0 0 20px rgba(59, 130, 246, 0.7)",
                     }}
-                    style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
+                    style={{ boxShadow: "0 0 15px rgba(59, 130, 246, 0.5)" }}
                   >
                     <h3 className="text-2xl font-bold mb-2 text-gray-800">
                       Company Founded
@@ -410,7 +418,7 @@ const AboutPage = () => {
                 className="mb-32 flex flex-col md:flex-row items-center relative"
                 variants={{
                   hidden: { opacity: 0 },
-                  visible: { opacity: 1 }
+                  visible: { opacity: 1 },
                 }}
               >
                 <motion.div
@@ -423,18 +431,18 @@ const AboutPage = () => {
                       transition: {
                         type: "spring",
                         stiffness: 100,
-                        damping: 20
-                      }
-                    }
+                        damping: 20,
+                      },
+                    },
                   }}
                 >
                   <motion.div
                     className="bg-white p-6 rounded-2xl shadow-lg transform transition-all hover:shadow-xl"
                     whileHover={{
                       scale: 1.03,
-                      boxShadow: "0 0 20px rgba(59, 130, 246, 0.7)"
+                      boxShadow: "0 0 20px rgba(59, 130, 246, 0.7)",
                     }}
-                    style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
+                    style={{ boxShadow: "0 0 15px rgba(59, 130, 246, 0.5)" }}
                   >
                     <h3 className="text-2xl font-bold mb-2 text-gray-800">
                       First Major Product Launch
@@ -453,13 +461,15 @@ const AboutPage = () => {
                       transition: {
                         type: "spring",
                         stiffness: 260,
-                        damping: 20
-                      }
-                    }
+                        damping: 20,
+                      },
+                    },
                   }}
                 >
-                  <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold mb-4 md:mb-0 mx-auto z-20 relative shadow-lg border-4 border-blue-300/50 overflow-hidden"
-                       style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
+                  <div
+                    className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold mb-4 md:mb-0 mx-auto z-20 relative shadow-lg border-4 border-blue-300/50 overflow-hidden"
+                    style={{ boxShadow: "0 0 15px rgba(59, 130, 246, 0.5)" }}
+                  >
                     <motion.div
                       className="absolute inset-0 bg-blue-400 rounded-full"
                       initial={{ scale: 0 }}
@@ -469,7 +479,7 @@ const AboutPage = () => {
                         duration: 0.8,
                         type: "spring",
                         stiffness: 200,
-                        damping: 15
+                        damping: 15,
                       }}
                       style={{ originX: 1, originY: 1 }}
                     />
@@ -484,7 +494,7 @@ const AboutPage = () => {
                 className="mb-32 flex flex-col md:flex-row items-center relative"
                 variants={{
                   hidden: { opacity: 0 },
-                  visible: { opacity: 1 }
+                  visible: { opacity: 1 },
                 }}
               >
                 <div className="md:w-1/2 order-2 md:order-1"></div>
@@ -497,13 +507,15 @@ const AboutPage = () => {
                       transition: {
                         type: "spring",
                         stiffness: 260,
-                        damping: 20
-                      }
-                    }
+                        damping: 20,
+                      },
+                    },
                   }}
                 >
-                  <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold mb-4 md:mb-0 mx-auto z-20 relative shadow-lg border-4 border-blue-300/50 overflow-hidden"
-                       style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
+                  <div
+                    className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold mb-4 md:mb-0 mx-auto z-20 relative shadow-lg border-4 border-blue-300/50 overflow-hidden"
+                    style={{ boxShadow: "0 0 15px rgba(59, 130, 246, 0.5)" }}
+                  >
                     <motion.div
                       className="absolute inset-0 bg-blue-400 rounded-full"
                       initial={{ scale: 0 }}
@@ -513,7 +525,7 @@ const AboutPage = () => {
                         duration: 0.8,
                         type: "spring",
                         stiffness: 200,
-                        damping: 15
+                        damping: 15,
                       }}
                       style={{ originX: 0, originY: 0 }}
                     />
@@ -530,24 +542,25 @@ const AboutPage = () => {
                       transition: {
                         type: "spring",
                         stiffness: 100,
-                        damping: 20
-                      }
-                    }
+                        damping: 20,
+                      },
+                    },
                   }}
                 >
                   <motion.div
                     className="bg-white p-6 rounded-2xl shadow-lg transform transition-all hover:shadow-xl"
                     whileHover={{
                       scale: 1.03,
-                      boxShadow: "0 0 20px rgba(59, 130, 246, 0.7)"
+                      boxShadow: "0 0 20px rgba(59, 130, 246, 0.7)",
                     }}
-                    style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
+                    style={{ boxShadow: "0 0 15px rgba(59, 130, 246, 0.5)" }}
                   >
                     <h3 className="text-2xl font-bold mb-2 text-gray-800">
                       International Expansion
                     </h3>
                     <p className="text-gray-600">
-                      We opened our first international office and expanded our reach.
+                      We opened our first international office and expanded our
+                      reach.
                     </p>
                   </motion.div>
                 </motion.div>
@@ -558,7 +571,7 @@ const AboutPage = () => {
                 className="mb-32 flex flex-col md:flex-row items-center relative"
                 variants={{
                   hidden: { opacity: 0 },
-                  visible: { opacity: 1 }
+                  visible: { opacity: 1 },
                 }}
               >
                 <motion.div
@@ -571,18 +584,18 @@ const AboutPage = () => {
                       transition: {
                         type: "spring",
                         stiffness: 100,
-                        damping: 20
-                      }
-                    }
+                        damping: 20,
+                      },
+                    },
                   }}
                 >
                   <motion.div
                     className="bg-white p-6 rounded-2xl shadow-lg transform transition-all hover:shadow-xl"
                     whileHover={{
                       scale: 1.03,
-                      boxShadow: "0 0 20px rgba(59, 130, 246, 0.7)"
+                      boxShadow: "0 0 20px rgba(59, 130, 246, 0.7)",
                     }}
-                    style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
+                    style={{ boxShadow: "0 0 15px rgba(59, 130, 246, 0.5)" }}
                   >
                     <h3 className="text-2xl font-bold mb-2 text-gray-800">
                       Digital Transformation
@@ -602,13 +615,15 @@ const AboutPage = () => {
                       transition: {
                         type: "spring",
                         stiffness: 260,
-                        damping: 20
-                      }
-                    }
+                        damping: 20,
+                      },
+                    },
                   }}
                 >
-                  <div className="w-20 h-20 bg-black rounded-full flex items-center justify-center text-white text-xl font-bold mb-4 md:mb-0 mx-auto z-20 relative shadow-lg border-4 border-blue-300/50"
-                       style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
+                  <div
+                    className="w-20 h-20 bg-black rounded-full flex items-center justify-center text-white text-xl font-bold mb-4 md:mb-0 mx-auto z-20 relative shadow-lg border-4 border-blue-300/50"
+                    style={{ boxShadow: "0 0 15px rgba(59, 130, 246, 0.5)" }}
+                  >
                     2020
                   </div>
                 </motion.div>
@@ -620,7 +635,7 @@ const AboutPage = () => {
                 className="mb-12 flex flex-col md:flex-row items-center relative"
                 variants={{
                   hidden: { opacity: 0 },
-                  visible: { opacity: 1 }
+                  visible: { opacity: 1 },
                 }}
               >
                 <div className="md:w-1/2 order-2 md:order-1"></div>
@@ -633,13 +648,15 @@ const AboutPage = () => {
                       transition: {
                         type: "spring",
                         stiffness: 260,
-                        damping: 20
-                      }
-                    }
+                        damping: 20,
+                      },
+                    },
                   }}
                 >
-                  <div className="w-20 h-20 bg-black rounded-full flex items-center justify-center text-white text-xl font-bold mb-4 md:mb-0 mx-auto z-20 relative shadow-lg border-4 border-blue-300/50"
-                       style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
+                  <div
+                    className="w-20 h-20 bg-black rounded-full flex items-center justify-center text-white text-xl font-bold mb-4 md:mb-0 mx-auto z-20 relative shadow-lg border-4 border-blue-300/50"
+                    style={{ boxShadow: "0 0 15px rgba(59, 130, 246, 0.5)" }}
+                  >
                     2023
                   </div>
                 </motion.div>
@@ -653,18 +670,18 @@ const AboutPage = () => {
                       transition: {
                         type: "spring",
                         stiffness: 100,
-                        damping: 20
-                      }
-                    }
+                        damping: 20,
+                      },
+                    },
                   }}
                 >
                   <motion.div
                     className="bg-white p-6 rounded-2xl shadow-lg transform transition-all hover:shadow-xl"
                     whileHover={{
                       scale: 1.03,
-                      boxShadow: "0 0 20px rgba(59, 130, 246, 0.7)"
+                      boxShadow: "0 0 20px rgba(59, 130, 246, 0.7)",
                     }}
-                    style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
+                    style={{ boxShadow: "0 0 15px rgba(59, 130, 246, 0.5)" }}
                   >
                     <h3 className="text-2xl font-bold mb-2 text-gray-800">
                       Sustainability Initiative
@@ -689,9 +706,9 @@ const AboutPage = () => {
               hidden: {},
               visible: {
                 transition: {
-                  staggerChildren: 0.2
-                }
-              }
+                  staggerChildren: 0.2,
+                },
+              },
             }}
           >
             <motion.div
@@ -704,17 +721,17 @@ const AboutPage = () => {
                   transition: {
                     type: "spring",
                     stiffness: 200,
-                    damping: 10
-                  }
-                }
+                    damping: 10,
+                  },
+                },
               }}
               whileHover={{
                 scale: 1.1,
                 boxShadow: "0 0 20px rgba(59, 130, 246, 0.7)",
-                rotate: 5
+                rotate: 5,
               }}
               whileTap={{ scale: 0.95 }}
-              style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
+              style={{ boxShadow: "0 0 15px rgba(59, 130, 246, 0.5)" }}
             >
               <motion.svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -744,17 +761,17 @@ const AboutPage = () => {
                   transition: {
                     type: "spring",
                     stiffness: 200,
-                    damping: 10
-                  }
-                }
+                    damping: 10,
+                  },
+                },
               }}
               whileHover={{
                 scale: 1.1,
                 boxShadow: "0 0 20px rgba(59, 130, 246, 0.7)",
-                rotate: -5
+                rotate: -5,
               }}
               whileTap={{ scale: 0.95 }}
-              style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
+              style={{ boxShadow: "0 0 15px rgba(59, 130, 246, 0.5)" }}
             >
               <motion.svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -784,17 +801,17 @@ const AboutPage = () => {
                   transition: {
                     type: "spring",
                     stiffness: 200,
-                    damping: 10
-                  }
-                }
+                    damping: 10,
+                  },
+                },
               }}
               whileHover={{
                 scale: 1.1,
                 boxShadow: "0 0 20px rgba(59, 130, 246, 0.7)",
-                rotate: 5
+                rotate: 5,
               }}
               whileTap={{ scale: 0.95 }}
-              style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
+              style={{ boxShadow: "0 0 15px rgba(59, 130, 246, 0.5)" }}
             >
               <motion.svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -833,7 +850,10 @@ const AboutPage = () => {
             <motion.p
               className="text-sm tracking-wider text-gray-600 mt-1"
               initial={{ letterSpacing: "0.1em" }}
-              whileHover={{ letterSpacing: "0.3em", transition: { duration: 0.3 } }}
+              whileHover={{
+                letterSpacing: "0.3em",
+                transition: { duration: 0.3 },
+              }}
             >
               CREATE • WORK • INSPIRE
             </motion.p>

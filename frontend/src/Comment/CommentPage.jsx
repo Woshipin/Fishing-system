@@ -209,7 +209,7 @@ const CommentPage = () => {
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       <div className="container mx-auto px-4 py-16">
         <AnimatedSection className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-blue-200" style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
             
             {/* Header */}
             <div className="p-8 bg-gradient-to-r from-blue-300 via-blue-400 to-blue-100 text-white relative overflow-hidden">
@@ -247,7 +247,8 @@ const CommentPage = () => {
                   <select 
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="text-sm bg-gray-100 border border-black rounded-lg px-3 py-1 text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="text-sm bg-gray-100 border border-blue-200 rounded-lg px-3 py-1 text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent shadow-blue-100/40"
+                    style={{ boxShadow: '0 0 8px rgba(59, 130, 246, 0.3)' }}
                   >
                     <option value="newest">Newest</option>
                     <option value="oldest">Oldest</option>
@@ -261,7 +262,8 @@ const CommentPage = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="mb-10 bg-gray-100 p-6 rounded-xl border border-black shadow-sm"
+                className="mb-10 bg-gray-100 p-6 rounded-xl border border-blue-200 shadow-sm shadow-blue-100/40"
+                style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
               >
                 <h3 className="text-lg font-medium text-gray-800 mb-4">Leave a Comment</h3>
                 <form onSubmit={handleAddComment}>
@@ -274,14 +276,16 @@ const CommentPage = () => {
                         value={newComment}
                         onChange={(e) => setNewComment(e.target.value)}
                         placeholder="Share your thoughts..."
-                        className="w-full px-4 py-3 bg-white rounded-xl border border-black shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow"
+                        className="w-full px-4 py-3 bg-white rounded-xl border border-blue-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow shadow-blue-100/40"
+                        style={{ boxShadow: '0 0 8px rgba(59, 130, 246, 0.3)' }}
                         rows="3"
                       ></textarea>
                       <div className="mt-3 flex justify-end">
                         <button
                           type="submit"
                           disabled={!newComment.trim()}
-                          className="px-5 py-2 bg-white text-black rounded-lg font-medium border border-black hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                          className="px-5 py-2 bg-white text-black rounded-lg font-medium border border-blue-200 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center shadow-blue-100/40"
+                          style={{ boxShadow: '0 0 8px rgba(59, 130, 246, 0.3)' }}
                         >
                           <Send size={16} className="mr-2" />
                           Post Comment
@@ -303,7 +307,7 @@ const CommentPage = () => {
                       transition={{ duration: 0.3, delay: index * 0.1 }}
                       className="border-b border-gray-100 pb-8 last:border-b-0 last:pb-0"
                     >
-                      <div className="flex space-x-4 bg-gray-100 p-6 rounded-xl border border-black shadow-sm">
+                      <div className="flex space-x-4 bg-gray-100 p-6 rounded-xl border border-blue-200 shadow-sm shadow-blue-100/40" style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
                         <div className="flex-shrink-0">
                           <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
                             <img
@@ -315,7 +319,7 @@ const CommentPage = () => {
                         </div>
                         
                         <div className="flex-grow">
-                          <div className="bg-white rounded-2xl p-6 border border-black shadow-sm">
+                          <div className="bg-white rounded-2xl p-6 border border-blue-200 shadow-sm shadow-blue-100/40" style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center">
                                 <h3 className="font-semibold text-gray-800">
@@ -382,13 +386,14 @@ const CommentPage = () => {
                                       value={replyContent}
                                       onChange={(e) => setReplyContent(e.target.value)}
                                       placeholder="Write a thoughtful reply..."
-                                      className="w-full px-4 py-3 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                      className="w-full px-4 py-3 text-sm rounded-xl border border-blue-200 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent shadow-blue-100/40"
+                                      style={{ boxShadow: '0 0 8px rgba(59, 130, 246, 0.3)' }}
                                       rows="2"
                                     ></textarea>
                                     <div className="mt-2 flex justify-end space-x-2">
                                       <button
                                         onClick={() => setReplyingTo(null)}
-                                        className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+                                        className="px-3 py-1.5 text-sm border border-blue-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center shadow-blue-100/40"
                                       >
                                         <X size={14} className="mr-1" />
                                         Cancel
@@ -396,7 +401,8 @@ const CommentPage = () => {
                                       <button
                                         onClick={() => handleAddReply(comment.id)}
                                         disabled={!replyContent.trim()}
-                                        className="px-3 py-1.5 text-sm bg-primary text-white rounded-lg font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                                        className="px-3 py-1.5 text-sm bg-primary text-white rounded-lg font-medium border border-blue-200 hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center shadow-blue-100/40"
+                                        style={{ boxShadow: '0 0 8px rgba(59, 130, 246, 0.3)' }}
                                       >
                                         <Send size={14} className="mr-1" />
                                         Reply
@@ -429,7 +435,7 @@ const CommentPage = () => {
                                     </div>
                                   </div>
                                   <div className="flex-grow">
-                                    <div className="bg-white rounded-xl p-4 border border-black shadow-sm">
+                                    <div className="bg-white rounded-xl p-4 border border-blue-200 shadow-sm" style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
                                       <div className="flex items-center justify-between mb-1">
                                         <div className="flex items-center">
                                           <h4 className="font-medium text-gray-800 text-sm">

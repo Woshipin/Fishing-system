@@ -6,7 +6,7 @@ const CTA = ({
   subtitle = "Join thousands of satisfied customers and experience the difference today.",
   primaryButtonText = "Sign Up Now",
   primaryButtonLink = "/register",
-  secondaryButtonText = "Contact Sales",
+  secondaryButtonText = "Contact Us",
   secondaryButtonLink = "/contact",
   className = "",
 }) => {
@@ -19,18 +19,26 @@ const CTA = ({
           <h2 className="text-3xl md:text-4xl font-bold mb-6">{title}</h2>
           <p className="text-lg mb-8">{subtitle}</p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link
-              to={primaryButtonLink}
-              className="btn bg-white text-blue-500 hover:bg-gray-100 rounded-full border-none shadow-md hover:shadow-lg transform hover:-translate-y-1"
-            >
-              {primaryButtonText}
-            </Link>
-            <Link
-              to={secondaryButtonLink}
-              className="btn btn-outline bg-white text-blue-500 hover:bg-white hover:text-blue-500 rounded-full shadow-md hover:shadow-lg transform hover:-translate-y-1"
-            >
-              {secondaryButtonText}
-            </Link>
+            {[
+              {
+                text: primaryButtonText,
+                link: primaryButtonLink,
+                style: "bg-white text-blue-500 hover:bg-gray-100",
+              },
+              {
+                text: secondaryButtonText,
+                link: secondaryButtonLink,
+                style: "btn-outline bg-white text-blue-500 hover:bg-white",
+              },
+            ].map(({ text, link, style }, i) => (
+              <Link
+                key={i}
+                to={link}
+                className={`btn rounded-full border-none shadow-md hover:shadow-lg transform hover:-translate-y-1 ${style}`}
+              >
+                {text}
+              </Link>
+            ))}
           </div>
         </AnimatedSection>
       </div>
