@@ -207,47 +207,47 @@ const CommentPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
-      <div className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
         <AnimatedSection className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-blue-200" style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl overflow-hidden border border-blue-200" style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
             
             {/* Header */}
-            <div className="p-8 bg-gradient-to-r from-blue-300 via-blue-400 to-blue-100 text-white relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -mr-32 -mt-32"></div>
-              <div className="absolute bottom-0 left-0 w-40 h-40 bg-black opacity-5 rounded-full -ml-20 -mb-20"></div>
+            <div className="p-4 sm:p-6 lg:p-8 bg-gradient-to-r from-blue-300 via-blue-400 to-blue-100 text-white relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 sm:w-48 sm:h-48 lg:w-64 lg:h-64 bg-white opacity-10 rounded-full -mr-16 sm:-mr-24 lg:-mr-32 -mt-16 sm:-mt-24 lg:-mt-32"></div>
+              <div className="absolute bottom-0 left-0 w-20 h-20 sm:w-32 sm:h-32 lg:w-40 lg:h-40 bg-black opacity-5 rounded-full -ml-10 sm:-ml-16 lg:-ml-20 -mb-10 sm:-mb-16 lg:-mb-20"></div>
               
               <div className="relative z-10">
                 <div className="flex items-center space-x-2 mb-2">
-                  <MessageCircle size={24} className="text-white opacity-80" />
-                  <h1 className="text-3xl font-bold">Community Discussions</h1>
+                  <MessageCircle size={20} className="text-white opacity-80 sm:w-6 sm:h-6" />
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Community Discussions</h1>
                 </div>
-                <p className="text-white text-opacity-90 max-w-lg">
+                <p className="text-white text-opacity-90 text-sm sm:text-base max-w-lg">
                   Join the conversation and share your thoughts with our community. We value your feedback and questions!
                 </p>
                 
-                <div className="flex items-center mt-4 space-x-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center mt-4 space-y-2 sm:space-y-0 sm:space-x-6">
                   <div className="flex items-center space-x-1">
-                    <MessageCircle size={16} className="text-white opacity-80" />
-                    <span className="text-white text-opacity-90">{commentStats.total} Comments</span>
+                    <MessageCircle size={14} className="text-white opacity-80 sm:w-4 sm:h-4" />
+                    <span className="text-white text-opacity-90 text-sm">{commentStats.total} Comments</span>
                   </div>
                   <div className="flex items-center space-x-1">
-                    <MessageCircle size={16} className="text-white opacity-80" />
-                    <span className="text-white text-opacity-90">{commentStats.replies} Replies</span>
+                    <MessageCircle size={14} className="text-white opacity-80 sm:w-4 sm:h-4" />
+                    <span className="text-white text-opacity-90 text-sm">{commentStats.replies} Replies</span>
                   </div>
                 </div>
               </div>
             </div>
             
-            <div className="p-8">
+            <div className="p-4 sm:p-6 lg:p-8">
               {/* Sort Controls */}
-              <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-100">
-                <h2 className="text-lg font-semibold text-black">All Comments</h2>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 pb-4 border-b border-gray-100 space-y-3 sm:space-y-0">
+                <h2 className="text-base sm:text-lg font-semibold text-black">All Comments</h2>
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-500">Sort by:</span>
+                  <span className="text-xs sm:text-sm text-gray-500">Sort by:</span>
                   <select 
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="text-sm bg-gray-100 border border-blue-200 rounded-lg px-3 py-1 text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent shadow-blue-100/40"
+                    className="text-xs sm:text-sm bg-gray-100 border border-blue-200 rounded-lg px-2 sm:px-3 py-1 text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent shadow-blue-100/40"
                     style={{ boxShadow: '0 0 8px rgba(59, 130, 246, 0.3)' }}
                   >
                     <option value="newest">Newest</option>
@@ -262,21 +262,21 @@ const CommentPage = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="mb-10 bg-gray-100 p-6 rounded-xl border border-blue-200 shadow-sm shadow-blue-100/40"
+                className="mb-8 sm:mb-10 bg-gray-100 p-4 sm:p-6 rounded-xl border border-blue-200 shadow-sm shadow-blue-100/40"
                 style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
               >
-                <h3 className="text-lg font-medium text-gray-800 mb-4">Leave a Comment</h3>
+                <h3 className="text-base sm:text-lg font-medium text-gray-800 mb-3 sm:mb-4">Leave a Comment</h3>
                 <form onSubmit={handleAddComment}>
-                  <div className="flex items-start space-x-4">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-black font-bold text-lg">
+                  <div className="flex flex-col sm:flex-row items-start space-y-3 sm:space-y-0 sm:space-x-4">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-black font-bold text-sm sm:text-lg flex-shrink-0">
                       Y
                     </div>
-                    <div className="flex-grow">
+                    <div className="flex-grow w-full sm:w-auto">
                       <textarea
                         value={newComment}
                         onChange={(e) => setNewComment(e.target.value)}
                         placeholder="Share your thoughts..."
-                        className="w-full px-4 py-3 bg-white rounded-xl border border-blue-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow shadow-blue-100/40"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white rounded-xl border border-blue-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow shadow-blue-100/40 text-sm sm:text-base"
                         style={{ boxShadow: '0 0 8px rgba(59, 130, 246, 0.3)' }}
                         rows="3"
                       ></textarea>
@@ -284,11 +284,12 @@ const CommentPage = () => {
                         <button
                           type="submit"
                           disabled={!newComment.trim()}
-                          className="px-5 py-2 bg-white text-black rounded-lg font-medium border border-blue-200 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center shadow-blue-100/40"
+                          className="px-4 sm:px-5 py-2 bg-white text-black rounded-lg font-medium border border-blue-200 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center shadow-blue-100/40 text-sm sm:text-base"
                           style={{ boxShadow: '0 0 8px rgba(59, 130, 246, 0.3)' }}
                         >
-                          <Send size={16} className="mr-2" />
-                          Post Comment
+                          <Send size={14} className="mr-1 sm:mr-2 sm:w-4 sm:h-4" />
+                          <span className="hidden sm:inline">Post Comment</span>
+                          <span className="sm:hidden">Post</span>
                         </button>
                       </div>
                     </div>
@@ -297,7 +298,7 @@ const CommentPage = () => {
               </motion.div>
 
               {/* Comments List */}
-              <div className="space-y-8">
+              <div className="space-y-6 sm:space-y-8">
                 <AnimatePresence>
                   {sortedComments.map((comment, index) => (
                     <motion.div
@@ -305,11 +306,11 @@ const CommentPage = () => {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, delay: index * 0.1 }}
-                      className="border-b border-gray-100 pb-8 last:border-b-0 last:pb-0"
+                      className="border-b border-gray-100 pb-6 sm:pb-8 last:border-b-0 last:pb-0"
                     >
-                      <div className="flex space-x-4 bg-gray-100 p-6 rounded-xl border border-blue-200 shadow-sm shadow-blue-100/40" style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
-                        <div className="flex-shrink-0">
-                          <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
+                      <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 bg-gray-100 p-4 sm:p-6 rounded-xl border border-blue-200 shadow-sm shadow-blue-100/40" style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
+                        <div className="flex-shrink-0 self-start">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden bg-gray-200">
                             <img
                               src="/assets/About/about-us.png"
                               alt={`${comment.user.name}'s Avatar`}
@@ -318,36 +319,36 @@ const CommentPage = () => {
                           </div>
                         </div>
                         
-                        <div className="flex-grow">
-                          <div className="bg-white rounded-2xl p-6 border border-blue-200 shadow-sm shadow-blue-100/40" style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
-                            <div className="flex items-center justify-between mb-2">
+                        <div className="flex-grow min-w-0">
+                          <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-blue-200 shadow-sm shadow-blue-100/40" style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 space-y-1 sm:space-y-0">
                               <div className="flex items-center">
-                                <h3 className="font-semibold text-gray-800">
+                                <h3 className="font-semibold text-gray-800 text-sm sm:text-base">
                                   {comment.user.name}
                                 </h3>
                                 {comment.user.isAdmin && (
-                                  <span className="ml-2 px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-medium flex items-center">
-                                    <Award size={12} className="mr-1" />
+                                  <span className="ml-2 px-2 sm:px-3 py-0.5 sm:py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-medium flex items-center">
+                                    <Award size={10} className="mr-0.5 sm:mr-1 sm:w-3 sm:h-3" />
                                     Admin
                                   </span>
                                 )}
                               </div>
-                              <div className="flex items-center text-sm text-gray-500">
-                                <Clock size={14} className="mr-1" />
+                              <div className="flex items-center text-xs sm:text-sm text-gray-500">
+                                <Clock size={12} className="mr-1 sm:w-3.5 sm:h-3.5" />
                                 <span>{getRelativeTime(comment.date)}</span>
                               </div>
                             </div>
                             
-                            <p className="text-gray-700 mb-4">{comment.content}</p>
+                            <p className="text-gray-700 mb-3 sm:mb-4 text-sm sm:text-base break-words">{comment.content}</p>
                             
-                            <div className="flex items-center space-x-6">
+                            <div className="flex items-center space-x-4 sm:space-x-6">
                               <button
                                 onClick={() => handleLike(comment.id)}
-                                className={`flex items-center text-sm group ${
+                                className={`flex items-center text-xs sm:text-sm group ${
                                   comment.likes > 0 ? "text-red-500" : "text-gray-500"
                                 } hover:text-red-600 transition-colors`}
                               >
-                                <Heart size={16} className={`mr-1.5 group-hover:scale-110 transition-transform ${
+                                <Heart size={14} className={`mr-1 sm:mr-1.5 group-hover:scale-110 transition-transform sm:w-4 sm:h-4 ${
                                   comment.likes > 0 ? "fill-red-500" : ""
                                 }`} />
                                 <span>{comment.likes || ""}</span>
@@ -355,14 +356,14 @@ const CommentPage = () => {
                               
                               <button
                                 onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-                                className="flex items-center text-sm text-gray-500 hover:text-primary transition-colors"
+                                className="flex items-center text-xs sm:text-sm text-gray-500 hover:text-primary transition-colors"
                               >
-                                <MessageCircle size={16} className="mr-1.5" />
+                                <MessageCircle size={14} className="mr-1 sm:mr-1.5 sm:w-4 sm:h-4" />
                                 <span>{replyingTo === comment.id ? "Cancel" : "Reply"}</span>
                               </button>
                               
-                              <button className="flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors">
-                                <MoreHorizontal size={16} />
+                              <button className="flex items-center text-xs sm:text-sm text-gray-500 hover:text-gray-700 transition-colors">
+                                <MoreHorizontal size={14} className="sm:w-4 sm:h-4" />
                               </button>
                             </div>
                           </div>
@@ -372,13 +373,13 @@ const CommentPage = () => {
                             {replyingTo === comment.id && (
                               <motion.div
                                 initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                                animate={{ opacity: 1, height: "auto", marginTop: 16 }}
+                                animate={{ opacity: 1, height: "auto", marginTop: 12 }}
                                 exit={{ opacity: 0, height: 0, marginTop: 0 }}
                                 transition={{ duration: 0.2 }}
-                                className="pl-4 border-l-2 border-gray-100"
+                                className="pl-2 sm:pl-4 border-l-2 border-gray-100"
                               >
-                                <div className="flex space-x-3">
-                                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-sm">
+                                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0">
                                     Y
                                   </div>
                                   <div className="flex-grow">
@@ -386,25 +387,25 @@ const CommentPage = () => {
                                       value={replyContent}
                                       onChange={(e) => setReplyContent(e.target.value)}
                                       placeholder="Write a thoughtful reply..."
-                                      className="w-full px-4 py-3 text-sm rounded-xl border border-blue-200 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent shadow-blue-100/40"
+                                      className="w-full px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm rounded-xl border border-blue-200 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent shadow-blue-100/40"
                                       style={{ boxShadow: '0 0 8px rgba(59, 130, 246, 0.3)' }}
                                       rows="2"
                                     ></textarea>
                                     <div className="mt-2 flex justify-end space-x-2">
                                       <button
                                         onClick={() => setReplyingTo(null)}
-                                        className="px-3 py-1.5 text-sm border border-blue-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center shadow-blue-100/40"
+                                        className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm border border-blue-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center shadow-blue-100/40"
                                       >
-                                        <X size={14} className="mr-1" />
+                                        <X size={12} className="mr-0.5 sm:mr-1 sm:w-3.5 sm:h-3.5" />
                                         Cancel
                                       </button>
                                       <button
                                         onClick={() => handleAddReply(comment.id)}
                                         disabled={!replyContent.trim()}
-                                        className="px-3 py-1.5 text-sm bg-primary text-white rounded-lg font-medium border border-blue-200 hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center shadow-blue-100/40"
+                                        className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm bg-primary text-white rounded-lg font-medium border border-blue-200 hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center shadow-blue-100/40"
                                         style={{ boxShadow: '0 0 8px rgba(59, 130, 246, 0.3)' }}
                                       >
-                                        <Send size={14} className="mr-1" />
+                                        <Send size={12} className="mr-0.5 sm:mr-1 sm:w-3.5 sm:h-3.5" />
                                         Reply
                                       </button>
                                     </div>
@@ -416,17 +417,17 @@ const CommentPage = () => {
 
                           {/* Replies */}
                           {comment.replies.length > 0 && (
-                            <div className="mt-4 pl-6 space-y-4">
+                            <div className="mt-3 sm:mt-4 pl-3 sm:pl-6 space-y-3 sm:space-y-4">
                               {comment.replies.map((reply, replyIndex) => (
                                 <motion.div
                                   key={reply.id}
                                   initial={{ opacity: 0, x: -10 }}
                                   animate={{ opacity: 1, x: 0 }}
                                   transition={{ duration: 0.2, delay: replyIndex * 0.1 }}
-                                  className="flex space-x-3"
+                                  className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3"
                                 >
-                                  <div className="flex-shrink-0">
-                                    <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200">
+                                  <div className="flex-shrink-0 self-start">
+                                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden bg-gray-200">
                                       <img
                                         src="/assets/About/about-us.png"
                                         alt={`${reply.user.name}'s Avatar`}
@@ -434,16 +435,16 @@ const CommentPage = () => {
                                       />
                                     </div>
                                   </div>
-                                  <div className="flex-grow">
-                                    <div className="bg-white rounded-xl p-4 border border-blue-200 shadow-sm" style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
-                                      <div className="flex items-center justify-between mb-1">
+                                  <div className="flex-grow min-w-0">
+                                    <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 border border-blue-200 shadow-sm" style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}>
+                                      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-1 space-y-1 sm:space-y-0">
                                         <div className="flex items-center">
-                                          <h4 className="font-medium text-gray-800 text-sm">
+                                          <h4 className="font-medium text-gray-800 text-xs sm:text-sm">
                                             {reply.user.name}
                                           </h4>
                                           {reply.user.isAdmin && (
-                                            <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium flex items-center">
-                                              <Award size={10} className="mr-0.5" />
+                                            <span className="ml-1 sm:ml-2 px-1.5 sm:px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium flex items-center">
+                                              <Award size={8} className="mr-0.5 sm:w-2.5 sm:h-2.5" />
                                               Admin
                                             </span>
                                           )}
@@ -452,7 +453,7 @@ const CommentPage = () => {
                                           {getRelativeTime(reply.date)}
                                         </span>
                                       </div>
-                                      <p className="text-sm text-gray-700 mb-2">
+                                      <p className="text-xs sm:text-sm text-gray-700 mb-2 break-words">
                                         {reply.content}
                                       </p>
                                       <button
@@ -461,7 +462,7 @@ const CommentPage = () => {
                                           reply.likes > 0 ? "text-red-500" : "text-gray-500"
                                         } hover:text-red-600 transition-colors`}
                                       >
-                                        <ThumbsUp size={12} className="mr-1" />
+                                        <ThumbsUp size={10} className="mr-0.5 sm:mr-1 sm:w-3 sm:h-3" />
                                         <span>{reply.likes || ""}</span>
                                       </button>
                                     </div>

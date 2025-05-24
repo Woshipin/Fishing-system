@@ -3,10 +3,10 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
-  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeLink, setActiveLink] = useState("/");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -30,8 +30,18 @@ const Navbar = () => {
       name: "Cart",
       path: "/cart",
       icon: (
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+        <svg
+          className="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+          />
         </svg>
       ),
     },
@@ -39,8 +49,18 @@ const Navbar = () => {
       name: "Order",
       path: "/orders",
       icon: (
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+        <svg
+          className="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+          />
         </svg>
       ),
     },
@@ -51,14 +71,14 @@ const Navbar = () => {
   const handleLinkClick = (path) => {
     setActiveLink(path);
     setIsOpen(false);
-    navigate(path); // ✅ 添加这行实现跳转
+    navigate(path); // 实际跳转
   };
 
   return (
     <motion.nav
       className={`fixed w-full z-50 transition-all duration-300 ${
-        scrolled 
-          ? "bg-white/95 backdrop-blur-md shadow-lg border-b border-blue-100/50 py-2" 
+        scrolled
+          ? "bg-white/95 backdrop-blur-md shadow-lg border-b border-blue-100/50 py-2"
           : "bg-white/90 backdrop-blur-sm py-3 sm:py-4"
       }`}
       initial={{ y: -100 }}
@@ -69,20 +89,20 @@ const Navbar = () => {
         <div className="flex justify-between items-center">
           {/* Logo */}
           <motion.div
-            className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent flex-shrink-0"
+            className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent"
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", stiffness: 400, damping: 10 }}
           >
             ModernSite
           </motion.div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden xl:flex space-x-1 xl:space-x-6 overflow-x-auto flex-grow justify-center mx-4 xl:mx-8">
+          {/* Desktop Navigation - 添加更大的gap */}
+          <div className="hidden lg:flex items-center space-x-1 xl:space-x-2 2xl:space-x-4 ml-8 lg:ml-12 xl:ml-16">
             {navLinks.map((link, index) => (
               <motion.button
                 key={link.path}
                 onClick={() => handleLinkClick(link.path)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 whitespace-nowrap relative ${
+                className={`px-2 xl:px-3 2xl:px-4 py-2 rounded-xl text-xs xl:text-sm font-medium transition-all duration-300 whitespace-nowrap relative ${
                   isActive(link.path)
                     ? "text-blue-600 bg-blue-50/80 shadow-md border border-blue-200/60"
                     : "text-gray-700 hover:text-blue-600 hover:bg-blue-50/50 hover:shadow-sm"
@@ -94,24 +114,17 @@ const Navbar = () => {
                 transition={{ delay: index * 0.1 }}
               >
                 {link.name}
-                {isActive(link.path) && (
-                  <motion.div
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"
-                    layoutId="activeIndicator"
-                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                  />
-                )}
               </motion.button>
             ))}
           </div>
 
-          {/* Desktop Icons and Auth */}
-          <div className="hidden xl:flex items-center space-x-3">
+          {/* Desktop Icons and Auth - 优化间距 */}
+          <div className="hidden lg:flex items-center space-x-2 xl:space-x-3">
             {iconLinks.map((link) => (
               <motion.button
                 key={link.path}
                 onClick={() => handleLinkClick(link.path)}
-                className={`p-2.5 rounded-xl transition-all duration-300 ${
+                className={`p-2 xl:p-2.5 rounded-xl transition-all duration-300 ${
                   isActive(link.path)
                     ? "text-blue-600 bg-blue-50/80 shadow-md border border-blue-200/60"
                     : "text-gray-700 hover:text-blue-600 hover:bg-blue-50/50 hover:shadow-sm"
@@ -123,27 +136,29 @@ const Navbar = () => {
                 {link.icon}
               </motion.button>
             ))}
-            
-            {/* Beautiful Auth Buttons */}
-            <div className="flex items-center space-x-2 ml-4">
+
+            {/* Auth Buttons - 优化尺寸 */}
+            <div className="flex items-center space-x-1 xl:space-x-2 ml-2 xl:ml-4">
               <motion.button
                 onClick={() => handleLinkClick("/login")}
-                className="px-5 py-2.5 rounded-xl text-sm font-semibold text-blue-600 bg-white/80 backdrop-blur-sm border border-blue-200/60 hover:border-blue-300/80 shadow-lg hover:shadow-xl transition-all duration-300 hover:bg-blue-50/50"
+                className="px-3 xl:px-5 py-2 xl:py-2.5 rounded-xl text-xs xl:text-sm font-semibold text-blue-600 bg-white/80 backdrop-blur-sm border border-blue-200/60 hover:border-blue-300/80 shadow-lg hover:shadow-xl transition-all duration-300 hover:bg-blue-50/50"
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 style={{
-                  boxShadow: "0 4px 15px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1)"
+                  boxShadow:
+                    "0 4px 15px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1)",
                 }}
               >
                 Login
               </motion.button>
               <motion.button
                 onClick={() => handleLinkClick("/register")}
-                className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shadow-lg hover:shadow-xl transition-all duration-300 border border-blue-500/20"
+                className="px-3 xl:px-5 py-2 xl:py-2.5 rounded-xl text-xs xl:text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shadow-lg hover:shadow-xl transition-all duration-300 border border-blue-500/20"
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 style={{
-                  boxShadow: "0 4px 15px rgba(59, 130, 246, 0.3), 0 0 0 1px rgba(59, 130, 246, 0.2)"
+                  boxShadow:
+                    "0 4px 15px rgba(59, 130, 246, 0.3), 0 0 0 1px rgba(59, 130, 246, 0.2)",
                 }}
               >
                 Register
@@ -151,8 +166,8 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Mobile Menu Button */}
-          <div className="xl:hidden flex items-center space-x-2">
+          {/* Mobile Menu Button - 修改断点从xl改为lg */}
+          <div className="lg:hidden flex items-center space-x-2">
             {iconLinks.map((link) => (
               <motion.button
                 key={link.path}
@@ -176,11 +191,26 @@ const Navbar = () => {
               whileTap={{ scale: 0.9 }}
               aria-label="Toggle menu"
             >
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
                 {isOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
                 )}
               </svg>
             </motion.button>
@@ -189,17 +219,20 @@ const Navbar = () => {
 
         {/* Mobile Menu Content */}
         <motion.div
-          className="xl:hidden overflow-hidden"
+          className="lg:hidden overflow-hidden"
           initial={false}
           animate={{ height: isOpen ? "auto" : 0 }}
           transition={{ duration: 0.3, ease: "easeInOut" }}
         >
           <div className="pt-4 pb-6 space-y-3">
             {/* Navigation Links with Beautiful Cards */}
-            <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-blue-200/60 shadow-lg p-2" 
-                 style={{
-                   boxShadow: "0 8px 25px rgba(59, 130, 246, 0.1), 0 0 0 1px rgba(59, 130, 246, 0.05)"
-                 }}>
+            <div
+              className="bg-white/90 backdrop-blur-sm rounded-2xl border border-blue-200/60 shadow-lg p-2"
+              style={{
+                boxShadow:
+                  "0 8px 25px rgba(59, 130, 246, 0.1), 0 0 0 1px rgba(59, 130, 246, 0.05)",
+              }}
+            >
               {navLinks.map((link, index) => (
                 <motion.button
                   key={link.path}
@@ -219,7 +252,7 @@ const Navbar = () => {
                 </motion.button>
               ))}
             </div>
-            
+
             {/* Mobile Auth Buttons */}
             <div className="space-y-3">
               <motion.button
@@ -231,7 +264,8 @@ const Navbar = () => {
                 whileHover={{ scale: 1.02, y: -3 }}
                 whileTap={{ scale: 0.98 }}
                 style={{
-                  boxShadow: "0 4px 15px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1)"
+                  boxShadow:
+                    "0 4px 15px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1)",
                 }}
               >
                 Login
@@ -245,7 +279,8 @@ const Navbar = () => {
                 whileHover={{ scale: 1.02, y: -3 }}
                 whileTap={{ scale: 0.98 }}
                 style={{
-                  boxShadow: "0 4px 15px rgba(59, 130, 246, 0.3), 0 0 0 1px rgba(59, 130, 246, 0.2)"
+                  boxShadow:
+                    "0 4px 15px rgba(59, 130, 246, 0.3), 0 0 0 1px rgba(59, 130, 246, 0.2)",
                 }}
               >
                 Register
