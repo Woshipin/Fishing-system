@@ -97,7 +97,7 @@ const Navbar = () => {
           </motion.div>
 
           {/* Desktop Navigation - 添加更大的gap */}
-          <div className="hidden lg:flex items-center space-x-1 xl:space-x-2 2xl:space-x-4 ml-8 lg:ml-12 xl:ml-16">
+          <div className="hidden lg:flex items-center space-x-1 xl:space-x-2 2xl:space-x-4 ml-8 lg:ml-12 xl:ml-6">
             {navLinks.map((link, index) => (
               <motion.button
                 key={link.path}

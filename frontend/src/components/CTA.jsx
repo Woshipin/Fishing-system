@@ -12,7 +12,7 @@ const CTA = ({
 }) => {
   return (
     <section
-      className={`py-16 bg-gradient-to-r from-blue-300 via-blue-500 to-blue-100 text-white ${className}`}
+      className={`py-16 bg-gradient-to-r from-blue-600/90 via-blue-700/90 to-blue-800/90 backdrop-blur-sm text-white relative ${className}`}
     >
       <div className="container mx-auto px-4 text-center">
         <AnimatedSection className="max-w-3xl mx-auto">

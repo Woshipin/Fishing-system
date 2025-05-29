@@ -75,12 +75,12 @@ const AnimatedSection = ({
     >
       {Array.isArray(children) ? (
         children.map((child, i) => (
-          <motion.div key={i} variants={getVariants}>
+          <motion.div key={i} variants={getVariants} className="w-full"> {/* Added w-full */}
             {child}
           </motion.div>
         ))
       ) : (
-        <motion.div variants={getVariants}>
+        <motion.div variants={getVariants} className="w-full"> {/* Added w-full */}
           {children}
         </motion.div>
       )}
