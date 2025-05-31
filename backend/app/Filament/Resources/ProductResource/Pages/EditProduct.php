@@ -21,8 +21,8 @@ class EditProduct extends EditRecord
     {
         return \Filament\Notifications\Notification::make()
             ->success()
-            ->title('Job Updated')
-            ->body('The job has been successfully updated.');
+            ->title('Product Updated')
+            ->body('The Product has been successfully updated.');
     }
 
     protected function getRedirectUrl(): string

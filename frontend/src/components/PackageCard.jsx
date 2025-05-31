@@ -1,76 +1,91 @@
 import { motion } from "framer-motion";
 
 const PackageCard = ({
-  title,
-  description,
+  title = "Package Title",
+  description = "Package description",
   buttonLink = "#",
-  category,
-  price,
+  category = "Category",
+  price = 0,
   rating = 5,
+  imageUrl = "/assets/About/about-us.png",
+  imageAlt = "Package image",
+  inStock = true
 }) => {
-  const renderStars = (count) => {
-    return Array(5)
-      .fill(0)
-      .map((_, index) => (
-        <span
-          key={index}
-          className={`text-lg ${
-            index < count ? "text-yellow-400" : "text-gray-300"
-          }`}
-        >
-          ★
-        </span>
-      ));
-  };
+  // 简化星级评分渲染
+  const stars = "★★★★★☆☆☆☆☆".slice(5 - rating, 10 - rating);
+  
+  // 确保价格是数字
+  const displayPrice = parseFloat(price) || 0;
 
   return (
     <motion.div
-      className="bg-white border border-blue-200/70 overflow-hidden transition-all duration-300 flex flex-col rounded-3xl h-[500px] w-full"
-      whileHover={{ y: -4, boxShadow: "0 10px 20px rgba(59, 130, 246, 0.15)" }}
-      style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
+      className="group bg-white border border-blue-200/50 overflow-hidden transition-all duration-500 flex flex-col rounded-3xl h-[500px] w-full shadow-lg hover:shadow-2xl backdrop-blur-sm"
+      whileHover={{ 
+        y: -8, 
+        scale: 1.02,
+        boxShadow: "0 25px 50px rgba(59, 130, 246, 0.25)"
+      }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
     >
-      <div className="relative h-[50%] overflow-hidden">
-        <img
-          src="/assets/About/about-us.png"
-          alt={title}
-          className="w-full h-full object-cover"
+      {/* 图片区域 */}
+      <div className="relative h-[50%] overflow-hidden rounded-t-3xl">
+        <motion.img
+          src={imageUrl}
+          alt={imageAlt}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          whileHover={{ scale: 1.1 }}
         />
-        <div className="absolute bottom-4 left-4 bg-blue-600 text-white px-3 py-1 rounded-md text-sm font-semibold shadow-md">
-          ${price}
+        
+        {/* 价格标签 */}
+        <div className="absolute bottom-4 left-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-xl backdrop-blur-sm border border-white/20">
+          ${displayPrice.toFixed(2)}
         </div>
-        {category && (
-          <div className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm text-blue-600 px-3 py-1 rounded-full text-xs font-semibold shadow-sm">
-            {category}
-          </div>
-        )}
+        
+        {/* 分类标签 */}
+        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md text-blue-700 px-4 py-2 rounded-full text-xs font-semibold shadow-lg border border-blue-100 transition-all duration-300 hover:bg-white hover:scale-105">
+          {category}
+        </div>
       </div>
 
-      <div className="p-4 flex flex-col h-[50%] overflow-auto scrollbar-thin">
-        <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-3">
-          <h3 className="text-lg font-bold text-gray-800 line-clamp-2 max-w-full sm:max-w-[70%]">
+      {/* 内容区域 */}
+      <div className="p-6 flex flex-col h-[50%] justify-between">
+        {/* 标题和评分 */}
+        <div className="flex justify-between items-start gap-4 mb-4">
+          <h3 className="text-xl font-bold text-gray-800 line-clamp-2 flex-1 leading-tight">
             {title}
           </h3>
-          <div className="flex self-start sm:self-center shrink-0">
-            {renderStars(rating)}
+          <div className="text-yellow-400 text-lg font-medium shrink-0 drop-shadow-sm">
+            {stars}
           </div>
         </div>
 
-        <div className="flex-grow overflow-auto mb-3">
-          <p className="text-gray-700 text-sm">
+        {/* 描述 */}
+        <div className="flex-1 mb-4">
+          <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">
             {description}
           </p>
         </div>
 
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100 mt-auto">
-          <span className="bg-green-100 text-green-800 px-2 py-1 rounded-md text-xs whitespace-nowrap">
-            In Stock
+        {/* 底部操作区 */}
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+          <span className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 ${
+            inStock 
+              ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
+              : 'bg-red-100 text-red-700 border border-red-200'
+          }`}>
+            {inStock ? 'In Stock' : 'Out of Stock'}
           </span>
-          <a
+          
+          <motion.a
             href={buttonLink || "/products"}
-            className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full transition-all duration-300 bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg transform hover:-translate-y-1 text-xs sm:text-sm whitespace-nowrap ml-2"
+            className="px-6 py-2.5 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold text-sm transition-all duration-300 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl border border-blue-500/20"
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.95 }}
           >
             View Details
-          </a>
+          </motion.a>
         </div>
       </div>
     </motion.div>

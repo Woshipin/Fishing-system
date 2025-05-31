@@ -22,19 +22,19 @@ const ProductPage = () => {
 
   // 价格范围过滤条件
   const PRICE_FILTERS = {
-    "0-50": product => product.price >= 0 && product.price <= 50,
-    "51-100": product => product.price >= 51 && product.price <= 100,
-    "101-200": product => product.price >= 101 && product.price <= 200,
-    "200+": product => product.price > 200,
+    "0-50": (product) => product.price >= 0 && product.price <= 50,
+    "51-100": (product) => product.price >= 51 && product.price <= 100,
+    "101-200": (product) => product.price >= 101 && product.price <= 200,
+    "200+": (product) => product.price > 200,
   };
 
   // 排序功能
   const SORT_FUNCTIONS = {
     "price-low": (a, b) => a.price - b.price,
     "price-high": (a, b) => b.price - a.price,
-    "rating": (a, b) => b.rating - a.rating,
-    "name": (a, b) => a.name.localeCompare(b.name),
-    "featured": (a, b) => (b.isActive ? 1 : 0) - (a.isActive ? 1 : 0),
+    rating: (a, b) => b.rating - a.rating,
+    name: (a, b) => a.name.localeCompare(b.name),
+    featured: (a, b) => (b.isActive ? 1 : 0) - (a.isActive ? 1 : 0),
   };
 
   // 过滤和排序产品
@@ -42,9 +42,20 @@ const ProductPage = () => {
     if (!products.length) return [];
 
     let result = products
-      .filter(product => selectedCategory === "all" || product.category === selectedCategory)
-      .filter(product => priceRange === "all" || (PRICE_FILTERS[priceRange] && PRICE_FILTERS[priceRange](product)))
-      .filter(product => !searchTerm.trim() || product.name.toLowerCase().includes(searchTerm.toLowerCase()));
+      .filter(
+        (product) =>
+          selectedCategory === "all" || product.category === selectedCategory
+      )
+      .filter(
+        (product) =>
+          priceRange === "all" ||
+          (PRICE_FILTERS[priceRange] && PRICE_FILTERS[priceRange](product))
+      )
+      .filter(
+        (product) =>
+          !searchTerm.trim() ||
+          product.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
 
     if (SORT_FUNCTIONS[sortBy]) {
       result.sort(SORT_FUNCTIONS[sortBy]);
@@ -58,25 +69,29 @@ const ProductPage = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/products');
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const response = await fetch("http://127.0.0.1:8000/api/products");
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
-      
-      const formattedProducts = data.products.map(product => ({
+
+      const formattedProducts = data.products.map((product) => ({
         id: product.id,
         name: product.name,
         description: product.description,
         price: parseFloat(product.price),
         category: product.category.name,
-        rating: parseInt(product.rating, 10) || Math.floor(Math.random() * 5) + 1,
-        imageUrls: product.images.map(img => `${BASE_IMAGE_URL}${img.image_path}`),
+        rating:
+          parseInt(product.rating, 10) || Math.floor(Math.random() * 5) + 1,
+        imageUrls: product.images.map(
+          (img) => `${BASE_IMAGE_URL}${img.image_path}`
+        ),
         isActive: !!product.is_active, //确保是布尔值
       }));
       setProducts(formattedProducts);
-      setCategories([...new Set(data.products.map(p => p.category.name))]);
+      setCategories([...new Set(data.products.map((p) => p.category.name))]);
     } catch (err) {
-      console.error('Error fetching products:', err);
-      setError('Failed to load products. Please try again later.');
+      console.error("Error fetching products:", err);
+      setError("Failed to load products. Please try again later.");
     } finally {
       setIsLoading(false);
     }
@@ -104,7 +119,7 @@ const ProductPage = () => {
   // 组件挂载时获取数据
   useEffect(() => {
     fetchProducts();
-  }, []); 
+  }, []);
 
   // 从URL参数中恢复过滤条件并更新URL
   useEffect(() => {
@@ -120,11 +135,13 @@ const ProductPage = () => {
 
     // 只有当 products 加载完毕后才更新 searchParams，以避免初始加载时覆盖
     // 并且仅当 URL 参数与当前状态不同时才更新，以防止不必要的重渲染
-    if (products.length > 0 && 
-        (selectedCategory !== categoryFromURL || 
-         priceRange !== priceFromURL || 
-         searchTerm !== searchFromURL || 
-         sortBy !== sortFromURL)) {
+    if (
+      products.length > 0 &&
+      (selectedCategory !== categoryFromURL ||
+        priceRange !== priceFromURL ||
+        searchTerm !== searchFromURL ||
+        sortBy !== sortFromURL)
+    ) {
       updateSearchParams();
     }
   }, [searchParams, products.length]); // 依赖项中加入 searchParams
@@ -135,7 +152,7 @@ const ProductPage = () => {
     if (products.length > 0) {
       updateSearchParams();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory, priceRange, searchTerm, sortBy]); // 移除 products.length，因为上面的 useEffect 已经处理了初始加载
 
   return (
@@ -155,17 +172,27 @@ const ProductPage = () => {
               <span className="font-medium">Filter Options</span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className={`h-5 w-5 transition-transform duration-300 ${showFilters ? 'rotate-180' : ''}`}
+                className={`h-5 w-5 transition-transform duration-300 ${
+                  showFilters ? "rotate-180" : ""
+                }`}
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
-                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                  clipRule="evenodd"
+                />
               </svg>
             </button>
           </div>
 
           <div className="flex flex-col lg:flex-row gap-4 md:gap-8">
-            <div className={`lg:w-1/4 w-full ${showFilters ? 'block' : 'hidden lg:block'}`}>
+            <div
+              className={`lg:w-1/4 w-full ${
+                showFilters ? "block" : "hidden lg:block"
+              }`}
+            >
               <AnimatedSection
                 direction="left"
                 className="bg-white rounded-2xl shadow-lg border-2 border-blue-200 p-4 md:p-6 sticky top-4 md:top-24 hover:border-blue-300 transition-all duration-300"
@@ -176,8 +203,19 @@ const ProductPage = () => {
                     onClick={() => setShowFilters(false)}
                     className="lg:hidden p-1 rounded-full hover:bg-gray-100"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-6 w-6 text-gray-500"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -192,7 +230,9 @@ const ProductPage = () => {
                 </div>
 
                 <div className="mb-4 md:mb-8">
-                  <h3 className="font-semibold mb-2 md:mb-3">Fish Categories</h3>
+                  <h3 className="font-semibold mb-2 md:mb-3">
+                    Fish Categories
+                  </h3>
                   <div className="space-y-1 md:space-y-2">
                     <div className="flex items-center">
                       <input
@@ -217,7 +257,10 @@ const ProductPage = () => {
                           onChange={() => setSelectedCategory(category)}
                           className="w-4 h-4 text-blue-500 focus:ring-blue-300 border-blue-200"
                         />
-                        <label htmlFor={category} className="ml-2 text-gray-700">
+                        <label
+                          htmlFor={category}
+                          className="ml-2 text-gray-700"
+                        >
                           {category}
                         </label>
                       </div>
@@ -250,7 +293,10 @@ const ProductPage = () => {
                         onChange={() => setPriceRange("0-50")}
                         className="w-4 h-4 text-blue-500 focus:ring-blue-300 border-blue-200"
                       />
-                      <label htmlFor="price-0-50" className="ml-2 text-gray-700">
+                      <label
+                        htmlFor="price-0-50"
+                        className="ml-2 text-gray-700"
+                      >
                         $0 - $50
                       </label>
                     </div>
@@ -263,7 +309,10 @@ const ProductPage = () => {
                         onChange={() => setPriceRange("51-100")}
                         className="w-4 h-4 text-blue-500 focus:ring-blue-300 border-blue-200"
                       />
-                      <label htmlFor="price-51-100" className="ml-2 text-gray-700">
+                      <label
+                        htmlFor="price-51-100"
+                        className="ml-2 text-gray-700"
+                      >
                         $51 - $100
                       </label>
                     </div>
@@ -276,7 +325,10 @@ const ProductPage = () => {
                         onChange={() => setPriceRange("101-200")}
                         className="w-4 h-4 text-blue-500 focus:ring-blue-300 border-blue-200"
                       />
-                      <label htmlFor="price-101-200" className="ml-2 text-gray-700">
+                      <label
+                        htmlFor="price-101-200"
+                        className="ml-2 text-gray-700"
+                      >
                         $101 - $200
                       </label>
                     </div>
@@ -289,7 +341,10 @@ const ProductPage = () => {
                         onChange={() => setPriceRange("200+")}
                         className="w-4 h-4 text-blue-500 focus:ring-blue-300 border-blue-200"
                       />
-                      <label htmlFor="price-200+" className="ml-2 text-gray-700">
+                      <label
+                        htmlFor="price-200+"
+                        className="ml-2 text-gray-700"
+                      >
                         $200+
                       </label>
                     </div>
@@ -308,7 +363,10 @@ const ProductPage = () => {
                         onChange={() => setSortBy("rating")}
                         className="w-4 h-4 text-blue-500 focus:ring-blue-300 border-blue-200"
                       />
-                      <label htmlFor="sort-rating" className="ml-2 text-gray-700">
+                      <label
+                        htmlFor="sort-rating"
+                        className="ml-2 text-gray-700"
+                      >
                         Highest Rating
                       </label>
                     </div>
@@ -320,11 +378,15 @@ const ProductPage = () => {
             <div className="lg:w-3/4 w-full">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-8 gap-3">
                 <p className="text-gray-600 text-sm md:text-base">
-                  Showing {filteredProducts.length} fish species out of {products.length} total
+                  Showing {filteredProducts.length} fish species out of{" "}
+                  {products.length} total
                 </p>
                 <div className="w-full md:w-auto flex flex-col md:flex-row items-stretch md:items-center gap-3 md:space-x-4">
                   <div className="flex items-center w-full md:w-auto order-1 md:order-2">
-                    <label htmlFor="sort" className="mr-2 text-gray-600 text-sm md:text-base whitespace-nowrap">
+                    <label
+                      htmlFor="sort"
+                      className="mr-2 text-gray-600 text-sm md:text-base whitespace-nowrap"
+                    >
                       Sort:
                     </label>
                     <select
@@ -402,7 +464,9 @@ const ProductPage = () => {
                   </button>
                 </div>
               ) : (
-                <AnimatedSection direction="up" className="w-full"> {/* Ensure AnimatedSection itself takes full width */}
+                <AnimatedSection direction="up" className="w-full">
+                  {" "}
+                  {/* Ensure AnimatedSection itself takes full width */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
                     <AnimatePresence>
                       {filteredProducts.map((product) => (
@@ -423,16 +487,18 @@ const ProductPage = () => {
                             rating={product.rating}
                             footer={
                               <div className="flex justify-between items-center">
-                                <span className={`px-2 py-1 rounded-md text-xs ${
-                                  product.isActive
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-red-100 text-red-800"
-                                }`}>
+                                <span
+                                  className={`px-2 py-1 rounded-md text-xs ${
+                                    product.isActive
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-red-100 text-red-800"
+                                  }`}
+                                >
                                   {product.isActive ? "Active" : "Inactive"}
                                 </span>
                                 <Link
                                   to={`/products/${product.id}`}
-                                  className="px-3 py-1 md:px-4 md:py-2 rounded-full transition-all duration-300 bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg transform hover:-translate-y-1 text-xs md:text-sm"
+                                  className="px-3 py-1 md:px-4 md:py-2 rounded-full transition-all duration-300 bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg transform hover:-translate-y-1 text-xs md:text-sm inline-block text-center"
                                 >
                                   View Details
                                 </Link>

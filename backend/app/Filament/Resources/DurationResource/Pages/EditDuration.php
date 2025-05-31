@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Filament\Resources\CategoryResource\Pages;
+namespace App\Filament\Resources\DurationResource\Pages;
 
-use App\Filament\Resources\CategoryResource;
+use App\Filament\Resources\DurationResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
-class EditCategory extends EditRecord
+class EditDuration extends EditRecord
 {
-    protected static string $resource = CategoryResource::class;
+    protected static string $resource = DurationResource::class;
 
     protected function getHeaderActions(): array
     {
@@ -21,8 +21,8 @@ class EditCategory extends EditRecord
     {
         return \Filament\Notifications\Notification::make()
             ->success()
-            ->title('Category Updated')
-            ->body('The Category has been successfully updated.');
+            ->title('Duration Updated')
+            ->body('The Duration has been successfully updated.');
     }
 
     protected function getRedirectUrl(): string
