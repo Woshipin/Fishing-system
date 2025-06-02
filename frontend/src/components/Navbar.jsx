@@ -3,10 +3,40 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeLink, setActiveLink] = useState("/");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkLoginStatus = () => {
+      const token = localStorage.getItem("token");
+      setIsLoggedIn(!!token);
+    };
+
+    checkLoginStatus(); // 初始检查
+
+    // 监听 storage 事件
+    window.addEventListener("storage", checkLoginStatus);
+    // 添加自定义事件监听器，以便在登录/登出时更新状态
+    window.addEventListener("login-status-change", checkLoginStatus);
+
+    return () => {
+      window.removeEventListener("storage", checkLoginStatus);
+      window.removeEventListener("login-status-change", checkLoginStatus);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setIsLoggedIn(false);
+    // 触发自定义事件，确保所有组件都能感知到登录状态变化
+    window.dispatchEvent(new Event("login-status-change"));
+    // 触发 storage 事件，确保其他标签页也能感知到登录状态变化
+    window.dispatchEvent(new Event("storage"));
+    navigate("/");
+  };
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -74,6 +104,8 @@ const Navbar = () => {
     navigate(path); // 实际跳转
   };
 
+  // handleLogout 函数已在上方定义，此处删除重复定义
+
   return (
     <motion.nav
       className={`fixed w-full z-50 transition-all duration-300 ${
@@ -138,32 +170,47 @@ const Navbar = () => {
             ))}
 
             {/* Auth Buttons - 优化尺寸 */}
-            <div className="flex items-center space-x-1 xl:space-x-2 ml-2 xl:ml-4">
+            {isLoggedIn ? (
               <motion.button
-                onClick={() => handleLinkClick("/login")}
-                className="px-3 xl:px-5 py-2 xl:py-2.5 rounded-xl text-xs xl:text-sm font-semibold text-blue-600 bg-white/80 backdrop-blur-sm border border-blue-200/60 hover:border-blue-300/80 shadow-lg hover:shadow-xl transition-all duration-300 hover:bg-blue-50/50"
+                onClick={handleLogout}
+                className="px-3 xl:px-5 py-2 xl:py-2.5 rounded-xl text-xs xl:text-sm font-semibold text-white bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 shadow-lg hover:shadow-xl transition-all duration-300 border border-red-500/20"
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 style={{
                   boxShadow:
-                    "0 4px 15px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1)",
+                    "0 4px 15px rgba(239, 68, 68, 0.3), 0 0 0 1px rgba(239, 68, 68, 0.2)",
                 }}
               >
-                Login
+                Logout
               </motion.button>
-              <motion.button
-                onClick={() => handleLinkClick("/register")}
-                className="px-3 xl:px-5 py-2 xl:py-2.5 rounded-xl text-xs xl:text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shadow-lg hover:shadow-xl transition-all duration-300 border border-blue-500/20"
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                style={{
-                  boxShadow:
-                    "0 4px 15px rgba(59, 130, 246, 0.3), 0 0 0 1px rgba(59, 130, 246, 0.2)",
-                }}
-              >
-                Register
-              </motion.button>
-            </div>
+            ) : (
+              <div className="flex items-center space-x-1 xl:space-x-2 ml-2 xl:ml-4">
+                <motion.button
+                  onClick={() => handleLinkClick("/login")}
+                  className="px-3 xl:px-5 py-2 xl:py-2.5 rounded-xl text-xs xl:text-sm font-semibold text-blue-600 bg-white/80 backdrop-blur-sm border border-blue-200/60 hover:border-blue-300/80 shadow-lg hover:shadow-xl transition-all duration-300 hover:bg-blue-50/50"
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  style={{
+                    boxShadow:
+                      "0 4px 15px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1)",
+                  }}
+                >
+                  Login
+                </motion.button>
+                <motion.button
+                  onClick={() => handleLinkClick("/register")}
+                  className="px-3 xl:px-5 py-2 xl:py-2.5 rounded-xl text-xs xl:text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shadow-lg hover:shadow-xl transition-all duration-300 border border-blue-500/20"
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  style={{
+                    boxShadow:
+                      "0 4px 15px rgba(59, 130, 246, 0.3), 0 0 0 1px rgba(59, 130, 246, 0.2)",
+                  }}
+                >
+                  Register
+                </motion.button>
+              </div>
+            )}
           </div>
 
           {/* Mobile Menu Button - 修改断点从xl改为lg */}
@@ -254,10 +301,10 @@ const Navbar = () => {
             </div>
 
             {/* Mobile Auth Buttons */}
-            <div className="space-y-3">
+            {isLoggedIn ? (
               <motion.button
-                onClick={() => handleLinkClick("/login")}
-                className="w-full px-4 py-3 rounded-xl text-base font-semibold text-blue-600 bg-white/90 backdrop-blur-sm border border-blue-200/60 hover:border-blue-300/80 shadow-lg hover:shadow-xl transition-all duration-300 hover:bg-blue-50/60"
+                onClick={handleLogout}
+                className="w-full px-4 py-3 rounded-xl text-base font-semibold text-white bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 shadow-lg hover:shadow-xl transition-all duration-300 border border-red-500/20"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: isOpen ? 1 : 0, y: isOpen ? 0 : 20 }}
                 transition={{ delay: 0.2 }}
@@ -265,27 +312,45 @@ const Navbar = () => {
                 whileTap={{ scale: 0.98 }}
                 style={{
                   boxShadow:
-                    "0 4px 15px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1)",
+                    "0 4px 15px rgba(239, 68, 68, 0.3), 0 0 0 1px rgba(239, 68, 68, 0.2)",
                 }}
               >
-                Login
+                Logout
               </motion.button>
-              <motion.button
-                onClick={() => handleLinkClick("/register")}
-                className="w-full px-4 py-3 rounded-xl text-base font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shadow-lg hover:shadow-xl transition-all duration-300 border border-blue-500/20"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: isOpen ? 1 : 0, y: isOpen ? 0 : 20 }}
-                transition={{ delay: 0.25 }}
-                whileHover={{ scale: 1.02, y: -3 }}
-                whileTap={{ scale: 0.98 }}
-                style={{
-                  boxShadow:
-                    "0 4px 15px rgba(59, 130, 246, 0.3), 0 0 0 1px rgba(59, 130, 246, 0.2)",
-                }}
-              >
-                Register
-              </motion.button>
-            </div>
+            ) : (
+              <div className="space-y-3">
+                <motion.button
+                  onClick={() => handleLinkClick("/login")}
+                  className="w-full px-4 py-3 rounded-xl text-base font-semibold text-blue-600 bg-white/90 backdrop-blur-sm border border-blue-200/60 hover:border-blue-300/80 shadow-lg hover:shadow-xl transition-all duration-300 hover:bg-blue-50/60"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: isOpen ? 1 : 0, y: isOpen ? 0 : 20 }}
+                  transition={{ delay: 0.2 }}
+                  whileHover={{ scale: 1.02, y: -3 }}
+                  whileTap={{ scale: 0.98 }}
+                  style={{
+                    boxShadow:
+                      "0 4px 15px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1)",
+                  }}
+                >
+                  Login
+                </motion.button>
+                <motion.button
+                  onClick={() => handleLinkClick("/register")}
+                  className="w-full px-4 py-3 rounded-xl text-base font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shadow-lg hover:shadow-xl transition-all duration-300 border border-blue-500/20"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: isOpen ? 1 : 0, y: isOpen ? 0 : 20 }}
+                  transition={{ delay: 0.25 }}
+                  whileHover={{ scale: 1.02, y: -3 }}
+                  whileTap={{ scale: 0.98 }}
+                  style={{
+                    boxShadow:
+                      "0 4px 15px rgba(59, 130, 246, 0.3), 0 0 0 1px rgba(59, 130, 246, 0.2)",
+                  }}
+                >
+                  Register
+                </motion.button>
+              </div>
+            )}
           </div>
         </motion.div>
       </div>

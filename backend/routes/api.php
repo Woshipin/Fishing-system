@@ -5,17 +5,25 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\DurationController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\PackageController;
 
 // Auth 认证路由
-// Route::post('/register', [AuthController::class, 'register']);
-// Route::post('/login', [AuthController::class, 'login']);
-// Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+Route::post('/register', [UserController::class, 'register'])->name('register');
+Route::post('/login', [UserController::class, 'login'])->name('login');
+Route::post('/logout', [UserController::class, 'logout'])->name('logout');
 
 // Restaurant 餐厅路由
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 
 // Restaurant {id} 是餐厅的 ID
 Route::get('/products/{id}', [ProductController::class, 'detail'])->name('products.detail');
+
+// Package routes
+Route::get('/packages', [PackageController::class, 'index']);
+// Package {id} 是包的 ID
+Route::get('/packages/{id}', [PackageController::class, 'detail']);
 
 
 // Gallery route
@@ -24,11 +32,23 @@ Route::get('/galleries', [GalleryController::class, 'index']);
 // Duration route
 Route::get('/durations', [DurationController::class, 'index']);
 
-// Restaurant {id} 是餐厅的 ID
-// Route::get('/menu/{id}', [MenuController::class, 'show'])->name('menu.show');
+// 获取购物车项目
+Route::get('/cart', [CartController::class, 'getCartItems']);
 
-// Menu 菜单路由
-// Route::get('/menus', [MenuController::class, 'index']);
+// 添加产品到购物车
+Route::post('/cart/product', [CartController::class, 'addProductToCart']);
 
-// 其他 API 路由...
+// 添加包到购物车
+Route::post('/cart/package', [CartController::class, 'addPackageToCart']);
+
+// 删除购物车项目
+Route::delete('/cart/{id}', [CartController::class, 'removeCartItem']);
+
+// 更新购物车项目数量
+// Route::put('/cart/{id}', [CartController::class, 'updateCartItem']);
+
+// 清空购物车
+// Route::delete('/cart', [CartController::class, 'clearCart']);
+
+
 

@@ -108,7 +108,9 @@ class GalleryResource extends Resource
                     ->label('Image')
                     ->disk('public'),
             ])
-            ->filters([])
+            ->filters([
+                
+            ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),

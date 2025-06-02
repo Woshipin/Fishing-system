@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import AnimatedSection from "../components/AnimatedSection";
 import Card from "../components/Card";
+import axios from "axios";
 
 const BASE_IMAGE_URL = "http://127.0.0.1:8000/storage/";
 const DEFAULT_IMAGE_URL = "/assets/About/about-us.png";
@@ -40,21 +41,21 @@ const ProductDetailPage = () => {
           description: data.description || "No description available.",
           longDescription: data.long_description || data.description || "No detailed description available.",
           price: parseFloat(data.price) || 0,
-          discountPrice: data.discount_price ? parseFloat(data.discount_price) : 0, 
+          discountPrice: data.discount_price ? parseFloat(data.discount_price) : 0,
           category: data.category ? data.category.name : "Uncategorized",
           rating: parseInt(data.rating, 10) || 0,
           reviewCount: data.reviews_count || (data.reviews ? data.reviews.length : 0),
-          images: data.images && data.images.length > 0 
+          images: data.images && data.images.length > 0
             ? data.images.map(img => `${BASE_IMAGE_URL}${img.image_path}`)
             : [DEFAULT_IMAGE_URL],
           colors: data.colors || [],
           sizes: data.sizes || [],
           inStock: !!data.is_active,
           featured: !!data.featured,
-          specifications: data.specifications && data.specifications.length > 0 
-            ? data.specifications.map(spec => ({ name: spec.name, value: spec.value })) 
+          specifications: data.specifications && data.specifications.length > 0
+            ? data.specifications.map(spec => ({ name: spec.name, value: spec.value }))
             : [],
-          reviews: data.reviews && data.reviews.length > 0 
+          reviews: data.reviews && data.reviews.length > 0
             ? data.reviews.map(review => ({
                 id: review.id,
                 user: review.user ? review.user.name : "Anonymous",
@@ -63,32 +64,31 @@ const ProductDetailPage = () => {
                 comment: review.comment || "",
               }))
             : [],
-          relatedProducts: data.related_products && data.related_products.length > 0 
+          relatedProducts: data.related_products && data.related_products.length > 0
             ? data.related_products.map(rp => ({
                 id: rp.id,
                 name: rp.name || "Related Product",
                 price: parseFloat(rp.price) || 0,
-                imageUrls: rp.images && rp.images.length > 0 
-                  ? rp.images.map(img => `${BASE_IMAGE_URL}${img.image_path}`) 
+                imageUrls: rp.images && rp.images.length > 0
+                  ? rp.images.map(img => `${BASE_IMAGE_URL}${img.image_path}`)
                   : [DEFAULT_IMAGE_URL],
-                imageUrl: rp.images && rp.images.length > 0 
-                  ? `${BASE_IMAGE_URL}${rp.images[0].image_path}` 
+                imageUrl: rp.images && rp.images.length > 0
+                  ? `${BASE_IMAGE_URL}${rp.images[0].image_path}`
                   : DEFAULT_IMAGE_URL,
                 category: rp.category ? rp.category.name : "Uncategorized",
                 rating: parseInt(rp.rating, 10) || 0,
                 inStock: !!rp.is_active,
-              })) 
+              }))
             : [],
         };
-        
-        // 设置默认选中的颜色和尺寸
+
         if (formattedProduct.colors.length > 0) {
           setSelectedColor(formattedProduct.colors[0]);
         }
         if (formattedProduct.sizes.length > 0) {
           setSelectedSize(formattedProduct.sizes[0]);
         }
-        
+
         setProduct(formattedProduct);
       } catch (err) {
         console.error('Error fetching product:', err);
@@ -123,6 +123,32 @@ const ProductDetailPage = () => {
     }
   };
 
+  const addToCart = async () => {
+    try {
+      const payload = {
+        product_id: product.id,
+        name: product.name,
+        quantity: quantity,
+        price: product.price,
+        slug: product.slug || null,
+        category_id: product.category_id || null,
+        image: product.images && product.images.length > 0 ? product.images[0] : null,
+      };
+
+      const response = await axios.post('http://127.0.0.1:8000/api/cart/product', payload, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      alert(response.data.message);
+    } catch (error) {
+      console.error('Error adding to cart:', error.response?.data || error.message);
+      alert('Failed to add product to cart: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -141,8 +167,8 @@ const ProductDetailPage = () => {
           <div className="text-5xl mb-4 text-red-500">⚠️</div>
           <div className="text-xl font-semibold text-gray-800 mb-2">Unable to Load Product</div>
           <div className="text-gray-600 mb-6">{error}</div>
-          <Link 
-            to="/products" 
+          <Link
+            to="/products"
             className="inline-block bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity"
           >
             Browse Products
@@ -159,8 +185,8 @@ const ProductDetailPage = () => {
           <div className="text-5xl mb-4 text-gray-500">🔍</div>
           <div className="text-xl font-semibold text-gray-800 mb-4">Product Not Found</div>
           <p className="text-gray-600 mb-6">The product you're looking for doesn't exist or has been removed.</p>
-          <Link 
-            to="/products" 
+          <Link
+            to="/products"
             className="inline-block bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity"
           >
             Browse Products
@@ -172,7 +198,6 @@ const ProductDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
-
       {/* Enhanced Breadcrumb */}
       <section className="py-4 bg-white/80 backdrop-blur-sm border-b border-gray-100">
         <div className="container mx-auto px-4">
@@ -231,15 +256,15 @@ const ProductDetailPage = () => {
                   </svg>
                 </div>
               </div>
-              
+
               {product.images && product.images.length > 1 && (
                 <div className="grid grid-cols-4 gap-3">
                   {product.images.map((image, index) => (
                     <div
                       key={index}
                       className={`cursor-pointer rounded-xl overflow-hidden border-2 transition-all duration-300 transform hover:scale-105 ${
-                        selectedImage === index 
-                          ? "border-blue-500 shadow-md ring-2 ring-blue-200" 
+                        selectedImage === index
+                          ? "border-blue-500 shadow-md ring-2 ring-blue-200"
                           : "border-gray-200 hover:border-blue-300"
                       }`}
                       onClick={() => setSelectedImage(index)}
@@ -258,7 +283,6 @@ const ProductDetailPage = () => {
 
             {/* Enhanced Product Info */}
             <AnimatedSection direction="right" className="space-y-6 lg:space-y-8">
-              {/* 添加了背景、阴影和发光边框的容器 */}
               <div className="bg-white rounded-2xl shadow-lg p-6 border border-blue-100 ring-1 ring-blue-200 ring-opacity-50">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
@@ -271,11 +295,11 @@ const ProductDetailPage = () => {
                       </span>
                     )}
                   </div>
-                  
+
                   <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 leading-tight">
                     {product.name || "Product Name Not Available"}
                   </h1>
-                  
+
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center">
                       <div className="flex text-yellow-400 mr-2">
@@ -321,7 +345,6 @@ const ProductDetailPage = () => {
                 </div>
 
                 <div className="space-y-6 mt-6">
-                  {/* Enhanced Color Selection */}
                   {product.colors && product.colors.length > 0 && (
                     <div>
                       <h3 className="text-sm font-semibold text-gray-900 mb-3">Color</h3>
@@ -346,7 +369,6 @@ const ProductDetailPage = () => {
                     </div>
                   )}
 
-                  {/* Enhanced Size Selection */}
                   {product.sizes && product.sizes.length > 0 && (
                     <div>
                       <h3 className="text-sm font-semibold text-gray-900 mb-3">Size</h3>
@@ -371,7 +393,6 @@ const ProductDetailPage = () => {
                     </div>
                   )}
 
-                  {/* Enhanced Quantity - Clear Design */}
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-semibold text-gray-900">Quantity</h3>
                     <div className="flex items-center bg-white rounded-lg border border-gray-300 p-1 w-fit shadow-sm">
@@ -399,9 +420,9 @@ const ProductDetailPage = () => {
                     </div>
                   </div>
 
-                  {/* Enhanced Action Buttons */}
                   <div className="flex flex-col sm:flex-row gap-3 mt-4">
                     <button
+                      onClick={addToCart}
                       className={`flex-1 bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-3 px-6 rounded-xl font-medium transition-all duration-300 hover:shadow-lg hover:scale-[1.02] transform flex items-center justify-center ${
                         !product.inStock && "opacity-50 cursor-not-allowed hover:scale-100"
                       }`}
@@ -420,7 +441,6 @@ const ProductDetailPage = () => {
                     </button>
                   </div>
 
-                  {/* Enhanced Stock Status with Glow Effect */}
                   <div className="flex items-center p-4 bg-blue-50 rounded-xl border border-blue-100 mt-4 shadow-sm ring-1 ring-blue-200 ring-opacity-50">
                     <div className="flex items-center">
                       <div className={`w-3 h-3 rounded-full mr-2 ${product.inStock ? "bg-green-500" : "bg-red-500"}`}></div>
@@ -500,7 +520,7 @@ const ProductDetailPage = () => {
                     {product.reviews.map((review) => (
                       <div
                         key={review.id}
-                        className="border-b border-gray-100 pb-6 last:border-b-0 last:pb-0 bg-blue-50 rounded-xl p-5 border border-blue-100 shadow-sm ring-1 ring-blue-200 ring-opacity-50"
+                        className="border-b pb-6 last:border-b-0 last:pb-0 bg-blue-50 rounded-xl p-5 border border-blue-100 shadow-sm ring-1 ring-blue-200 ring-opacity-50"
                       >
                         <div className="flex justify-between items-start mb-3">
                           <div className="flex items-center space-x-3">
@@ -535,7 +555,6 @@ const ProductDetailPage = () => {
                       </div>
                     ))}
 
-                    {/* Enhanced Review Form */}
                     <div className="mt-8 pt-8 border-t border-gray-100">
                       <h3 className="text-lg font-semibold mb-6 text-gray-900">Write a Review</h3>
                       <form className="space-y-6">
@@ -565,8 +584,8 @@ const ProductDetailPage = () => {
                             placeholder="Share your experience with this product..."
                           ></textarea>
                         </div>
-                        <button 
-                          type="submit" 
+                        <button
+                          type="submit"
                           className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-3 px-6 rounded-xl font-medium transition-all duration-300 hover:shadow-lg hover:scale-[1.02] transform"
                         >
                           Submit Review
@@ -594,10 +613,10 @@ const ProductDetailPage = () => {
                 </svg>
               </Link>
             </div>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {product.relatedProducts.slice(0, 4).map((relatedProduct) => (
-                <Card 
+                <Card
                   key={relatedProduct.id}
                   id={relatedProduct.id}
                   name={relatedProduct.name}

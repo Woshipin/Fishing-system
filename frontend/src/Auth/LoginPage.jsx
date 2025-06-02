@@ -1,45 +1,68 @@
-"use client"
-
-import { useState } from "react"
-import { Link } from "react-router-dom"
-import { motion } from "framer-motion"
-import AnimatedSection from "../components/AnimatedSection"
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import AnimatedSection from "../components/AnimatedSection";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     rememberMe: false,
-  })
+  });
 
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
-    }))
-  }
+    }));
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
-    // Simulate API call
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      // For demo purposes, just log the form data
-      console.log("Login form submitted:", formData)
-      // Redirect would happen here in a real app
+      const response = await fetch("http://127.0.0.1:8000/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to login");
+      }
+
+      console.log("Login successful:", data);
+      
+      // 保存 token 到 localStorage
+      localStorage.setItem("token", data.token);
+      
+      // 手动触发 storage 事件，确保其他组件能够感知到登录状态变化
+      window.dispatchEvent(new Event('storage'));
+      // 触发自定义事件，确保所有组件都能感知到登录状态变化
+      window.dispatchEvent(new Event('login-status-change'));
+      
+      navigate("/"); // 重定向到首页
     } catch (err) {
-      setError("Invalid email or password. Please try again.")
+      setError(err.message || "Invalid email or password. Please try again.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen">
@@ -193,7 +216,7 @@ const LoginPage = () => {
         </AnimatedSection>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default LoginPage
+export default LoginPage;

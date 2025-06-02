@@ -1,9 +1,8 @@
-"use client"
-
-import { useState } from "react"
-import { Link } from "react-router-dom"
-import { motion } from "framer-motion"
-import AnimatedSection from "../components/AnimatedSection"
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import AnimatedSection from "../components/AnimatedSection";
+import axios from "axios";
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -12,100 +11,136 @@ const RegisterPage = () => {
     password: "",
     confirmPassword: "",
     agreeTerms: false,
-  })
+  });
 
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [passwordStrength, setPasswordStrength] = useState(0)
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [passwordStrength, setPasswordStrength] = useState(0);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
-    }))
+    }));
 
     if (name === "password") {
-      // Simple password strength calculation
-      let strength = 0
-      if (value.length >= 8) strength += 1
-      if (/[A-Z]/.test(value)) strength += 1
-      if (/[0-9]/.test(value)) strength += 1
-      if (/[^A-Za-z0-9]/.test(value)) strength += 1
-      setPasswordStrength(strength)
+      let strength = 0;
+      if (value.length >= 1) strength += 1; // 只要有内容就给1分
+      if (value.length >= 4) strength += 1; // 4个字符以上加1分
+      if (/[A-Z]/.test(value)) strength += 1;
+      if (/[0-9]/.test(value)) strength += 1;
+      setPasswordStrength(strength);
     }
-  }
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
-    // Basic validation
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match")
-      setIsLoading(false)
-      return
+      setError("Passwords do not match");
+      setIsLoading(false);
+      return;
     }
 
-    if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters long")
-      setIsLoading(false)
-      return
-    }
+    // 移除密码长度限制
 
     if (!formData.agreeTerms) {
-      setError("You must agree to the Terms of Service and Privacy Policy")
-      setIsLoading(false)
-      return
+      setError("You must agree to the Terms of Service and Privacy Policy");
+      setIsLoading(false);
+      return;
     }
 
-    // Simulate API call
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      // For demo purposes, just log the form data
-      console.log("Registration form submitted:", formData)
-      // Redirect would happen here in a real app
+      const response = await axios.post("http://127.0.0.1:8000/api/register", {
+        name: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+        password_confirmation: formData.confirmPassword,
+      });
+
+      console.log("Registration successful:", response.data);
+      
+      // 检查响应中是否包含 token
+      if (response.data && response.data.token) {
+        // 如果包含 token，保存到 localStorage
+        localStorage.setItem("token", response.data.token);
+        
+        // 手动触发 storage 事件，确保其他组件能够感知到登录状态变化
+        window.dispatchEvent(new Event('storage'));
+        // 触发自定义事件，确保所有组件都能感知到登录状态变化
+        window.dispatchEvent(new Event('login-status-change'));
+        
+        // 直接导航到首页
+        navigate("/");
+      } else {
+        // 如果不包含 token，导航到登录页面
+        navigate("/login");
+      }
     } catch (err) {
-      setError("Registration failed. Please try again.")
+      console.error('Registration error:', err.response?.data);
+      
+      // Log the full error object to help with debugging
+      console.log('Full error object:', err);
+      
+      if (err.response?.data?.errors) {
+        // Handle Laravel validation errors
+        const errorMessages = Object.values(err.response.data.errors).flat();
+        setError(errorMessages.join('\n'));
+      } else if (err.response?.data?.message) {
+        // Handle message format errors
+        setError(err.response.data.message);
+      } else if (err.response?.data?.email) {
+        // Handle specific email error format {email: Array(1)}
+        const emailErrors = Array.isArray(err.response.data.email) 
+          ? err.response.data.email.join('\n')
+          : 'Email validation failed';
+        setError(`Email error: ${emailErrors}`);
+      } else {
+        // Generic error fallback
+        setError("Registration failed. Please try again.");
+      }
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const getPasswordStrengthText = () => {
     switch (passwordStrength) {
       case 0:
-        return "Very Weak"
+        return "Very Weak";
       case 1:
-        return "Weak"
+        return "Weak";
       case 2:
-        return "Medium"
+        return "Medium";
       case 3:
-        return "Strong"
+        return "Strong";
       case 4:
-        return "Very Strong"
+        return "Very Strong";
       default:
-        return ""
+        return "";
     }
-  }
+  };
 
   const getPasswordStrengthColor = () => {
     switch (passwordStrength) {
       case 0:
-        return "bg-red-500"
+        return "bg-red-500";
       case 1:
-        return "bg-orange-500"
+        return "bg-orange-500";
       case 2:
-        return "bg-yellow-500"
+        return "bg-yellow-500";
       case 3:
-        return "bg-green-500"
+        return "bg-green-500";
       case 4:
-        return "bg-green-600"
+        return "bg-green-600";
       default:
-        return "bg-gray-200"
+        return "bg-gray-200";
     }
-  }
+  };
 
   return (
     <div className="min-h-screen">
@@ -113,8 +148,12 @@ const RegisterPage = () => {
         <AnimatedSection className="max-w-md mx-auto">
           <div className="bg-white rounded-xl shadow-sm p-8">
             <div className="text-center mb-8">
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">Create an Account</h1>
-              <p className="text-gray-600">Join our community and get started today</p>
+              <h1 className="text-2xl font-bold text-gray-800 mb-2">
+                Create an Account
+              </h1>
+              <p className="text-gray-600">
+                Join our community and get started today
+              </p>
             </div>
 
             {error && (
@@ -129,7 +168,10 @@ const RegisterPage = () => {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="fullName"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Full Name
                 </label>
                 <input
@@ -145,7 +187,10 @@ const RegisterPage = () => {
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Email Address
                 </label>
                 <input
@@ -161,7 +206,10 @@ const RegisterPage = () => {
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Password
                 </label>
                 <input
@@ -183,15 +231,22 @@ const RegisterPage = () => {
                           style={{ width: `${(passwordStrength / 4) * 100}%` }}
                         ></div>
                       </div>
-                      <span className="text-xs text-gray-600">{getPasswordStrengthText()}</span>
+                      <span className="text-xs text-gray-600">
+                        {getPasswordStrengthText()}
+                      </span>
                     </div>
-                    <p className="text-xs text-gray-500">Use 8+ characters with a mix of letters, numbers & symbols</p>
+                    <p className="text-xs text-gray-500">
+                      可以使用简单密码，如数字组合
+                    </p>
                   </div>
                 )}
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="confirmPassword"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Confirm Password
                 </label>
                 <input
@@ -215,7 +270,10 @@ const RegisterPage = () => {
                   onChange={handleChange}
                   className="h-4 w-4 mt-1 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                 />
-                <label htmlFor="agreeTerms" className="ml-2 block text-sm text-gray-700">
+                <label
+                  htmlFor="agreeTerms"
+                  className="ml-2 block text-sm text-gray-700"
+                >
                   I agree to the{" "}
                   <a href="#" className="text-indigo-600 hover:text-indigo-800">
                     Terms of Service
@@ -265,14 +323,19 @@ const RegisterPage = () => {
             <div className="mt-6 text-center">
               <p className="text-gray-600">
                 Already have an account?{" "}
-                <Link to="/login" className="text-indigo-600 hover:text-indigo-800 font-medium">
+                <Link
+                  to="/login"
+                  className="text-indigo-600 hover:text-indigo-800 font-medium"
+                >
                   Sign in
                 </Link>
               </p>
             </div>
 
             <div className="mt-8 pt-6 border-t border-gray-200">
-              <div className="text-center text-sm text-gray-600 mb-4">Or sign up with</div>
+              <div className="text-center text-sm text-gray-600 mb-4">
+                Or sign up with
+              </div>
               <div className="flex space-x-4">
                 <button className="flex-1 flex items-center justify-center py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                   <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -296,7 +359,11 @@ const RegisterPage = () => {
                   Google
                 </button>
                 <button className="flex-1 flex items-center justify-center py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                  <svg className="w-5 h-5 mr-2" fill="#1877F2" viewBox="0 0 24 24">
+                  <svg
+                    className="w-5 h-5 mr-2"
+                    fill="#1877F2"
+                    viewBox="0 0 24 24"
+                  >
                     <path d="M12 2.04c-5.5 0-10 4.49-10 10.02 0 5 3.66 9.15 8.44 9.9v-7H7.9v-2.9h2.54V9.85c0-2.51 1.49-3.89 3.78-3.89 1.09 0 2.23.19 2.23.19v2.47h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.9h-2.33v7a10 10 0 0 0 8.44-9.9c0-5.53-4.5-10.02-10-10.02z" />
                   </svg>
                   Facebook
@@ -307,7 +374,7 @@ const RegisterPage = () => {
         </AnimatedSection>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default RegisterPage
+export default RegisterPage;

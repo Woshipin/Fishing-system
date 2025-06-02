@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -35,12 +34,16 @@ class Product extends Model
     {
         return $this->images->map(function ($image) {
             return [
-                'id' => $image->id,
-                'url' => Storage::disk('public')->url($image->image_path),
+                'id'   => $image->id,
+                'url'  => Storage::disk('public')->url($image->image_path),
                 'path' => $image->image_path,
             ];
         });
     }
 
+    public function packages()
+    {
+        return $this->belongsToMany(Package::class);
+    }
 
 }

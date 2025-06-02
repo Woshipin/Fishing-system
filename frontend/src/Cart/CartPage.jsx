@@ -1,318 +1,676 @@
-import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
-import { motion } from "framer-motion"
-import AnimatedSection from "../components/AnimatedSection"
-import PageHeader from "../components/PageHeader"
+import React, { useState, useEffect } from 'react';
+import { ChevronDown, ChevronUp, ShoppingCart, Package, Clock, Trash2, Plus, Minus, Check, Tag, AlertCircle, Loader, ArrowRight, ArrowLeft, Eye } from 'lucide-react';
 
 const CartPage = () => {
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: "Premium Package",
-      price: 99.99,
-      quantity: 1,
-      image: "https://via.placeholder.com/100",
-    },
-    {
-      id: 2,
-      name: "Standard Package",
-      price: 59.99,
-      quantity: 1,
-      image: "https://via.placeholder.com/100",
-    },
-  ])
+  const [productCart, setProductCart] = useState([]);
+  const [packageCart, setPackageCart] = useState([]);
+  const [durations, setDurations] = useState([]);
+  const [selectedDuration, setSelectedDuration] = useState(null);
+  const [isDurationOpen, setIsDurationOpen] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoApplied, setPromoApplied] = useState(false);
+  const [discount, setDiscount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [cartLoading, setCartLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [updating, setUpdating] = useState({});
+  const [currentStep, setCurrentStep] = useState(1);
 
-  const [promoCode, setPromoCode] = useState("")
-  const [promoApplied, setPromoApplied] = useState(false)
-  const [promoDiscount, setPromoDiscount] = useState(0)
-  const [isHovering, setIsHovering] = useState(null)
-
-  // 添加鼠标悬停效果
-  const handleMouseEnter = (id) => {
-    setIsHovering(id)
-  }
-
-  const handleMouseLeave = () => {
-    setIsHovering(null)
-  }
-
-  const updateQuantity = (id, newQuantity) => {
-    if (newQuantity < 1) return
-
-    setCartItems(cartItems.map((item) => (item.id === id ? { ...item, quantity: newQuantity } : item)))
-  }
-
-  const removeItem = (id) => {
-    setCartItems(cartItems.filter((item) => item.id !== id))
-  }
-
-  const applyPromoCode = () => {
-    // Simple promo code logic for demo
-    if (promoCode.toLowerCase() === "discount10") {
-      setPromoApplied(true)
-      setPromoDiscount(10)
-    } else {
-      setPromoApplied(false)
-      setPromoDiscount(0)
-    }
-  }
-
-  const subtotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0)
-  const shipping = 5.99
-  const tax = subtotal * 0.08
-  const total = subtotal + shipping + tax - promoDiscount
-
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+  // Mock data for demo
+  useEffect(() => {
+    // Simulate loading
+    setTimeout(() => {
+      setProductCart([
+        {
+          id: 1,
+          name: "Premium Wireless Headphones",
+          price: 199.99,
+          quantity: 1,
+          image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=150&h=150&fit=crop&crop=center"
+        },
+        {
+          id: 2,
+          name: "Smart Watch Series 8",
+          price: 399.99,
+          quantity: 2,
+          image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=150&h=150&fit=crop&crop=center"
+        }
+      ]);
       
-      {/* Hero Section */}
-      <PageHeader
-        title="Your Shopping Cart"
-        description="Review your selected items and proceed to checkout when you're ready."
-      />
+      setPackageCart([
+        {
+          id: 1,
+          name: "Premium Support Package",
+          price: 49.99,
+          quantity: 1,
+          features: ["24/7 Support", "Priority Queue", "Advanced Analytics"],
+          image: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=150&h=150&fit=crop&crop=center"
+        }
+      ]);
+      
+      setDurations([
+        { id: 1, name: "1 Month", price: 9.99, value: "Monthly billing", popular: false },
+        { id: 2, name: "3 Months", price: 24.99, value: "Save 17%", popular: true, discount: "Best Value" },
+        { id: 3, name: "12 Months", price: 79.99, value: "Save 33%", popular: false, discount: "Maximum Savings" }
+      ]);
+      
+      setSelectedDuration(2);
+      setLoading(false);
+    }, 1000);
+  }, []);
 
-      <div className="container mx-auto px-4 py-16">
-        <AnimatedSection>
+  const steps = [
+    { number: 1, title: "Cart Items", icon: ShoppingCart, description: "Review your products and packages" },
+    { number: 2, title: "Duration", icon: Clock, description: "Choose subscription length" },
+    { number: 3, title: "Options", icon: Tag, description: "Apply promo codes and extras" },
+    { number: 4, title: "Review", icon: Eye, description: "Confirm your order" }
+  ];
 
-          {cartItems.length === 0 ? (
-            <motion.div 
-              className="bg-white rounded-2xl p-10 text-center border border-blue-200 shadow-[0_0_15px_rgba(59,130,246,0.15)]" 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              style={{
-                background: "linear-gradient(to bottom right, #ffffff, #f0f7ff)",
-                boxShadow: "0 10px 25px -5px rgba(59, 130, 246, 0.1), 0 8px 10px -6px rgba(59, 130, 246, 0.1)"
-              }}
-            >
-              <div className="relative w-24 h-24 mx-auto mb-6 bg-blue-50 rounded-full flex items-center justify-center">
-                <svg
-                  className="w-12 h-12 text-blue-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="1.5"
-                    d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-                  ></path>
-                </svg>
-                <div className="absolute inset-0 rounded-full border border-blue-200 opacity-50 animate-pulse"></div>
-              </div>
-              <h2 className="text-2xl font-semibold mb-3 text-gray-800">Your cart is empty</h2>
-              <p className="text-gray-600 mb-8 max-w-md mx-auto">Looks like you haven't added any items to your cart yet. Explore our products and find something you'll love!</p>
-              <Link
-                to="/products"
-                className="px-8 py-3.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-blue-500/30 transform hover:-translate-y-1 inline-flex items-center gap-2"
-              >
-                <span>Browse Products</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </Link>
-            </motion.div>
+  // Step validation
+  const isStepValid = (step) => {
+    switch (step) {
+      case 1:
+        return productCart.length > 0 || packageCart.length > 0;
+      case 2:
+        return selectedDuration !== null;
+      case 3:
+        return true; // Optional step
+      case 4:
+        return true;
+      default:
+        return false;
+    }
+  };
+
+  const canProceedToStep = (step) => {
+    for (let i = 1; i < step; i++) {
+      if (!isStepValid(i)) return false;
+    }
+    return true;
+  };
+
+  // Update quantity function
+  const updateQuantity = (type, id, newQuantity) => {
+    if (newQuantity < 1) return;
+    
+    setUpdating(prev => ({ ...prev, [`${type}-${id}`]: true }));
+    
+    setTimeout(() => {
+      if (type === 'product') {
+        setProductCart(prev => prev.map(item => 
+          item.id === id ? { ...item, quantity: newQuantity } : item
+        ));
+      } else {
+        setPackageCart(prev => prev.map(item => 
+          item.id === id ? { ...item, quantity: newQuantity } : item
+        ));
+      }
+      setUpdating(prev => ({ ...prev, [`${type}-${id}`]: false }));
+    }, 500);
+  };
+
+  // Remove item function
+  const removeItem = (type, id) => {
+    setUpdating(prev => ({ ...prev, [`${type}-${id}`]: true }));
+    
+    setTimeout(() => {
+      if (type === 'product') {
+        setProductCart(prev => prev.filter(item => item.id !== id));
+      } else {
+        setPackageCart(prev => prev.filter(item => item.id !== id));
+      }
+      setUpdating(prev => ({ ...prev, [`${type}-${id}`]: false }));
+    }, 500);
+  };
+
+  // Apply promo function
+  const applyPromo = () => {
+    if (promoCode.toLowerCase() === 'save20') {
+      setPromoApplied(true);
+      setDiscount(20);
+    } else {
+      setPromoApplied(false);
+      setDiscount(0);
+    }
+  };
+
+  // Calculate totals
+  const productTotal = productCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const packageTotal = packageCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const durationPrice = selectedDuration && durations.find(d => d.id === selectedDuration)?.price || 0;
+  const subtotal = productTotal + packageTotal + durationPrice;
+  const discountAmount = subtotal * (discount / 100);
+  const total = subtotal - discountAmount;
+
+  // Get line status for each connection - FIXED to show full lines
+  const getLineStatus = (stepIndex) => {
+    if (stepIndex >= steps.length - 1) return 'inactive';
+    
+    const stepNumber = stepIndex + 1;
+    
+    // If current step is greater than this step, line should be completed
+    if (currentStep > stepNumber) return 'completed';
+    
+    // If current step equals this step, show active line
+    if (currentStep === stepNumber) return 'active';
+    
+    return 'inactive';
+  };
+
+  // Progress Step Component
+  const ProgressStep = ({ step, isActive, isCompleted, isClickable, index }) => (
+    <div className="relative flex-1 flex flex-col items-center">
+      <div 
+        className={`flex flex-col items-center cursor-pointer transition-all duration-300 z-10 ${
+          isClickable ? 'hover:scale-105' : 'cursor-not-allowed opacity-50'
+        }`}
+        onClick={() => isClickable && setCurrentStep(step.number)}
+      >
+        <div className={`relative w-12 h-12 md:w-16 md:h-16 rounded-full border-2 flex items-center justify-center mb-2 transition-all duration-300 ${
+          isCompleted 
+            ? 'bg-gradient-to-r from-green-400 to-green-500 border-green-400 shadow-lg shadow-green-200' 
+            : isActive 
+              ? 'bg-gradient-to-r from-blue-500 to-indigo-600 border-blue-400 shadow-lg shadow-blue-200' 
+              : 'bg-white border-gray-300 shadow-md'
+        }`}>
+          {isCompleted ? (
+            <Check className="w-6 h-6 text-white" />
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Cart Items */}
-              <div className="lg:col-span-2">
-                <motion.div 
-                  className="bg-white rounded-2xl overflow-hidden border border-blue-200 shadow-[0_0_20px_rgba(59,130,246,0.15)]" 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4 }}
-                  style={{
-                    background: "linear-gradient(145deg, #ffffff, #f8faff)",
-                    boxShadow: "0 10px 25px -5px rgba(59, 130, 246, 0.1), 0 8px 10px -6px rgba(59, 130, 246, 0.1)"
-                  }}
-                >
-                  <div className="p-6 border-b border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50">
-                    <h2 className="text-xl font-semibold text-gray-800 flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
-                      </svg>
-                      Cart Items <span className="ml-2 text-sm bg-blue-100 text-blue-600 py-0.5 px-2 rounded-full">{cartItems.length}</span>
-                    </h2>
-                  </div>
-
-                  <div className="divide-y divide-blue-100">
-                    {cartItems.map((item) => (
-                      <motion.div 
-                        key={item.id} 
-                        className={`p-6 flex flex-wrap md:flex-nowrap items-center transition-all duration-200 ${isHovering === item.id ? 'bg-blue-50/50' : 'bg-white'}`}
-                        onMouseEnter={() => handleMouseEnter(item.id)}
-                        onMouseLeave={handleMouseLeave}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <div className="w-full md:w-auto md:mr-6 mb-4 md:mb-0 flex justify-center">
-                          <div className="relative group">
-                            <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-xl opacity-0 group-hover:opacity-70 transition-opacity duration-300 flex items-center justify-center">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                              </svg>
-                            </div>
-                            <img
-                              src="assets/About/about-us.png"
-                              alt={item.name}
-                              className="w-24 h-24 object-cover rounded-xl border border-blue-100 shadow-md transition-transform duration-300 group-hover:scale-105"
-                            />
-                          </div>
-                        </div>
-                        <div className="flex-grow">
-                          <h3 className="font-medium text-lg text-gray-800">{item.name}</h3>
-                          <p className="text-blue-600 font-semibold mb-3">${item.price.toFixed(2)}</p>
-                          <div className="flex items-center">
-                            <button
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                              className="w-8 h-8 flex items-center justify-center border border-blue-200 rounded-l-lg hover:bg-blue-50 text-blue-600 transition-colors"
-                            >
-                              -
-                            </button>
-                            <input
-                              type="number"
-                              min="1"
-                              value={item.quantity}
-                              onChange={(e) => updateQuantity(item.id, Number.parseInt(e.target.value) || 1)}
-                              className="w-12 h-8 border-t border-b border-blue-200 text-center focus:outline-none bg-white"
-                            />
-                            <button
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              className="w-8 h-8 flex items-center justify-center border border-blue-200 rounded-r-lg hover:bg-blue-50 text-blue-600 transition-colors"
-                            >
-                              +
-                            </button>
-                          </div>
-                        </div>
-                        <div className="w-full md:w-auto mt-4 md:mt-0 flex flex-col items-end">
-                          <span className="font-semibold text-lg text-gray-800">${(item.price * item.quantity).toFixed(2)}</span>
-                          <button
-                            onClick={() => removeItem(item.id)}
-                            className="text-red-500 hover:text-red-700 text-sm mt-2 flex items-center transition-colors"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                            Remove
-                          </button>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </motion.div>
+            <step.icon className={`w-5 h-5 md:w-6 md:h-6 ${
+              isActive ? 'text-white' : 'text-gray-400'
+            }`} />
+          )}
+          {isActive && (
+            <div className="absolute inset-0 rounded-full border-2 border-blue-300 animate-pulse"></div>
+          )}
+        </div>
+        <div className="text-center">
+          <div className={`font-semibold text-xs md:text-sm ${
+            isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-400'
+          }`}>
+            {step.title}
+          </div>
+          <div className="text-xs text-gray-500 mt-1 hidden md:block max-w-24">
+            {step.description}
+          </div>
+        </div>
+      </div>
+      
+      {/* Connection Line - FIXED for full width */}
+      {index < steps.length - 1 && (
+        <div className="absolute top-6 md:top-8 left-1/2 w-full h-1 flex items-center z-0">
+          <div className="w-full relative">
+            {/* Base line */}
+            <div className="w-full h-0.5 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full"></div>
+            
+            {/* Progress line - FIXED to show full width when completed */}
+            <div 
+              className={`absolute top-0 h-0.5 rounded-full transition-all duration-700 ease-in-out ${
+                getLineStatus(index) === 'completed' 
+                  ? 'w-full bg-gradient-to-r from-green-400 to-green-500 shadow-sm shadow-green-200' 
+                  : getLineStatus(index) === 'active'
+                    ? 'w-full bg-gradient-to-r from-blue-400 to-indigo-500 shadow-sm shadow-blue-200'
+                    : 'w-0 bg-gray-300'
+              }`}
+            >
+              {/* Animated pulse dot for active line */}
+              {getLineStatus(index) === 'active' && (
+                <div className="absolute right-0 top-1/2 transform -translate-y-1/2">
+                  <div className="w-2 h-2 bg-white rounded-full shadow-lg animate-pulse border-2 border-blue-400"></div>
+                </div>
+              )}
+            </div>
+            
+            {/* Decorative dots for completed lines */}
+            {getLineStatus(index) === 'completed' && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-1 h-1 bg-green-300 rounded-full opacity-60"></div>
               </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
-              {/* Order Summary */}
-              <div className="lg:col-span-1">
-                <motion.div 
-                  className="bg-white rounded-2xl overflow-hidden border border-blue-200 shadow-[0_0_20px_rgba(59,130,246,0.15)]" 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.1 }}
-                  style={{
-                    background: "linear-gradient(145deg, #ffffff, #f8faff)",
-                    boxShadow: "0 10px 25px -5px rgba(59, 130, 246, 0.1), 0 8px 10px -6px rgba(59, 130, 246, 0.1)"
-                  }}
-                >
-                  <div className="p-6 border-b border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50">
-                    <h2 className="text-xl font-semibold text-gray-800 flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clipRule="evenodd" />
-                      </svg>
-                      Order Summary
-                    </h2>
-                  </div>
-                  <div className="p-6 space-y-4">
-                    <div className="flex justify-between items-center py-2">
-                      <span className="text-gray-600">Subtotal</span>
-                      <span className="font-medium">${subtotal.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2">
-                      <span className="text-gray-600">Shipping</span>
-                      <span className="font-medium">${shipping.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2">
-                      <span className="text-gray-600">Tax</span>
-                      <span className="font-medium">${tax.toFixed(2)}</span>
-                    </div>
-
-                    {promoApplied && (
-                      <div className="flex justify-between items-center py-2 text-green-600">
-                        <span className="flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M5 2a2 2 0 00-2 2v14l3.5-2 3.5 2 3.5-2 3.5 2V4a2 2 0 00-2-2H5zm4.707 3.707a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L8.414 9H10a3 3 0 013 3v1a1 1 0 102 0v-1a5 5 0 00-5-5H8.414l1.293-1.293z" clipRule="evenodd" />
-                          </svg>
-                          Promo Discount
-                        </span>
-                        <span className="font-medium">-${promoDiscount.toFixed(2)}</span>
-                      </div>
-                    )}
-
-                    <div className="pt-4 border-t border-blue-100">
-                      <div className="flex justify-between font-semibold text-lg">
-                        <span>Total</span>
-                        <span className="text-blue-600">${total.toFixed(2)}</span>
-                      </div>
-                    </div>
-
-                    <div className="pt-4">
-                      <div className="flex space-x-2">
-                        <input
-                          type="text"
-                          value={promoCode}
-                          onChange={(e) => setPromoCode(e.target.value)}
-                          placeholder="Promo Code"
-                          className="flex-grow px-4 py-3 rounded-xl border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm hover:shadow-md"
-                        />
-                        <button
-                          onClick={applyPromoCode}
-                          className="px-4 py-3 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-600 rounded-xl hover:from-blue-200 hover:to-indigo-200 transition-all font-medium shadow-sm hover:shadow-md"
-                        >
-                          Apply
-                        </button>
-                      </div>
-                      {promoApplied && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="mt-3 text-sm text-green-600 bg-green-50 p-2 rounded-lg border border-green-100 flex items-center"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
-                          Promo code applied successfully!
-                        </motion.div>
-                      )}
-                    </div>
-
-                    <button className="w-full py-4 mt-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-blue-500/30 transform hover:-translate-y-1 flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                      </svg>
-                      Proceed to Checkout
-                    </button>
-
-                    <div className="text-center mt-6">
-                      <Link to="/products" className="text-blue-600 hover:text-blue-800 text-sm flex items-center justify-center transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
-                        </svg>
-                        Continue Shopping
-                      </Link>
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
+  // Cart Item Component
+  const CartItem = ({ item, type, showFeatures = false }) => {
+    const isUpdating = updating[`${type}-${item.id}`];
+    
+    return (
+      <div className="p-4 md:p-6 hover:bg-blue-50/30 transition-all duration-300 border-b border-blue-100/50 last:border-b-0 relative rounded-lg">
+        {isUpdating && (
+          <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10 rounded-lg backdrop-blur-sm">
+            <Loader className="w-6 h-6 animate-spin text-blue-500" />
+          </div>
+        )}
+        
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          {item.image && (
+            <div className="relative group">
+              <img 
+                src={item.image} 
+                alt={item.name}
+                className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-xl border border-blue-200/50 shadow-md group-hover:scale-105 transition-transform duration-300"
+              />
+              <div className="absolute inset-0 bg-blue-500/20 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300"></div>
             </div>
           )}
-        </AnimatedSection>
+          
+          <div className="flex-grow space-y-2">
+            <h3 className="font-semibold text-base md:text-lg text-gray-800">{item.name}</h3>
+            <p className="text-blue-600 font-bold text-lg">${parseFloat(item.price).toFixed(2)}</p>
+            
+            {showFeatures && item.features && item.features.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {item.features.map((feature, idx) => (
+                  <span key={idx} className="px-2 py-1 bg-blue-100/70 text-blue-700 text-xs rounded-full border border-blue-200/50">
+                    {feature}
+                  </span>
+                ))}
+              </div>
+            )}
+            
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => updateQuantity(type, item.id, item.quantity - 1)}
+                disabled={isUpdating || item.quantity <= 1}
+                className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-gradient-to-r from-blue-100 to-blue-200 hover:from-blue-200 hover:to-blue-300 text-blue-600 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Minus className="w-3 h-3 md:w-4 md:h-4" />
+              </button>
+              <span className="w-10 md:w-12 text-center font-semibold bg-white/70 py-2 rounded-lg border border-blue-200/50 text-sm md:text-base">
+                {item.quantity}
+              </span>
+              <button
+                onClick={() => updateQuantity(type, item.id, item.quantity + 1)}
+                disabled={isUpdating}
+                className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-gradient-to-r from-blue-100 to-blue-200 hover:from-blue-200 hover:to-blue-300 text-blue-600 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Plus className="w-3 h-3 md:w-4 md:h-4" />
+              </button>
+            </div>
+          </div>
+          
+          <div className="flex flex-col items-end gap-3">
+            <span className="text-lg md:text-xl font-bold text-gray-800">
+              ${(parseFloat(item.price) * item.quantity).toFixed(2)}
+            </span>
+            <button
+              onClick={() => removeItem(type, item.id)}
+              disabled={isUpdating}
+              className="flex items-center gap-2 px-3 py-2 text-red-500 hover:text-red-700 hover:bg-red-50/50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span className="text-sm">Remove</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Step Content Components
+  const StepContent = () => {
+    const contentClass = "bg-gradient-to-br from-white via-blue-50/30 to-blue-100/20 backdrop-blur-sm rounded-2xl border border-blue-200/50 shadow-[0_8px_32px_rgba(59,130,246,0.12)] hover:shadow-[0_12px_40px_rgba(59,130,246,0.18)] transition-all duration-300";
+    
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="space-y-6">
+            {/* Products */}
+            <div className={contentClass}>
+              <div className="bg-gradient-to-r from-blue-100/80 to-indigo-100/80 backdrop-blur-sm p-4 border-b border-blue-200/30 rounded-t-2xl">
+                <h2 className="text-lg md:text-xl font-semibold text-gray-800 flex items-center gap-3">
+                  <div className="p-2 bg-blue-500/10 rounded-lg">
+                    <ShoppingCart className="w-5 h-5 text-blue-600" />
+                  </div>
+                  Products
+                </h2>
+              </div>
+              <div className="divide-y divide-blue-100/50">
+                {productCart.length === 0 ? (
+                  <div className="p-8 text-center text-gray-500">
+                    <ShoppingCart className="w-12 h-12 mx-auto mb-4 text-blue-300" />
+                    <p>No products in cart</p>
+                  </div>
+                ) : (
+                  productCart.map(item => (
+                    <CartItem key={item.id} item={item} type="product" />
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Packages */}
+            <div className={contentClass}>
+              <div className="bg-gradient-to-r from-blue-100/80 to-indigo-100/80 backdrop-blur-sm p-4 border-b border-blue-200/30 rounded-t-2xl">
+                <h2 className="text-lg md:text-xl font-semibold text-gray-800 flex items-center gap-3">
+                  <div className="p-2 bg-blue-500/10 rounded-lg">
+                    <Package className="w-5 h-5 text-blue-600" />
+                  </div>
+                  Packages
+                </h2>
+              </div>
+              <div className="divide-y divide-blue-100/50">
+                {packageCart.length === 0 ? (
+                  <div className="p-8 text-center text-gray-500">
+                    <Package className="w-12 h-12 mx-auto mb-4 text-blue-300" />
+                    <p>No packages selected</p>
+                  </div>
+                ) : (
+                  packageCart.map(item => (
+                    <CartItem key={item.id} item={item} type="package" showFeatures />
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 2:
+        return (
+          <div className={contentClass}>
+            <div className="bg-gradient-to-r from-blue-100/80 to-indigo-100/80 backdrop-blur-sm p-4 border-b border-blue-200/30 rounded-t-2xl">
+              <h2 className="text-lg md:text-xl font-semibold text-gray-800 flex items-center gap-3">
+                <div className="p-2 bg-blue-500/10 rounded-lg">
+                  <Clock className="w-5 h-5 text-blue-600" />
+                </div>
+                Subscription Duration
+              </h2>
+            </div>
+            <div className="p-6">
+              {loading ? (
+                <div className="flex items-center justify-center p-8">
+                  <Loader className="w-8 h-8 animate-spin text-blue-500" />
+                  <span className="ml-3 text-gray-600">Loading durations...</span>
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
+                  {durations.map(duration => (
+                    <div
+                      key={duration.id}
+                      onClick={() => setSelectedDuration(duration.id)}
+                      className={`p-4 md:p-6 rounded-2xl border-2 cursor-pointer transition-all duration-300 transform hover:scale-105 ${
+                        selectedDuration === duration.id
+                          ? 'bg-gradient-to-br from-blue-100 to-indigo-100 border-blue-400 shadow-lg shadow-blue-200/50'
+                          : 'bg-white/70 border-blue-200/50 hover:bg-blue-50/50 shadow-md hover:shadow-lg'
+                      }`}
+                    >
+                      <div className="text-center space-y-3">
+                        <div className="flex items-center justify-center gap-2">
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                            selectedDuration === duration.id ? 'bg-blue-500 border-blue-500' : 'border-gray-300'
+                          }`}>
+                            {selectedDuration === duration.id && <Check className="w-3 h-3 text-white" />}
+                          </div>
+                          <span className="font-bold text-lg text-gray-800">{duration.name}</span>
+                          {duration.popular && (
+                            <span className="px-2 py-1 bg-gradient-to-r from-orange-400 to-orange-500 text-white text-xs rounded-full">
+                              Popular
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div className="text-3xl font-bold text-blue-600">
+                          ${duration.price.toFixed(2)}
+                        </div>
+                        
+                        {duration.value && (
+                          <div className="text-sm text-gray-600">{duration.value}</div>
+                        )}
+                        
+                        {duration.discount && (
+                          <div className="text-sm text-green-600 font-medium bg-green-50 py-1 px-3 rounded-full">
+                            {duration.discount}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+
+      case 3:
+        return (
+          <div className={contentClass}>
+            <div className="bg-gradient-to-r from-blue-100/80 to-indigo-100/80 backdrop-blur-sm p-4 border-b border-blue-200/30 rounded-t-2xl">
+              <h2 className="text-lg md:text-xl font-semibold text-gray-800 flex items-center gap-3">
+                <div className="p-2 bg-blue-500/10 rounded-lg">
+                  <Tag className="w-5 h-5 text-blue-600" />
+                </div>
+                Promo Code & Options
+              </h2>
+            </div>
+            <div className="p-6 space-y-6">
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    type="text"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value)}
+                    placeholder="Enter promo code (try: SAVE20)"
+                    className="flex-1 px-4 py-3 rounded-xl border border-blue-200/50 bg-white/70 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200 text-base"
+                  />
+                  <button
+                    onClick={applyPromo}
+                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg whitespace-nowrap"
+                  >
+                    Apply Code
+                  </button>
+                </div>
+                
+                {promoApplied && (
+                  <div className="flex items-center gap-2 p-4 bg-green-50/80 border border-green-200/50 rounded-xl text-green-700">
+                    <Check className="w-5 h-5" />
+                    <span>Promo code applied successfully! You saved {discount}%</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 4:
+        return (
+          <div className="space-y-6">
+            {/* Order Summary */}
+            <div className={contentClass}>
+              <div className="bg-gradient-to-r from-blue-100/80 to-indigo-100/80 backdrop-blur-sm p-4 border-b border-blue-200/30 rounded-t-2xl">
+                <h2 className="text-lg md:text-xl font-semibold text-gray-800 flex items-center gap-3">
+                  <div className="p-2 bg-blue-500/10 rounded-lg">
+                    <Eye className="w-5 h-5 text-blue-600" />
+                  </div>
+                  Order Review
+                </h2>
+              </div>
+              <div className="p-6 space-y-6">
+                {/* Products Summary */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-gray-800 border-b border-blue-100 pb-2">Products</h3>
+                  {productCart.map(item => (
+                    <div key={item.id} className="flex justify-between items-center py-2">
+                      <div className="flex items-center gap-3">
+                        <img src={item.image} alt={item.name} className="w-10 h-10 rounded-lg" />
+                        <div>
+                          <div className="font-medium text-sm">{item.name}</div>
+                          <div className="text-xs text-gray-500">Qty: {item.quantity}</div>
+                        </div>
+                      </div>
+                      <div className="font-semibold">${(item.price * item.quantity).toFixed(2)}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Packages Summary */}
+                {packageCart.length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-gray-800 border-b border-blue-100 pb-2">Packages</h3>
+                    {packageCart.map(item => (
+                      <div key={item.id} className="flex justify-between items-center py-2">
+                        <div className="flex items-center gap-3">
+                          <img src={item.image} alt={item.name} className="w-10 h-10 rounded-lg" />
+                          <div>
+                            <div className="font-medium text-sm">{item.name}</div>
+                            <div className="text-xs text-gray-500">Qty: {item.quantity}</div>
+                          </div>
+                        </div>
+                        <div className="font-semibold">${(item.price * item.quantity).toFixed(2)}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Duration Summary */}
+                {selectedDuration && (
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-gray-800 border-b border-blue-100 pb-2">Subscription</h3>
+                    <div className="flex justify-between items-center py-2">
+                      <div>
+                        <div className="font-medium text-sm">
+                          {durations.find(d => d.id === selectedDuration)?.name}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {durations.find(d => d.id === selectedDuration)?.value}
+                        </div>
+                      </div>
+                      <div className="font-semibold">${durationPrice.toFixed(2)}</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Price Breakdown */}
+                <div className="space-y-3 pt-4 border-t border-blue-200/50">
+                  <div className="flex justify-between text-gray-600">
+                    <span>Subtotal</span>
+                    <span>${subtotal.toFixed(2)}</span>
+                  </div>
+                  
+                  {promoApplied && (
+                    <div className="flex justify-between text-green-600 font-medium">
+                      <span>Discount ({discount}%)</span>
+                      <span>-${discountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between text-xl font-bold text-gray-800 pt-3 border-t border-blue-200/50">
+                    <span>Total</span>
+                    <span className="text-blue-600">${total.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  if (loading && currentStep === 2) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50/30 flex items-center justify-center">
+        <div className="text-center">
+          <Loader className="w-12 h-12 animate-spin text-blue-500 mx-auto mb-4" />
+          <p className="text-gray-600 text-lg">Loading your cart...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50/30">
+      <div className="container mx-auto px-4 py-6 md:py-8 max-w-6xl">
+        {/* Header */}
+        <div className="text-center mb-8 md:mb-12">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-4">
+            Shopping Cart
+          </h1>
+          <p className="text-gray-600 text-base md:text-lg">Complete your purchase in easy steps</p>
+        </div>
+
+        {/* Progress Steps */}
+        <div className="mb-8 md:mb-12">
+          <div className="flex justify-between items-start max-w-4xl mx-auto relative">
+            {steps.map((step, index) => (
+              <ProgressStep
+                key={step.number}
+                step={step}
+                isActive={currentStep === step.number}
+                isCompleted={currentStep > step.number}
+                isClickable={canProceedToStep(step.number)}
+                index={index}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Error Alert */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50/80 border border-red-200/50 rounded-xl text-red-700 flex items-center gap-3">
+            <AlertCircle className="w-5 h-5" />
+            <span className="flex-grow">{error}</span>
+            <button onClick={() => setError(null)} className="text-red-500 hover:text-red-700">
+              <Minus className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {/* Step Content */}
+        <div className="mb-8">
+          <StepContent />
+        </div>
+
+        {/* Navigation Buttons */}
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 sticky bottom-4 bg-gradient-to-r from-white/90 to-blue-50/90 backdrop-blur-sm p-4 rounded-2xl border border-blue-200/50 shadow-lg">
+          <button
+            onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
+            disabled={currentStep === 1}
+            className="w-full sm:w-auto order-2 sm:order-1 flex items-center gap-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Previous
+          </button>
+
+          <div className="flex items-center gap-4 order-1 sm:order-2">
+            <span className="text-sm text-gray-600">
+              Step {currentStep} of {steps.length}
+            </span>
+            {currentStep === 4 && (
+              <div className="text-right">
+                <div className="text-2xl font-bold text-blue-600">
+                  ${total.toFixed(2)}
+                </div>
+                <div className="text-xs text-gray-500">Total Amount</div>
+              </div>
+            )}
+          </div>
+
+          {currentStep < 4 ? (
+            <button
+              onClick={() => setCurrentStep(Math.min(4, currentStep + 1))}
+              disabled={!isStepValid(currentStep)}
+              className="w-full sm:w-auto order-3 flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          ) : (
+            <button
+              disabled={productCart.length === 0 && packageCart.length === 0}
+              className="w-full sm:w-auto order-3 px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            >
+              Complete Purchase
+            </button>
+          )}
+        </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default CartPage
+export default CartPage;

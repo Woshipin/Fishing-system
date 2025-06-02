@@ -1,53 +1,79 @@
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import AnimatedSection from "../components/AnimatedSection"
-import PackageCard from "../components/PackageCard"
-import PageHeader from "../components/PageHeader"
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import AnimatedSection from "../components/AnimatedSection";
+import PackageCard from "../components/PackageCard";
+import PageHeader from "../components/PageHeader";
 
 const PackagePage = () => {
-  const [selectedCategory, setSelectedCategory] = useState("all")
-  const [hoveredCategory, setHoveredCategory] = useState(null)
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [hoveredCategory, setHoveredCategory] = useState(null);
+  const [packages, setPackages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const packages = [
-    {
-      id: 1,
-      title: "Premium Package",
-      description: "Our most comprehensive solution for businesses of all sizes.",
-      category: "business",
-      imageUrl: "/api/placeholder/400/320",
-      price: "99.99",
-      rating: 5,
-    },
-    {
-      id: 2,
-      title: "Standard Package",
-      description: "Perfect balance of features and affordability for growing businesses.",
-      category: "business",
-      imageUrl: "/api/placeholder/400/320",
-      price: "59.99",
-      rating: 4,
-    },
-    {
-      id: 3,
-      title: "Basic Package",
-      description: "Essential features to get started with your business needs.",
-      category: "individual",
-      imageUrl: "/api/placeholder/400/320",
-      price: "29.99",
-      rating: 3,
-    },
-  ]
+  useEffect(() => {
+    const fetchPackages = async () => {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/api/packages");
+        if (!response.ok) {
+          throw new Error("Failed to fetch packages");
+        }
+        const data = await response.json();
+        setPackages(data);
+      } catch (err) {
+        setError(err.message);
+        console.error("Error fetching packages:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPackages();
+  }, []);
 
   const categories = [
     { id: "all", name: "All Packages", icon: "🌟" },
     { id: "individual", name: "Individual", icon: "👤" },
     { id: "business", name: "Business", icon: "🏢" },
     { id: "enterprise", name: "Enterprise", icon: "🏭" },
-  ]
+  ];
 
   const filteredPackages = selectedCategory === "all" 
     ? packages 
-    : packages.filter(pkg => pkg.category === selectedCategory)
+    : packages.filter(pkg => pkg.category === selectedCategory);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-lg font-medium text-gray-700">Loading packages...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-xl border border-red-100 p-10 max-w-md mx-auto text-center">
+          <div className="text-red-500 mb-4">
+            <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <h3 className="text-xl font-bold text-gray-800 mb-2">Error Loading Packages</h3>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative">
@@ -160,4 +186,4 @@ const PackagePage = () => {
   )
 }
 
-export default PackagePage
+export default PackagePage;
