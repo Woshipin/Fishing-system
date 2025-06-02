@@ -8,6 +8,7 @@ use App\Http\Controllers\DurationController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PackageController;
+use App\Http\Controllers\TableNumberController;
 
 // Auth 认证路由
 Route::post('/register', [UserController::class, 'register'])->name('register');
@@ -22,9 +23,12 @@ Route::get('/products/{id}', [ProductController::class, 'detail'])->name('produc
 
 // Package routes
 Route::get('/packages', [PackageController::class, 'index']);
+
 // Package {id} 是包的 ID
 Route::get('/packages/{id}', [PackageController::class, 'detail']);
 
+// Table Number routes
+Route::get('/table-numbers', [TableNumberController::class, 'index']);
 
 // Gallery route
 Route::get('/galleries', [GalleryController::class, 'index']);

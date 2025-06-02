@@ -11,17 +11,19 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\FileUpload;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\ImageColumn;
 
 class PackageResource extends Resource
 {
     protected static ?string $model = Package::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-archive-box';
     protected static ?string $navigationLabel = 'Packages';
     protected static ?string $pluralModelLabel = 'Packages';
     protected static ?string $modelLabel = 'Package';
@@ -46,11 +48,21 @@ class PackageResource extends Resource
                         ->prefix('RM')
                         ->required(),
 
+                    FileUpload::make('image')
+                        ->label('Package Image')
+                        ->image()
+                        ->directory('packages/images')
+                        ->disk('public')
+                        ->visibility('public')
+                        ->enableOpen()
+                        ->enableDownload()
+                        ->required(),
+
                     Toggle::make('is_active')
                         ->label('Active')
                         ->default(true),
 
-                    Select::make('category_id') // ✅ 加入 Category 选择
+                    Select::make('category_id')
                         ->label('Category')
                         ->relationship('category', 'name')
                         ->searchable()
@@ -72,8 +84,15 @@ class PackageResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('id')->sortable(),
+                TextColumn::make('id')
+                    ->label('ID')
+                    ->sortable()
+                    ->toggleable(),
                 TextColumn::make('name')->searchable()->sortable(),
+                ImageColumn::make('image')
+                    ->label('Image')
+                    ->disk('public')
+                    ->visibility('public'),
                 TextColumn::make('price')->money('MYR')->sortable(),
                 IconColumn::make('is_active')
                     ->label('Status')
@@ -89,7 +108,6 @@ class PackageResource extends Resource
                 TextColumn::make('category.name')
                     ->label('Category')
                     ->sortable(),
-                TextColumn::make('created_at')->label('Created At')->dateTime('d M Y'),
             ])
             ->filters([
                 //

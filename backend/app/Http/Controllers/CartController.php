@@ -58,14 +58,14 @@ class CartController extends Controller
         $request->validate([
             'package_id' => 'required|exists:packages,id',
             'name' => 'required|string',
-            'slug' => ['nullable', 'string', Rule::unique('carts', 'slug')],
+            'slug' => ['nullable', 'string', Rule::unique('carts')->where(fn ($q) => $q->where('user_id', Auth::id()))],
             'quantity' => 'required|integer|min:1',
             'price' => 'required|numeric|min:0',
-            'features' => 'nullable|array', // 包的特性数组
+            'features' => 'nullable|array',
             'features.*' => 'string',
+            'image' => 'nullable|string', // ✅ 新增
         ]);
 
-        // 检查是否已存在相同包，如果存在则更新数量
         $existingCartItem = Cart::where('user_id', Auth::id())
             ->where('package_id', $request->package_id)
             ->first();
@@ -77,15 +77,15 @@ class CartController extends Controller
         } else {
             $cartItem = Cart::create([
                 'user_id' => Auth::id(),
-                'product_id' => null, // 包购物车项目，product_id 为 null
+                'product_id' => null,
                 'package_id' => $request->package_id,
                 'name' => $request->name,
                 'slug' => $request->slug,
-                'image' => null, // 包通常没有图片
-                'category_id' => null, // 包可能不属于任何类别
+                'image' => $request->image, // ✅ 使用传入图片
+                'category_id' => null,
                 'quantity' => $request->quantity,
                 'price' => $request->price,
-                'features' => json_encode($request->features), // 存储为 JSON
+                'features' => $request->features, // ✅ 不需要 json_encode
             ]);
         }
 

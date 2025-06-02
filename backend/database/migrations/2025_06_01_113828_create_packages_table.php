@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->unsignedBigInteger('category_id');
+            $table->string('image')->nullable(); // ✅ 新增 image 字段
             $table->text('description')->nullable();
             $table->decimal('price', 8, 2)->default(0.00);
             $table->boolean('is_active')->default(0);

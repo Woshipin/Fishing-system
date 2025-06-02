@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -7,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 class Package extends Model
 {
     protected $fillable = [
-        'name', 'category_id', 'description', 'price', 'is_active'
+        'name', 'category_id', 'description', 'price', 'is_active', 'image',
     ];
 
     public function category()
@@ -20,4 +19,3 @@ class Package extends Model
         return $this->belongsToMany(Product::class);
     }
 }
-

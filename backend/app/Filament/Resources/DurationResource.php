@@ -12,6 +12,7 @@ use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
 
 class DurationResource extends Resource
 {
@@ -153,14 +154,18 @@ class DurationResource extends Resource
     {
         return $table
             ->columns([
+                TextColumn::make('id')
+                    ->label('ID')
+                    ->sortable()
+                    ->toggleable(),
                 // 显示名称
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label('Duration Name')
                     ->sortable()
                     ->searchable(),
 
                 // 显示总秒数（格式化为 H:i:s）
-                Tables\Columns\TextColumn::make('seconds')
+                TextColumn::make('seconds')
                     ->label('Total Duration')
                     ->formatStateUsing(fn($state) => gmdate('H:i:s', $state)),
             ])
