@@ -4,6 +4,7 @@ import HomePage from "./Home/HomePage"
 import AboutPage from "./About/AboutPage"
 import ContactPage from "./Contact/ContactPage"
 import PackagePage from "./Package/PackagePage"
+import PackageDetailPage from "./Package/PackageDetailPage"
 import ProductPage from "./Product/ProductPage"
 import ProductDetailPage from "./Product/ProductDetailPage"
 import OrderPage from "./Order/OrderPage"
@@ -26,6 +27,7 @@ function App() {
           <Route path="about" element={<AboutPage />} />
           <Route path="contact" element={<ContactPage />} />
           <Route path="packages" element={<PackagePage />} />
+          <Route path="/packages/:id" element={<PackageDetailPage />} />
           <Route path="gallery" element={<GalleryPage />} />
           <Route path="products" element={<ProductPage />} />
           <Route path="products/:id" element={<ProductDetailPage />} />
