@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams } from 'react-router-dom';
 
@@ -175,41 +175,65 @@ const PackageDetailPage = () => {
     });
   };
 
-  const ImageWithFallback = ({ src, alt, className, onError, ...props }) => {
+  const ImageWithFallback = ({ src, alt, className, ...props }) => {
     const [imageSrc, setImageSrc] = useState(src);
     const [hasError, setHasError] = useState(false);
-    const [isLoading, setIsLoading] = useState(true); // Assume loading initially
+    const [isLoading, setIsLoading] = useState(true);
+    const timeoutRef = useRef(null);
+    const isMountedRef = useRef(true);
+
+    useEffect(() => {
+      isMountedRef.current = true;
+      
+      // Reset states when src changes
+      setImageSrc(src);
+      setHasError(false);
+      setIsLoading(!!src && src !== DEFAULT_IMAGE_URL);
+      
+      // Clear any existing timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      
+      // Set timeout for image loading (5 seconds)
+      if (src && src !== DEFAULT_IMAGE_URL) {
+        timeoutRef.current = setTimeout(() => {
+          if (isMountedRef.current && isLoading) {
+            console.warn('Image load timeout:', src);
+            setHasError(true);
+            setIsLoading(false);
+          }
+        }, 5000);
+      }
+
+      return () => {
+        isMountedRef.current = false;
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+      };
+    }, [src]);
 
     const handleImageError = () => {
+      if (!isMountedRef.current) return;
       console.log('Image failed to load:', src);
       setHasError(true);
-      setIsLoading(false); // Stop loading on error
-      if (onError) onError();
+      setIsLoading(false);
     };
 
     const handleImageLoad = () => {
-      setIsLoading(false); // Stop loading on success
+      if (!isMountedRef.current) return;
+      setIsLoading(false);
       setHasError(false);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
     };
 
-    useEffect(() => {
-      setImageSrc(src);
-      setHasError(false);
-      // Only show loading spinner if src is valid and not the default image
-      setIsLoading(!!src && src !== DEFAULT_IMAGE_URL);
-    },
-    [src]);
-
-    if (hasError || !imageSrc) {
-      return (
-        <img
-          src={DEFAULT_IMAGE_URL}
-          alt={alt}
-          className={`${className} object-cover`}
-          {...props}
-        />
-      );
-    }
+    // Determine which image to display
+    const displaySrc = hasError || !imageSrc ? DEFAULT_IMAGE_URL : imageSrc;
 
     return (
       <div className="relative">
@@ -219,12 +243,12 @@ const PackageDetailPage = () => {
           </div>
         )}
         <img
-          src={imageSrc}
+          src={displaySrc}
           alt={alt}
-          className={`${className} transition-opacity duration-300`} // Removed opacity control
+          className={`${className} transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
           onError={handleImageError}
           onLoad={handleImageLoad}
-          loading="lazy" // Add lazy loading
+          loading="lazy"
           {...props}
         />
       </div>
