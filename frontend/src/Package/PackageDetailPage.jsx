@@ -1,33 +1,103 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useParams } from 'react-router-dom';
 
-const PackageDetailPage = ({ packageId = 1 }) => {
+const DEFAULT_IMAGE_URL = "/assets/About/about-us.png"; // Fallback image
+
+const PackageDetailPage = () => {
+  const { id } = useParams();
   const [packageData, setPackageData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [addingToCart, setAddingToCart] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) {
+      console.warn('Image path is null or empty, using default fallback image.');
+      return DEFAULT_IMAGE_URL;
+    }
+
+    // If it's already a full URL, return as is
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+
+    // If it starts with '/storage', prepend the base URL
+    if (imagePath.startsWith('/storage')) {
+      return `http://127.0.0.1:8000${imagePath}`;
+    }
+
+    // If it starts with 'storage', prepend the base URL with slash
+    if (imagePath.startsWith('storage')) {
+      return `http://127.0.0.1:8000/${imagePath}`;
+    }
+
+    // Default case: assume it's a relative path and prepend full storage path
+    return `http://127.0.0.1:8000/storage/${imagePath}`;
+  };
+
   useEffect(() => {
     const fetchPackageDetail = async () => {
       try {
         setLoading(true);
         setError(null);
-        
-        // Fixed the API endpoint URL - removed '/detail' since your Laravel route is likely just /api/packages/{id}
-        const response = await fetch(`http://127.0.0.1:8000/api/packages/${packageId}`, {
+
+        const response = await fetch(`http://127.0.0.1:8000/api/packages/${id}`, {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
           },
         });
-        
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const data = await response.json();
+        console.log('Fetched package data:', data);
+
+        if (data.imageUrls && Array.isArray(data.imageUrls)) {
+          data.imageUrls = data.imageUrls.map(url => {
+            const fullUrl = getImageUrl(url);
+            console.log('Constructed image URL:', fullUrl);
+            return fullUrl;
+          }).filter(url => url);
+        }
+
+        if (data.products && Array.isArray(data.products)) {
+          data.products = data.products.map(product => {
+            let imageUrls = product.imageUrls || [];
+
+            if (product.imageUrls && Array.isArray(product.imageUrls) && product.imageUrls.length > 0) {
+              imageUrls = product.imageUrls.map(url => {
+                const fullUrl = getImageUrl(url);
+                console.log('Constructed product image URL:', fullUrl);
+                return fullUrl;
+              }).filter(url => url);
+            } else if (product.image_url) {
+              const fullUrl = getImageUrl(product.image_url);
+              console.log('Constructed product image URL from image_url:', fullUrl);
+              imageUrls = [fullUrl];
+            } else if (product.image) {
+              const fullUrl = getImageUrl(product.image);
+              console.log('Constructed product image URL from image:', fullUrl);
+              imageUrls = [fullUrl];
+            }
+
+            // Ensure there's always at least one image URL, even if it's the default fallback
+            if (imageUrls.length === 0) {
+              imageUrls = [DEFAULT_IMAGE_URL];
+            }
+
+            return {
+              ...product,
+              imageUrls: imageUrls
+            };
+          });
+        }
+
         setPackageData(data);
       } catch (err) {
         console.error('Error fetching package details:', err);
@@ -37,14 +107,14 @@ const PackageDetailPage = ({ packageId = 1 }) => {
       }
     };
 
-    if (packageId) {
+    if (id) {
       fetchPackageDetail();
     }
-  }, [packageId]);
+  }, [id]);
 
   const handleAddToCart = async () => {
     if (!packageData?.inStock) return;
-    
+
     setAddingToCart(true);
     try {
       const response = await fetch('http://127.0.0.1:8000/api/cart/add-package', {
@@ -52,7 +122,6 @@ const PackageDetailPage = ({ packageId = 1 }) => {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          // Remove CSRF token for API routes, or handle it properly if needed
         },
         body: JSON.stringify({
           package_id: packageData.id,
@@ -78,7 +147,7 @@ const PackageDetailPage = ({ packageId = 1 }) => {
   const renderStars = (rating) => {
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 !== 0;
-    
+
     return Array(5).fill(0).map((_, index) => {
       let starClass = 'text-gray-300';
       if (index < fullStars) {
@@ -86,17 +155,17 @@ const PackageDetailPage = ({ packageId = 1 }) => {
       } else if (index === fullStars && hasHalfStar) {
         starClass = 'text-amber-400';
       }
-      
+
       return (
         <span
           key={index}
           className={`text-lg ${starClass}`}
           style={{
-            filter: index < fullStars || (index === fullStars && hasHalfStar) 
-              ? 'drop-shadow(0 0 4px rgba(251, 191, 36, 0.8))' 
+            filter: index < fullStars || (index === fullStars && hasHalfStar)
+              ? 'drop-shadow(0 0 4px rgba(251, 191, 36, 0.8))'
               : 'none',
             textShadow: index < fullStars || (index === fullStars && hasHalfStar)
-              ? '0 0 8px rgba(251, 191, 36, 0.5)' 
+              ? '0 0 8px rgba(251, 191, 36, 0.5)'
               : 'none'
           }}
         >
@@ -104,6 +173,62 @@ const PackageDetailPage = ({ packageId = 1 }) => {
         </span>
       );
     });
+  };
+
+  const ImageWithFallback = ({ src, alt, className, onError, ...props }) => {
+    const [imageSrc, setImageSrc] = useState(src);
+    const [hasError, setHasError] = useState(false);
+    const [isLoading, setIsLoading] = useState(true); // Assume loading initially
+
+    const handleImageError = () => {
+      console.log('Image failed to load:', src);
+      setHasError(true);
+      setIsLoading(false); // Stop loading on error
+      if (onError) onError();
+    };
+
+    const handleImageLoad = () => {
+      setIsLoading(false); // Stop loading on success
+      setHasError(false);
+    };
+
+    useEffect(() => {
+      setImageSrc(src);
+      setHasError(false);
+      // Only show loading spinner if src is valid and not the default image
+      setIsLoading(!!src && src !== DEFAULT_IMAGE_URL);
+    },
+    [src]);
+
+    if (hasError || !imageSrc) {
+      return (
+        <img
+          src={DEFAULT_IMAGE_URL}
+          alt={alt}
+          className={`${className} object-cover`}
+          {...props}
+        />
+      );
+    }
+
+    return (
+      <div className="relative">
+        {isLoading && (
+          <div className={`${className} bg-gray-100 flex items-center justify-center absolute inset-0 z-10`}>
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
+          </div>
+        )}
+        <img
+          src={imageSrc}
+          alt={alt}
+          className={`${className} transition-opacity duration-300`} // Removed opacity control
+          onError={handleImageError}
+          onLoad={handleImageLoad}
+          loading="lazy" // Add lazy loading
+          {...props}
+        />
+      </div>
+    );
   };
 
   const buttonStyle = {
@@ -176,14 +301,12 @@ const PackageDetailPage = ({ packageId = 1 }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-indigo-100 relative overflow-hidden">
-      {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-400/20 to-cyan-400/20 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-indigo-400/20 to-blue-400/20 rounded-full blur-3xl"></div>
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-cyan-400/10 to-blue-400/10 rounded-full blur-3xl"></div>
       </div>
 
-      {/* Header */}
       <motion.div
         className="relative bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-700 text-white py-12 md:py-20"
         style={{
@@ -218,14 +341,12 @@ const PackageDetailPage = ({ packageId = 1 }) => {
       </motion.div>
 
       <div className="max-w-7xl mx-auto px-4 py-8 md:py-16 relative z-10">
-        {/* Package Overview */}
         <motion.div
           className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 mb-16"
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.8 }}
         >
-          {/* Image Gallery */}
           <div className="space-y-4">
             <motion.div
               className="relative rounded-3xl overflow-hidden"
@@ -234,18 +355,17 @@ const PackageDetailPage = ({ packageId = 1 }) => {
               transition={{ duration: 0.3 }}
             >
               {imageUrls.length > 0 ? (
-                <img
+                <ImageWithFallback
                   src={imageUrls[selectedImageIndex]}
                   alt={packageData.title}
                   className="w-full h-64 md:h-80 lg:h-96 object-cover"
-                  onError={(e) => {
-                    e.target.src = 'https://via.placeholder.com/800x600?text=No+Image';
-                  }}
                 />
               ) : (
-                <div className="w-full h-64 md:h-80 lg:h-96 flex items-center justify-center bg-gray-200 text-gray-500">
-                  No Image Available
-                </div>
+                <ImageWithFallback
+                  src={DEFAULT_IMAGE_URL}
+                  alt={packageData.title}
+                  className="w-full h-64 md:h-80 lg:h-96 object-cover"
+                />
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
             </motion.div>
@@ -269,13 +389,10 @@ const PackageDetailPage = ({ packageId = 1 }) => {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    <img
+                    <ImageWithFallback
                       src={url}
                       alt={`${packageData.title} ${index + 1}`}
                       className="w-full h-16 md:h-20 object-cover"
-                      onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/400x320?text=No+Image';
-                      }}
                     />
                   </motion.button>
                 ))}
@@ -283,7 +400,6 @@ const PackageDetailPage = ({ packageId = 1 }) => {
             )}
           </div>
 
-          {/* Package Information */}
           <div className="space-y-6">
             <motion.div
               className="rounded-3xl p-6 md:p-8"
@@ -310,7 +426,6 @@ const PackageDetailPage = ({ packageId = 1 }) => {
                 {packageData.description}
               </p>
 
-              {/* Features */}
               {packageData.features && packageData.features.length > 0 && (
                 <div className="mb-8">
                   <h3 className="text-xl font-bold text-gray-800 mb-4">Package Features</h3>
@@ -333,7 +448,6 @@ const PackageDetailPage = ({ packageId = 1 }) => {
                 </div>
               )}
 
-              {/* Pricing */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
                 <div className="mb-4 sm:mb-0">
                   <div className="flex items-center space-x-3">
@@ -369,7 +483,6 @@ const PackageDetailPage = ({ packageId = 1 }) => {
           </div>
         </motion.div>
 
-        {/* Included Products */}
         <motion.div
           className="rounded-3xl p-6 md:p-10 mb-12"
           style={glowStyle}
@@ -402,17 +515,17 @@ const PackageDetailPage = ({ packageId = 1 }) => {
                   <div className="rounded-xl overflow-hidden mb-4 border-2 border-blue-100"
                        style={{ boxShadow: '0 8px 20px rgba(59, 130, 246, 0.15)' }}>
                     {product.imageUrls && product.imageUrls.length > 0 ? (
-                      <img
+                      <ImageWithFallback
                         src={product.imageUrls[0]}
                         alt={product.name}
                         className="w-full h-32 md:h-40 object-cover transition-transform duration-500 hover:scale-110"
-                        onError={(e) => {
-                          e.target.src = 'https://via.placeholder.com/400x320?text=No+Image';
-                        }}
                       />
                     ) : (
                       <div className="w-full h-32 md:h-40 flex items-center justify-center bg-gray-200 text-gray-500">
-                        No Image Available
+                        <div className="text-center">
+                          <div className="text-2xl mb-1">🛍️</div>
+                          <div className="text-xs">No Image</div>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -460,7 +573,6 @@ const PackageDetailPage = ({ packageId = 1 }) => {
           )}
         </motion.div>
 
-        {/* Add to Cart Button */}
         <motion.div
           className="text-center"
           initial={{ opacity: 0, y: 30 }}

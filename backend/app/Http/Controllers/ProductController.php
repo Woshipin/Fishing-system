@@ -2,38 +2,236 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\Product;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
     public function index()
     {
-        // 获取所有产品，带关联的分类和图片
-        $products = Product::with(['category', 'images'])->get();
+        try {
+            // ✅ 使用正确的关系名 productImages
+            $products = Product::with(['category', 'productImages'])
+                ->orderBy('is_active', 'desc')
+                ->orderBy('name', 'asc')
+                ->get();
 
-        // 获取所有分类
-        $categories = Category::all();
+            $categories = Category::orderBy('name', 'asc')->get();
 
-        // 返回组合数据
-        return response()->json([
-            'products' => $products,
-            'categories' => $categories,
-        ]);
+            // 为每个产品添加图片 URLs 和其他计算属性
+            $products->each(function ($product) {
+                // 添加图片 URLs
+                $product->image_urls = $product->productImages
+                    ->sortBy('sort_order')
+                    ->pluck('image_path')
+                    ->map(function ($path) {
+                        return Storage::disk('public')->exists($path)
+                            ? Storage::disk('public')->url($path)
+                            : asset('images/placeholder.jpg'); // 默认图片
+                    })
+                    ->values()
+                    ->all();
+
+                // 如果没有关联图片但有单独的 image 字段
+                if (empty($product->image_urls) && $product->image) {
+                    $product->image_urls = [
+                        Storage::disk('public')->exists($product->image)
+                            ? Storage::disk('public')->url($product->image)
+                            : asset('images/placeholder.jpg')
+                    ];
+                }
+
+                // 确保至少有一个占位图片
+                if (empty($product->image_urls)) {
+                    $product->image_urls = [asset('images/placeholder.jpg')];
+                }
+
+                // 添加其他有用的属性
+                $product->formatted_price = number_format($product->price, 2);
+                $product->status_text = $product->is_active ? 'Active' : 'Inactive';
+
+                // 隐藏不需要的关系以减少响应大小
+                $product->makeHidden(['productImages']);
+            });
+
+            return response()->json([
+                'success' => true,
+                'products' => $products,
+                'categories' => $categories,
+                'meta' => [
+                    'total_products' => $products->count(),
+                    'active_products' => $products->where('is_active', true)->count(),
+                    'total_categories' => $categories->count(),
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error fetching products: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch products',
+                'error' => app()->environment('local') ? $e->getMessage() : 'Internal server error'
+            ], 500);
+        }
     }
 
     public function detail($id)
     {
-        $product = Product::with(['category', 'images'])->find($id);
+        try {
+            $product = Product::with(['category', 'productImages'])
+                ->find($id);
 
-        if (!$product) {
+            if (!$product) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Product not found'
+                ], 404);
+            }
+
+            // 添加图片 URLs
+            $product->image_urls = $product->productImages
+                ->sortBy('sort_order')
+                ->pluck('image_path')
+                ->map(function ($path) {
+                    return Storage::disk('public')->exists($path)
+                        ? Storage::disk('public')->url($path)
+                        : asset('images/placeholder.jpg');
+                })
+                ->values()
+                ->all();
+
+            // 如果没有关联图片但有单独的 image 字段
+            if (empty($product->image_urls) && $product->image) {
+                $product->image_urls = [
+                    Storage::disk('public')->exists($product->image)
+                        ? Storage::disk('public')->url($product->image)
+                        : asset('images/placeholder.jpg')
+                ];
+            }
+
+            // 确保至少有一个占位图片
+            if (empty($product->image_urls)) {
+                $product->image_urls = [asset('images/placeholder.jpg')];
+            }
+
+            $product->formatted_price = number_format($product->price, 2);
+            $product->status_text = $product->is_active ? 'Active' : 'Inactive';
+
             return response()->json([
-                'message' => 'Product not found',
-            ], 404);
-        }
+                'success' => true,
+                'product' => $product
+            ]);
 
-        return response()->json($product);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching product detail: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch product details',
+                'error' => app()->environment('local') ? $e->getMessage() : 'Internal server error'
+            ], 500);
+        }
+    }
+
+    /**
+     * 搜索产品
+     */
+    public function search(Request $request)
+    {
+        try {
+            $query = Product::with(['category', 'productImages']);
+
+            // 按名称搜索
+            if ($request->has('search') && $request->search) {
+                $searchTerm = $request->search;
+                $query->where(function ($q) use ($searchTerm) {
+                    $q->where('name', 'LIKE', "%{$searchTerm}%")
+                      ->orWhere('description', 'LIKE', "%{$searchTerm}%");
+                });
+            }
+
+            // 按分类过滤
+            if ($request->has('category') && $request->category !== 'all') {
+                $query->whereHas('category', function ($q) use ($request) {
+                    $q->where('name', $request->category);
+                });
+            }
+
+            // 按价格范围过滤
+            if ($request->has('price_min')) {
+                $query->where('price', '>=', $request->price_min);
+            }
+            if ($request->has('price_max')) {
+                $query->where('price', '<=', $request->price_max);
+            }
+
+            // 按状态过滤
+            if ($request->has('active')) {
+                $query->where('is_active', $request->boolean('active'));
+            }
+
+            // 排序
+            $sortBy = $request->get('sort', 'name');
+            $sortDirection = $request->get('direction', 'asc');
+
+            switch ($sortBy) {
+                case 'price':
+                    $query->orderBy('price', $sortDirection);
+                    break;
+                case 'created_at':
+                    $query->orderBy('created_at', $sortDirection);
+                    break;
+                case 'category':
+                    $query->join('categories', 'products.category_id', '=', 'categories.id')
+                          ->orderBy('categories.name', $sortDirection)
+                          ->select('products.*');
+                    break;
+                default:
+                    $query->orderBy('name', $sortDirection);
+            }
+
+            $products = $query->get();
+
+            // 处理图片 URLs
+            $products->each(function ($product) {
+                $product->image_urls = $product->productImages
+                    ->sortBy('sort_order')
+                    ->pluck('image_path')
+                    ->map(function ($path) {
+                        return Storage::disk('public')->url($path);
+                    })
+                    ->values()
+                    ->all();
+
+                if (empty($product->image_urls) && $product->image) {
+                    $product->image_urls = [Storage::disk('public')->url($product->image)];
+                }
+
+                if (empty($product->image_urls)) {
+                    $product->image_urls = [asset('images/placeholder.jpg')];
+                }
+
+                $product->formatted_price = number_format($product->price, 2);
+                $product->makeHidden(['productImages']);
+            });
+
+            return response()->json([
+                'success' => true,
+                'products' => $products,
+                'count' => $products->count()
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error searching products: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Search failed',
+                'error' => app()->environment('local') ? $e->getMessage() : 'Internal server error'
+            ], 500);
+        }
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,41 +10,42 @@ class Product extends Model
 {
     use HasFactory;
 
-    // 允许批量赋值的字段
     protected $fillable = [
-        'name', 'slug', 'category_id', 'description', 'price', 'stock', 'is_active',
+        'name', 'slug', 'category_id', 'description',
+        'price', 'stock', 'is_active',
+        // 如果需要单图字段，留 image
+        'image',
     ];
 
-    // 将 images 字段转换为数组
+    /** 这里依旧把列 images 映射成数组（如需保留） */
     protected $casts = [
         'images' => 'array',
     ];
 
-    // 定义与 Category 模型的关联关系
+    /* ---------- 关系 ---------- */
+
     public function category()
     {
         return $this->belongsTo(Category::class);
     }
 
-    public function images()
+    /** ✅ 改名以避开列冲突 */
+    public function productImages()
     {
-        return $this->hasMany(ProductImage::class);
+        return $this->hasMany(ProductImage::class, 'product_id');
     }
 
+    /** 方便前端直接获取 URL 数组 */
     public function getImageUrlsAttribute()
     {
-        return $this->images->map(function ($image) {
-            return [
-                'id'   => $image->id,
-                'url'  => Storage::disk('public')->url($image->image_path),
-                'path' => $image->image_path,
-            ];
-        });
+        return $this->productImages
+            ->pluck('image_path')
+            ->map(fn ($p) => Storage::disk('public')->url($p))
+            ->all();
     }
 
     public function packages()
     {
         return $this->belongsToMany(Package::class);
     }
-
 }

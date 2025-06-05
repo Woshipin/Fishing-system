@@ -34,54 +34,106 @@ const ProductDetailPage = () => {
           return;
         }
         const data = await response.json();
+        
+        // 添加数据验证和调试
+        console.log("Product API Response:", data);
+        
+        // 检查响应数据结构
+        const productData = data.success ? data.product : data;
+        
+        if (!productData || typeof productData !== 'object') {
+          throw new Error("Invalid product data received from server");
+        }
+
+        // 处理图片数组 - 支持多种可能的数据结构
+        let imageUrls = [];
+        if (productData.image_urls && Array.isArray(productData.image_urls)) {
+          imageUrls = productData.image_urls;
+        } else if (productData.productImages && Array.isArray(productData.productImages)) {
+          imageUrls = productData.productImages.map(img => `${BASE_IMAGE_URL}${img.image_path}`);
+        } else if (productData.images && Array.isArray(productData.images)) {
+          imageUrls = productData.images.map(img => 
+            typeof img === 'string' ? img : `${BASE_IMAGE_URL}${img.image_path}`
+          );
+        } else if (productData.image) {
+          imageUrls = [`${BASE_IMAGE_URL}${productData.image}`];
+        }
+
+        // 如果没有图片，使用默认图片
+        if (imageUrls.length === 0) {
+          imageUrls = [DEFAULT_IMAGE_URL];
+        }
 
         const formattedProduct = {
-          id: data.id,
-          name: data.name || "Unnamed Product",
-          description: data.description || "No description available.",
-          longDescription: data.long_description || data.description || "No detailed description available.",
-          price: parseFloat(data.price) || 0,
-          discountPrice: data.discount_price ? parseFloat(data.discount_price) : 0,
-          category: data.category ? data.category.name : "Uncategorized",
-          rating: parseInt(data.rating, 10) || 0,
-          reviewCount: data.reviews_count || (data.reviews ? data.reviews.length : 0),
-          images: data.images && data.images.length > 0
-            ? data.images.map(img => `${BASE_IMAGE_URL}${img.image_path}`)
-            : [DEFAULT_IMAGE_URL],
-          colors: data.colors || [],
-          sizes: data.sizes || [],
-          inStock: !!data.is_active,
-          featured: !!data.featured,
-          specifications: data.specifications && data.specifications.length > 0
-            ? data.specifications.map(spec => ({ name: spec.name, value: spec.value }))
-            : [],
-          reviews: data.reviews && data.reviews.length > 0
-            ? data.reviews.map(review => ({
-                id: review.id,
-                user: review.user ? review.user.name : "Anonymous",
-                rating: parseInt(review.rating, 10) || 0,
-                date: review.created_at ? new Date(review.created_at).toLocaleDateString() : "N/A",
-                comment: review.comment || "",
-              }))
-            : [],
-          relatedProducts: data.related_products && data.related_products.length > 0
-            ? data.related_products.map(rp => ({
-                id: rp.id,
+          id: productData.id || 0,
+          name: productData.name || "Unnamed Product",
+          description: productData.description || "No description available.",
+          longDescription: productData.long_description || productData.description || "No detailed description available.",
+          price: parseFloat(productData.price) || 0,
+          discountPrice: productData.discount_price ? parseFloat(productData.discount_price) : 0,
+          category: productData.category ? 
+            (typeof productData.category === 'string' ? productData.category : productData.category.name) 
+            : "Uncategorized",
+          rating: parseInt(productData.rating, 10) || 0,
+          reviewCount: productData.reviews_count || 
+            (productData.reviews && Array.isArray(productData.reviews) ? productData.reviews.length : 0),
+          images: imageUrls,
+          colors: Array.isArray(productData.colors) ? productData.colors : [],
+          sizes: Array.isArray(productData.sizes) ? productData.sizes : [],
+          inStock: !!productData.is_active,
+          featured: !!productData.featured,
+          specifications: Array.isArray(productData.specifications) ? 
+            productData.specifications.map(spec => ({ 
+              name: spec.name || 'Unknown', 
+              value: spec.value || 'N/A' 
+            })) : [],
+          reviews: Array.isArray(productData.reviews) ? 
+            productData.reviews.map(review => ({
+              id: review.id || Math.random(),
+              user: review.user ? 
+                (typeof review.user === 'string' ? review.user : review.user.name || "Anonymous") 
+                : "Anonymous",
+              rating: parseInt(review.rating, 10) || 0,
+              date: review.created_at ? 
+                new Date(review.created_at).toLocaleDateString() : "N/A",
+              comment: review.comment || "",
+            })) : [],
+          relatedProducts: Array.isArray(productData.related_products) ? 
+            productData.related_products.map(rp => {
+              // 处理相关产品的图片
+              let relatedImageUrls = [];
+              if (rp.image_urls && Array.isArray(rp.image_urls)) {
+                relatedImageUrls = rp.image_urls;
+              } else if (rp.productImages && Array.isArray(rp.productImages)) {
+                relatedImageUrls = rp.productImages.map(img => `${BASE_IMAGE_URL}${img.image_path}`);
+              } else if (rp.images && Array.isArray(rp.images)) {
+                relatedImageUrls = rp.images.map(img => 
+                  typeof img === 'string' ? img : `${BASE_IMAGE_URL}${img.image_path}`
+                );
+              } else if (rp.image) {
+                relatedImageUrls = [`${BASE_IMAGE_URL}${rp.image}`];
+              }
+
+              if (relatedImageUrls.length === 0) {
+                relatedImageUrls = [DEFAULT_IMAGE_URL];
+              }
+
+              return {
+                id: rp.id || 0,
                 name: rp.name || "Related Product",
                 price: parseFloat(rp.price) || 0,
-                imageUrls: rp.images && rp.images.length > 0
-                  ? rp.images.map(img => `${BASE_IMAGE_URL}${img.image_path}`)
-                  : [DEFAULT_IMAGE_URL],
-                imageUrl: rp.images && rp.images.length > 0
-                  ? `${BASE_IMAGE_URL}${rp.images[0].image_path}`
-                  : DEFAULT_IMAGE_URL,
-                category: rp.category ? rp.category.name : "Uncategorized",
+                imageUrls: relatedImageUrls,
+                imageUrl: relatedImageUrls[0] || DEFAULT_IMAGE_URL,
+                category: rp.category ? 
+                  (typeof rp.category === 'string' ? rp.category : rp.category.name) 
+                  : "Uncategorized",
                 rating: parseInt(rp.rating, 10) || 0,
                 inStock: !!rp.is_active,
-              }))
-            : [],
+              };
+            }) : [],
         };
 
+        // 设置默认选择项
         if (formattedProduct.colors.length > 0) {
           setSelectedColor(formattedProduct.colors[0]);
         }
@@ -195,6 +247,12 @@ const ProductDetailPage = () => {
       </div>
     );
   }
+
+  // 安全的SKU生成 - 这是导致错误的地方
+  const generateSKU = () => {
+    if (!product || !product.id) return "PRD-0000";
+    return `PRD-${product.id.toString().padStart(4, '0')}`;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
@@ -315,7 +373,7 @@ const ProductDetailPage = () => {
                     </div>
                     <div className="h-4 w-px bg-gray-300"></div>
                     <div className="text-sm text-gray-600">
-                      <span className="font-medium">SKU:</span> PRD-{product.id.toString().padStart(4, '0')}
+                      <span className="font-medium">SKU:</span> {generateSKU()}
                     </div>
                   </div>
 
@@ -472,7 +530,7 @@ const ProductDetailPage = () => {
                   onClick={() => setActiveTab(tab)}
                 >
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                  {tab === "reviews" && ` (${product.reviews.length})`}
+                  {tab === "reviews" && ` (${product.reviews ? product.reviews.length : 0})`}
                   {activeTab === tab && (
                     <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
                   )}
@@ -500,60 +558,82 @@ const ProductDetailPage = () => {
 
               {activeTab === "specifications" && (
                 <AnimatedSection>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {product.specifications.map((spec, index) => (
-                      <div
-                        key={index}
-                        className="flex justify-between items-center py-3 px-4 bg-blue-50 rounded-lg border border-blue-100 shadow-sm ring-1 ring-blue-200 ring-opacity-50"
-                      >
-                        <span className="font-medium text-gray-900 text-sm">{spec.name}</span>
-                        <span className="text-blue-700 font-medium text-sm">{spec.value}</span>
+                  {product.specifications && product.specifications.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {product.specifications.map((spec, index) => (
+                        <div
+                          key={index}
+                          className="flex justify-between items-center py-3 px-4 bg-blue-50 rounded-lg border border-blue-100 shadow-sm ring-1 ring-blue-200 ring-opacity-50"
+                        >
+                          <span className="font-medium text-gray-900 text-sm">{spec.name}</span>
+                          <span className="text-blue-700 font-medium text-sm">{spec.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="text-gray-400 mb-2">
+                        <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
                       </div>
-                    ))}
-                  </div>
+                      <p className="text-gray-500">No specifications available for this product.</p>
+                    </div>
+                  )}
                 </AnimatedSection>
               )}
 
               {activeTab === "reviews" && (
                 <AnimatedSection>
                   <div className="space-y-6">
-                    {product.reviews.map((review) => (
-                      <div
-                        key={review.id}
-                        className="border-b pb-6 last:border-b-0 last:pb-0 bg-blue-50 rounded-xl p-5 border border-blue-100 shadow-sm ring-1 ring-blue-200 ring-opacity-50"
-                      >
-                        <div className="flex justify-between items-start mb-3">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center shadow-sm">
-                              <span className="text-white font-medium text-sm">
-                                {review.user.charAt(0).toUpperCase()}
-                              </span>
-                            </div>
-                            <div>
-                              <h3 className="font-semibold text-gray-900 text-sm">{review.user}</h3>
-                              <div className="flex items-center space-x-2">
-                                <div className="flex">
-                                  {[...Array(5)].map((_, i) => (
-                                    <svg
-                                      key={i}
-                                      className={`w-4 h-4 ${
-                                        i < review.rating ? "text-yellow-400" : "text-gray-200"
-                                      }`}
-                                      fill="currentColor"
-                                      viewBox="0 0 20 20"
-                                    >
-                                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                    </svg>
-                                  ))}
+                    {product.reviews && product.reviews.length > 0 ? (
+                      product.reviews.map((review) => (
+                        <div
+                          key={review.id}
+                          className="border-b pb-6 last:border-b-0 last:pb-0 bg-blue-50 rounded-xl p-5 border border-blue-100 shadow-sm ring-1 ring-blue-200 ring-opacity-50"
+                        >
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center shadow-sm">
+                                <span className="text-white font-medium text-sm">
+                                  {review.user ? review.user.charAt(0).toUpperCase() : 'A'}
+                                </span>
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-gray-900 text-sm">{review.user}</h3>
+                                <div className="flex items-center space-x-2">
+                                  <div className="flex">
+                                    {[...Array(5)].map((_, i) => (
+                                      <svg
+                                        key={i}
+                                        className={`w-4 h-4 ${
+                                          i < review.rating ? "text-yellow-400" : "text-gray-200"
+                                        }`}
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                      >
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                      </svg>
+                                    ))}
+                                  </div>
+                                  <span className="text-xs text-gray-500">{review.date}</span>
                                 </div>
-                                <span className="text-xs text-gray-500">{review.date}</span>
                               </div>
                             </div>
                           </div>
+                          <p className="text-gray-700 text-sm leading-relaxed ml-13">{review.comment}</p>
                         </div>
-                        <p className="text-gray-700 text-sm leading-relaxed ml-13">{review.comment}</p>
+                      ))
+                    ) : (
+                      <div className="text-center py-8">
+                        <div className="text-gray-400 mb-2">
+                          <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                          </svg>
+                        </div>
+                        <p className="text-gray-500 mb-4">No reviews yet. Be the first to review this product!</p>
                       </div>
-                    ))}
+                    )}
 
                     <div className="mt-8 pt-8 border-t border-gray-100">
                       <h3 className="text-lg font-semibold mb-6 text-gray-900">Write a Review</h3>
@@ -618,13 +698,30 @@ const ProductDetailPage = () => {
               {product.relatedProducts.slice(0, 4).map((relatedProduct) => (
                 <Card
                   key={relatedProduct.id}
-                  id={relatedProduct.id}
-                  name={relatedProduct.name}
+                  imageUrls={relatedProduct.imageUrls}
+                  title={relatedProduct.name}
                   price={relatedProduct.price}
-                  imageUrl={relatedProduct.imageUrl}
                   category={relatedProduct.category}
                   rating={relatedProduct.rating}
-                  inStock={relatedProduct.inStock}
+                  footer={
+                    <div className="flex justify-between items-center">
+                      <span
+                        className={`px-2 py-1 rounded-md text-xs ${
+                          relatedProduct.inStock
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {relatedProduct.inStock ? "In Stock" : "Out of Stock"}
+                      </span>
+                      <Link
+                        to={`/products/${relatedProduct.id}`}
+                        className="px-3 py-1 md:px-4 md:py-2 rounded-full transition-all duration-300 bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg transform hover:-translate-y-1 text-xs md:text-sm inline-block text-center"
+                      >
+                        View Details
+                      </Link>
+                    </div>
+                  }
                 />
               ))}
             </div>

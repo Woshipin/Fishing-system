@@ -64,34 +64,78 @@ const ProductPage = () => {
     return result;
   }, [products, selectedCategory, priceRange, searchTerm, sortBy]);
 
-  // 获取产品数据
+  // 获取产品数据 - 修复版本
   const fetchProducts = async () => {
     setIsLoading(true);
     setError(null);
     try {
       const response = await fetch("http://127.0.0.1:8000/api/products");
-      if (!response.ok)
+      if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
+      
+      // 添加数据验证和调试
+      console.log("API Response:", data);
+      
+      // 确保 data.products 存在且是数组
+      if (!data || !data.products || !Array.isArray(data.products)) {
+        throw new Error("Invalid response format: products data is missing or not an array");
+      }
 
-      const formattedProducts = data.products.map((product) => ({
-        id: product.id,
-        name: product.name,
-        description: product.description,
-        price: parseFloat(product.price),
-        category: product.category.name,
-        rating:
-          parseInt(product.rating, 10) || Math.floor(Math.random() * 5) + 1,
-        imageUrls: product.images.map(
-          (img) => `${BASE_IMAGE_URL}${img.image_path}`
-        ),
-        isActive: !!product.is_active, //确保是布尔值
-      }));
+      const formattedProducts = data.products.map((product) => {
+        // 添加产品数据验证
+        if (!product) {
+          console.warn("Null product found, skipping");
+          return null;
+        }
+
+        // 处理图片数据 - 使用 productImages 而不是 images
+        let imageUrls = [];
+        if (product.productImages && Array.isArray(product.productImages)) {
+          imageUrls = product.productImages.map(
+            (img) => `${BASE_IMAGE_URL}${img.image_path}`
+          );
+        } else if (product.image_urls && Array.isArray(product.image_urls)) {
+          // 如果后端提供了 image_urls 属性
+          imageUrls = product.image_urls;
+        } else if (product.image) {
+          // 如果只有单个图片
+          imageUrls = [`${BASE_IMAGE_URL}${product.image}`];
+        }
+
+        // 如果没有图片，提供默认图片
+        if (imageUrls.length === 0) {
+          imageUrls = ["/api/placeholder/300/200"];
+        }
+
+        return {
+          id: product.id,
+          name: product.name || "Unknown Product",
+          description: product.description || "No description available",
+          price: parseFloat(product.price) || 0,
+          category: product.category?.name || "Uncategorized",
+          rating: parseInt(product.rating, 10) || Math.floor(Math.random() * 5) + 1,
+          imageUrls: imageUrls,
+          isActive: !!product.is_active,
+        };
+      }).filter(product => product !== null); // 过滤掉无效产品
+
       setProducts(formattedProducts);
-      setCategories([...new Set(data.products.map((p) => p.category.name))]);
+      
+      // 处理分类数据
+      if (data.products && Array.isArray(data.products)) {
+        const categoryNames = data.products
+          .map((p) => p.category?.name)
+          .filter(name => name) // 过滤掉 undefined/null
+          .filter((name, index, arr) => arr.indexOf(name) === index); // 去重
+        setCategories(categoryNames);
+      }
+      
     } catch (err) {
       console.error("Error fetching products:", err);
-      setError("Failed to load products. Please try again later.");
+      setError(`Failed to load products: ${err.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -104,7 +148,7 @@ const ProductPage = () => {
     if (priceRange !== "all") params.set("price", priceRange);
     if (searchTerm.trim()) params.set("search", searchTerm);
     if (sortBy !== "featured") params.set("sort", sortBy);
-    setSearchParams(params, { replace: true }); // 使用 replace: true 避免不必要的历史记录条目
+    setSearchParams(params, { replace: true });
   };
 
   // 重置所有过滤器
@@ -116,12 +160,17 @@ const ProductPage = () => {
     setSearchParams({});
   };
 
+  // 重试加载产品
+  const retryFetch = () => {
+    fetchProducts();
+  };
+
   // 组件挂载时获取数据
   useEffect(() => {
     fetchProducts();
   }, []);
 
-  // 从URL参数中恢复过滤条件并更新URL
+  // 从URL参数中恢复过滤条件
   useEffect(() => {
     const categoryFromURL = searchParams.get("category") || "all";
     const priceFromURL = searchParams.get("price") || "all";
@@ -132,28 +181,14 @@ const ProductPage = () => {
     setPriceRange(priceFromURL);
     setSearchTerm(searchFromURL);
     setSortBy(sortFromURL);
-
-    // 只有当 products 加载完毕后才更新 searchParams，以避免初始加载时覆盖
-    // 并且仅当 URL 参数与当前状态不同时才更新，以防止不必要的重渲染
-    if (
-      products.length > 0 &&
-      (selectedCategory !== categoryFromURL ||
-        priceRange !== priceFromURL ||
-        searchTerm !== searchFromURL ||
-        sortBy !== sortFromURL)
-    ) {
-      updateSearchParams();
-    }
-  }, [searchParams, products.length]); // 依赖项中加入 searchParams
+  }, [searchParams]);
 
   // 当过滤条件改变时更新URL参数
   useEffect(() => {
-    // 确保 products 已经加载，避免在初始加载时就更新 URL
     if (products.length > 0) {
       updateSearchParams();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCategory, priceRange, searchTerm, sortBy]); // 移除 products.length，因为上面的 useEffect 已经处理了初始加载
+  }, [selectedCategory, priceRange, searchTerm, sortBy, products.length]);
 
   return (
     <div className="min-h-screen">
@@ -164,6 +199,7 @@ const ProductPage = () => {
 
       <section className="py-4 md:py-8 lg:py-16">
         <div className="container mx-auto px-2 sm:px-4">
+          {/* 移动端过滤按钮 */}
           <div className="lg:hidden mb-4">
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -188,6 +224,7 @@ const ProductPage = () => {
           </div>
 
           <div className="flex flex-col lg:flex-row gap-4 md:gap-8">
+            {/* 侧边栏过滤器 */}
             <div
               className={`lg:w-1/4 w-full ${
                 showFilters ? "block" : "hidden lg:block"
@@ -220,6 +257,7 @@ const ProductPage = () => {
                   </button>
                 </div>
 
+                {/* 重置按钮 */}
                 <div className="mb-4 md:mb-6">
                   <button
                     onClick={resetFilters}
@@ -229,6 +267,7 @@ const ProductPage = () => {
                   </button>
                 </div>
 
+                {/* 分类过滤 */}
                 <div className="mb-4 md:mb-8">
                   <h3 className="font-semibold mb-2 md:mb-3">
                     Fish Categories
@@ -268,6 +307,7 @@ const ProductPage = () => {
                   </div>
                 </div>
 
+                {/* 价格过滤 */}
                 <div className="mb-4 md:mb-8">
                   <h3 className="font-semibold mb-2 md:mb-3">Price Range</h3>
                   <div className="space-y-1 md:space-y-2">
@@ -351,6 +391,7 @@ const ProductPage = () => {
                   </div>
                 </div>
 
+                {/* 排序选项 */}
                 <div>
                   <h3 className="font-semibold mb-2 md:mb-3">Sort By</h3>
                   <div className="space-y-1 md:space-y-2">
@@ -375,13 +416,16 @@ const ProductPage = () => {
               </AnimatedSection>
             </div>
 
+            {/* 主内容区域 */}
             <div className="lg:w-3/4 w-full">
+              {/* 顶部控制栏 */}
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-8 gap-3">
                 <p className="text-gray-600 text-sm md:text-base">
                   Showing {filteredProducts.length} fish species out of{" "}
                   {products.length} total
                 </p>
                 <div className="w-full md:w-auto flex flex-col md:flex-row items-stretch md:items-center gap-3 md:space-x-4">
+                  {/* 排序选择器 */}
                   <div className="flex items-center w-full md:w-auto order-1 md:order-2">
                     <label
                       htmlFor="sort"
@@ -403,6 +447,7 @@ const ProductPage = () => {
                     </select>
                   </div>
 
+                  {/* 搜索框 */}
                   <div className="relative flex-grow order-2 md:order-1">
                     <input
                       type="text"
@@ -429,27 +474,47 @@ const ProductPage = () => {
                 </div>
               </div>
 
+              {/* 内容区域 */}
               {isLoading ? (
                 <div className="flex justify-center items-center h-32 md:h-64">
-                  <div className="animate-spin rounded-full h-8 w-8 md:h-12 md:w-12 border-t-2 border-b-2 border-primary"></div>
+                  <div className="flex flex-col items-center">
+                    <div className="animate-spin rounded-full h-8 w-8 md:h-12 md:w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+                    <p className="text-gray-600">Loading products...</p>
+                  </div>
                 </div>
               ) : error ? (
                 <div className="text-center py-8 md:py-12">
-                  <h3 className="text-lg md:text-xl font-semibold mb-2 text-red-600">
-                    Error Loading Products
-                  </h3>
-                  <p className="text-gray-600 text-sm md:text-base mb-4">
-                    {error}
-                  </p>
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                  >
-                    Reload
-                  </button>
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
+                    <svg className="mx-auto h-12 w-12 text-red-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <h3 className="text-lg md:text-xl font-semibold mb-2 text-red-600">
+                      Error Loading Products
+                    </h3>
+                    <p className="text-gray-600 text-sm md:text-base mb-4">
+                      {error}
+                    </p>
+                    <div className="space-y-2">
+                      <button
+                        onClick={retryFetch}
+                        className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                      >
+                        Retry
+                      </button>
+                      <button
+                        onClick={() => window.location.reload()}
+                        className="w-full px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                      >
+                        Reload Page
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ) : filteredProducts.length === 0 ? (
                 <div className="text-center py-8 md:py-12">
+                  <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
                   <h3 className="text-lg md:text-xl font-semibold mb-2">
                     No fish species found
                   </h3>
@@ -465,8 +530,6 @@ const ProductPage = () => {
                 </div>
               ) : (
                 <AnimatedSection direction="up" className="w-full">
-                  {" "}
-                  {/* Ensure AnimatedSection itself takes full width */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
                     <AnimatePresence>
                       {filteredProducts.map((product) => (

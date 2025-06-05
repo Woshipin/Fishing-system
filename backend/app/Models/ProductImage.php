@@ -19,19 +19,15 @@ class ProductImage extends Model
         'sort_order' => 'integer',
     ];
 
-    // 关联产品
     public function product()
     {
         return $this->belongsTo(Product::class);
     }
 
-    // 添加访问器来获取完整的图片URL
     public function getImageUrlAttribute()
     {
-        if ($this->image_path) {
-            return Storage::disk('public')->url($this->image_path);
-        }
-
-        return null;
+        return $this->image_path
+            ? Storage::disk('public')->url($this->image_path)
+            : null;
     }
 }
