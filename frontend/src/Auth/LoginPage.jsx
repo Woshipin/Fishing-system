@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import AnimatedSection from "../components/AnimatedSection";
@@ -47,22 +47,32 @@ const LoginPage = () => {
       }
 
       console.log("Login successful:", data);
-      
-      // 保存 token 到 localStorage
+
+      // Store user ID and token in localStorage
+      localStorage.setItem("userId", data.user.id);
       localStorage.setItem("token", data.token);
-      
-      // 手动触发 storage 事件，确保其他组件能够感知到登录状态变化
+
+      // Manually trigger storage event to ensure other components can detect login status change
       window.dispatchEvent(new Event('storage'));
-      // 触发自定义事件，确保所有组件都能感知到登录状态变化
+
+      // Trigger custom event to ensure all components can detect login status change
       window.dispatchEvent(new Event('login-status-change'));
-      
-      navigate("/"); // 重定向到首页
+
+      navigate("/"); // Redirect to home page
     } catch (err) {
       setError(err.message || "Invalid email or password. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Optional: Add an effect to check if userId is already present in localStorage
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      console.log("User ID already present in localStorage:", userId);
+    }
+  }, []);
 
   return (
     <div className="min-h-screen">
