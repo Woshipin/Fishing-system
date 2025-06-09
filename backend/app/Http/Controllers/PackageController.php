@@ -2,7 +2,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Package;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class PackageController extends Controller
@@ -25,8 +24,8 @@ class PackageController extends Controller
             return response()->json($packages);
         } catch (\Exception $e) {
             return response()->json([
-                'error' => 'Failed to fetch packages',
-                'message' => $e->getMessage()
+                'error'   => 'Failed to fetch packages',
+                'message' => $e->getMessage(),
             ], 500);
         }
     }
@@ -41,10 +40,10 @@ class PackageController extends Controller
                 },
             ])->find($id);
 
-            if (!$package) {
+            if (! $package) {
                 return response()->json([
-                    'error' => 'Package not found',
-                    'message' => 'The requested package does not exist.'
+                    'error'   => 'Package not found',
+                    'message' => 'The requested package does not exist.',
                 ], 404);
             }
 
@@ -63,6 +62,7 @@ class PackageController extends Controller
                 'title'         => $package->name,
                 'description'   => $package->description,
                 'category'      => $package->category ? $package->category->name : 'Uncategorized',
+                'category_id'   => $package->category ? $package->category->id : null, // Include category_id
                 'price'         => (float) $package->price,
                 'originalPrice' => (float) $package->price + 100, // Adjust based on business logic
                 'rating'        => $package->rating ?? 4.5,
@@ -80,8 +80,8 @@ class PackageController extends Controller
             return response()->json($packageData);
         } catch (\Exception $e) {
             return response()->json([
-                'error' => 'Failed to fetch package details',
-                'message' => $e->getMessage()
+                'error'   => 'Failed to fetch package details',
+                'message' => $e->getMessage(),
             ], 500);
         }
     }
@@ -106,7 +106,7 @@ class PackageController extends Controller
             }
 
             // Fallback: check for single image field
-            if (empty($images) && !empty($product->image)) {
+            if (empty($images) && ! empty($product->image)) {
                 $imageUrl = $this->getImageUrl($product->image);
                 if ($imageUrl) {
                     $images[] = $imageUrl;
@@ -137,7 +137,7 @@ class PackageController extends Controller
      */
     private function getImageUrl($imagePath)
     {
-        if (!$imagePath) {
+        if (! $imagePath) {
             return null;
         }
 
