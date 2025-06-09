@@ -15,19 +15,20 @@ import {
   ArrowRight,
   ArrowLeft,
   Eye,
+  RefreshCw,
 } from "lucide-react";
 
 const CartPage = () => {
   const [productCart, setProductCart] = useState([]);
   const [packageCart, setPackageCart] = useState([]);
   const [durations, setDurations] = useState([]);
+  const [tableNumbers, setTableNumbers] = useState([]);
   const [selectedDuration, setSelectedDuration] = useState(null);
-  const [isDurationOpen, setIsDurationOpen] = useState(false);
+  const [selectedTableNumber, setSelectedTableNumber] = useState(null);
   const [promoCode, setPromoCode] = useState("");
   const [promoApplied, setPromoApplied] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [cartLoading, setCartLoading] = useState(false);
   const [error, setError] = useState(null);
   const [updating, setUpdating] = useState({});
   const [currentStep, setCurrentStep] = useState(1);
@@ -36,31 +37,38 @@ const CartPage = () => {
   useEffect(() => {
     const storedUserId = localStorage.getItem("userId");
     setUserId(storedUserId);
-    console.log("User ID:", storedUserId);
   }, []);
 
   useEffect(() => {
     if (userId) {
       fetchCartItems(userId);
+      fetchDurations();
+      fetchTableNumbers();
     }
   }, [userId]);
+
+  const getHeaders = () => {
+    return {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    };
+  };
 
   const fetchCartItems = async (userId) => {
     try {
       setLoading(true);
+      setError(null);
+
       const response = await fetch(
         `http://127.0.0.1:8000/api/cart/items?user_id=${userId}`,
         {
           method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
+          headers: getHeaders(),
         }
       );
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("Failed to fetch cart items:", errorData);
         setError(
           errorData.message || "Failed to fetch cart items. Please try again."
         );
@@ -68,15 +76,68 @@ const CartPage = () => {
       }
 
       const data = await response.json();
-      console.log("Fetched cart items:", data);
-
       setProductCart(data.productCart || []);
       setPackageCart(data.packageCart || []);
+
+      if (
+        (data.productCart || []).length === 0 &&
+        (data.packageCart || []).length === 0
+      ) {
+        console.log("Cart is empty");
+      }
     } catch (err) {
-      console.error("Error fetching cart items:", err);
-      setError("Failed to fetch cart items. Please try again.");
+      console.error("Fetch cart items error:", err);
+      setError(
+        "Failed to fetch cart items. Please check your connection and try again."
+      );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDurations = async () => {
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/durations", {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch durations");
+      }
+
+      const data = await response.json();
+      setDurations(data);
+    } catch (err) {
+      console.error("Error fetching durations:", err);
+    }
+  };
+
+  const fetchTableNumbers = async () => {
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/table-numbers", {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch table numbers");
+      }
+
+      const data = await response.json();
+      setTableNumbers(data);
+    } catch (err) {
+      console.error("Error fetching table numbers:", err);
+    }
+  };
+
+  const refreshCart = async () => {
+    if (userId) {
+      await fetchCartItems(userId);
     }
   };
 
@@ -95,9 +156,9 @@ const CartPage = () => {
     },
     {
       number: 3,
-      title: "Options",
+      title: "Table Number",
       icon: Tag,
-      description: "Apply promo codes and extras",
+      description: "Select table number",
     },
     {
       number: 4,
@@ -107,7 +168,6 @@ const CartPage = () => {
     },
   ];
 
-  // Step validation
   const isStepValid = (step) => {
     switch (step) {
       case 1:
@@ -115,7 +175,7 @@ const CartPage = () => {
       case 2:
         return selectedDuration !== null;
       case 3:
-        return true; // Optional step
+        return selectedTableNumber !== null;
       case 4:
         return true;
       default:
@@ -130,45 +190,186 @@ const CartPage = () => {
     return true;
   };
 
-  // Update quantity function
   const updateQuantity = (type, id, newQuantity) => {
     if (newQuantity < 1) return;
 
-    setUpdating((prev) => ({ ...prev, [`${type}-${id}`]: true }));
-
-    setTimeout(() => {
-      if (type === "product") {
-        setProductCart((prev) =>
-          prev.map((item) =>
-            item.id === id ? { ...item, quantity: newQuantity } : item
-          )
-        );
-      } else {
-        setPackageCart((prev) =>
-          prev.map((item) =>
-            item.id === id ? { ...item, quantity: newQuantity } : item
-          )
-        );
-      }
-      setUpdating((prev) => ({ ...prev, [`${type}-${id}`]: false }));
-    }, 500);
+    if (type === "product") {
+      setProductCart((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, quantity: newQuantity } : item
+        )
+      );
+    } else {
+      setPackageCart((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, quantity: newQuantity } : item
+        )
+      );
+    }
   };
 
-  // Remove item function
-  const removeItem = (type, id) => {
+  const removeItem = async (type, id) => {
+    const itemExists =
+      type === "product"
+        ? productCart.some((item) => item.id === id)
+        : packageCart.some((item) => item.id === id);
+
+    if (!itemExists) {
+      setError("Item not found in cart");
+      return;
+    }
+
     setUpdating((prev) => ({ ...prev, [`${type}-${id}`]: true }));
 
-    setTimeout(() => {
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/cart/${id}`, {
+        method: "DELETE",
+        headers: getHeaders(),
+        body: JSON.stringify({
+          user_id: userId,
+        }),
+      });
+
+      if (!response.ok) {
+        let errorMessage = "Failed to remove item from cart";
+
+        const contentType = response.headers.get("content-type");
+
+        if (contentType && contentType.includes("application/json")) {
+          try {
+            const errorData = await response.json();
+
+            switch (errorData.error_code) {
+              case "ITEM_NOT_FOUND":
+                errorMessage = "This item is no longer in your cart";
+                if (type === "product") {
+                  setProductCart((prev) =>
+                    prev.filter((item) => item.id !== id)
+                  );
+                } else {
+                  setPackageCart((prev) => prev.filter((item) => item.id !== id));
+                }
+                setError(null);
+                return;
+
+              case "PERMISSION_DENIED":
+                errorMessage = "You do not have permission to remove this item";
+                break;
+
+              case "USER_ID_REQUIRED":
+                errorMessage = "User ID is required to remove items";
+                break;
+
+              default:
+                errorMessage = errorData.message || errorMessage;
+            }
+          } catch (parseError) {
+            console.error("Error parsing JSON response:", parseError);
+
+            switch (response.status) {
+              case 400:
+                errorMessage = "Invalid request. Please try again.";
+                break;
+              case 403:
+                errorMessage =
+                  "You do not have permission to remove this item.";
+                break;
+              case 404:
+                errorMessage =
+                  "Item not found in cart. It may have been already removed.";
+                if (type === "product") {
+                  setProductCart((prev) =>
+                    prev.filter((item) => item.id !== id)
+                  );
+                } else {
+                  setPackageCart((prev) => prev.filter((item) => item.id !== id));
+                }
+                setError(null);
+                return;
+
+              case 500:
+                errorMessage = "Server error. Please try again later.";
+                break;
+              default:
+                errorMessage = `Error ${response.status}: ${response.statusText}`;
+            }
+          }
+        } else {
+          const textResponse = await response.text();
+          console.error("Non-JSON response:", textResponse);
+
+          switch (response.status) {
+            case 404:
+              errorMessage =
+                "Item not found in cart. It may have been already removed.";
+              if (type === "product") {
+                setProductCart((prev) => prev.filter((item) => item.id !== id));
+              } else {
+                setPackageCart((prev) => prev.filter((item) => item.id !== id));
+              }
+              setError(null);
+              return;
+            case 500:
+              errorMessage = "Server error. Please try again later.";
+              break;
+            default:
+              errorMessage = `Server returned ${response.status}: ${response.statusText}`;
+          }
+        }
+
+        console.error("Remove item error:", {
+          status: response.status,
+          statusText: response.statusText,
+          message: errorMessage,
+          contentType: contentType,
+        });
+
+        throw new Error(errorMessage);
+      }
+
+      const contentType = response.headers.get("content-type");
+      let result = null;
+
+      if (contentType && contentType.includes("application/json")) {
+        try {
+          result = await response.json();
+          console.log("Item removed successfully:", result.message);
+        } catch (parseError) {
+          console.warn(
+            "Could not parse success response as JSON, but operation succeeded"
+          );
+        }
+      }
+
       if (type === "product") {
         setProductCart((prev) => prev.filter((item) => item.id !== id));
       } else {
         setPackageCart((prev) => prev.filter((item) => item.id !== id));
       }
+
+      setError(null);
+    } catch (error) {
+      console.error("Error removing item:", error);
+
+      if (error.name === "TypeError" && error.message.includes("fetch")) {
+        setError("Network error. Please check your connection and try again.");
+      } else if (error.message.includes("JSON")) {
+        setError(
+          "Server response error. The item may have been removed successfully."
+        );
+        setTimeout(() => {
+          refreshCart();
+        }, 1000);
+      } else {
+        setError(
+          error.message || "Failed to remove item from cart. Please try again."
+        );
+      }
+    } finally {
       setUpdating((prev) => ({ ...prev, [`${type}-${id}`]: false }));
-    }, 500);
+    }
   };
 
-  // Apply promo function
   const applyPromo = () => {
     if (promoCode.toLowerCase() === "save20") {
       setPromoApplied(true);
@@ -179,24 +380,20 @@ const CartPage = () => {
     }
   };
 
-  // Calculate totals
   const productTotal = productCart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (sum, item) => sum + (item.price || 0) * item.quantity,
     0
   );
   const packageTotal = packageCart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (sum, item) => sum + (item.price || 0) * item.quantity,
     0
   );
   const durationPrice =
-    (selectedDuration &&
-      durations.find((d) => d.id === selectedDuration)?.price) ||
-    0;
+    durations.find((d) => d.id === selectedDuration)?.price || 0;
   const subtotal = productTotal + packageTotal + durationPrice;
   const discountAmount = subtotal * (discount / 100);
   const total = subtotal - discountAmount;
 
-  // Get line status for each connection
   const getLineStatus = (stepIndex) => {
     if (stepIndex >= steps.length - 1) return "inactive";
 
@@ -209,7 +406,6 @@ const CartPage = () => {
     return "inactive";
   };
 
-  // Progress Step Component
   const ProgressStep = ({
     step,
     isActive,
@@ -264,12 +460,10 @@ const CartPage = () => {
         </div>
       </div>
 
-      {/* Connection Line */}
       {index < steps.length - 1 && (
         <div className="absolute top-6 md:top-8 left-1/2 w-full h-1 flex items-center z-0">
           <div className="w-full relative">
             <div className="w-full h-0.5 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full"></div>
-
             <div
               className={`absolute top-0 h-0.5 rounded-full transition-all duration-700 ease-in-out ${
                 getLineStatus(index) === "completed"
@@ -285,7 +479,6 @@ const CartPage = () => {
                 </div>
               )}
             </div>
-
             {getLineStatus(index) === "completed" && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-1 h-1 bg-green-300 rounded-full opacity-60"></div>
@@ -297,7 +490,6 @@ const CartPage = () => {
     </div>
   );
 
-  // Cart Item Component
   const CartItem = ({ item, type, showFeatures = false }) => {
     const isUpdating = updating[`${type}-${item.id}`];
 
@@ -308,7 +500,6 @@ const CartPage = () => {
             <Loader className="w-6 h-6 animate-spin text-blue-500" />
           </div>
         )}
-
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           {item.image && (
             <div className="relative group">
@@ -316,19 +507,21 @@ const CartPage = () => {
                 src={item.image}
                 alt={item.name}
                 className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-xl border border-blue-200/50 shadow-md group-hover:scale-105 transition-transform duration-300"
+                onError={(e) => {
+                  e.target.src =
+                    "https://via.placeholder.com/80x80?text=No+Image";
+                }}
               />
               <div className="absolute inset-0 bg-blue-500/20 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300"></div>
             </div>
           )}
-
           <div className="flex-grow space-y-2">
             <h3 className="font-semibold text-base md:text-lg text-gray-800">
               {item.name}
             </h3>
             <p className="text-blue-600 font-bold text-lg">
-              ${parseFloat(item.price).toFixed(2)}
+              ${(item.price || 0).toFixed(2)}
             </p>
-
             {showFeatures && item.features && item.features.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {item.features.map((feature, idx) => (
@@ -341,11 +534,10 @@ const CartPage = () => {
                 ))}
               </div>
             )}
-
             <div className="flex items-center gap-2">
               <button
                 onClick={() => updateQuantity(type, item.id, item.quantity - 1)}
-                disabled={isUpdating || item.quantity <= 1}
+                disabled={item.quantity <= 1}
                 className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-gradient-to-r from-blue-100 to-blue-200 hover:from-blue-200 hover:to-blue-300 text-blue-600 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Minus className="w-3 h-3 md:w-4 md:h-4" />
@@ -355,17 +547,15 @@ const CartPage = () => {
               </span>
               <button
                 onClick={() => updateQuantity(type, item.id, item.quantity + 1)}
-                disabled={isUpdating}
                 className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-gradient-to-r from-blue-100 to-blue-200 hover:from-blue-200 hover:to-blue-300 text-blue-600 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Plus className="w-3 h-3 md:w-4 md:h-4" />
               </button>
             </div>
           </div>
-
           <div className="flex flex-col items-end gap-3">
             <span className="text-lg md:text-xl font-bold text-gray-800">
-              ${(parseFloat(item.price) * item.quantity).toFixed(2)}
+              ${((item.price || 0) * item.quantity).toFixed(2)}
             </span>
             <button
               onClick={() => removeItem(type, item.id)}
@@ -381,7 +571,6 @@ const CartPage = () => {
     );
   };
 
-  // Step Content Components
   const StepContent = () => {
     const contentClass =
       "bg-gradient-to-br from-white via-blue-50/30 to-blue-100/20 backdrop-blur-sm rounded-2xl border border-blue-200/50 shadow-[0_8px_32px_rgba(59,130,246,0.12)] hover:shadow-[0_12px_40px_rgba(59,130,246,0.18)] transition-all duration-300";
@@ -390,14 +579,34 @@ const CartPage = () => {
       case 1:
         return (
           <div className="space-y-6">
-            {/* Products */}
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-800">
+                  Your Cart Items
+                </h2>
+                {userId && (
+                  <p className="text-sm text-gray-500">User ID: {userId}</p>
+                )}
+              </div>
+              <button
+                onClick={refreshCart}
+                disabled={loading}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg transition-all duration-200 disabled:opacity-50"
+              >
+                <RefreshCw
+                  className={`w-4 h-4 ${loading ? "animate-spin" : ""}`}
+                />
+                <span className="text-sm">Refresh</span>
+              </button>
+            </div>
+
             <div className={contentClass}>
               <div className="bg-gradient-to-r from-blue-100/80 to-indigo-100/80 backdrop-blur-sm p-4 border-b border-blue-200/30 rounded-t-2xl">
                 <h2 className="text-lg md:text-xl font-semibold text-gray-800 flex items-center gap-3">
                   <div className="p-2 bg-blue-500/10 rounded-lg">
                     <ShoppingCart className="w-5 h-5 text-blue-600" />
                   </div>
-                  Products
+                  Products ({productCart.length})
                 </h2>
               </div>
               <div className="divide-y divide-blue-100/50">
@@ -414,14 +623,13 @@ const CartPage = () => {
               </div>
             </div>
 
-            {/* Packages */}
             <div className={contentClass}>
               <div className="bg-gradient-to-r from-blue-100/80 to-indigo-100/80 backdrop-blur-sm p-4 border-b border-blue-200/30 rounded-t-2xl">
                 <h2 className="text-lg md:text-xl font-semibold text-gray-800 flex items-center gap-3">
                   <div className="p-2 bg-blue-500/10 rounded-lg">
                     <Package className="w-5 h-5 text-blue-600" />
                   </div>
-                  Packages
+                  Packages ({packageCart.length})
                 </h2>
               </div>
               <div className="divide-y divide-blue-100/50">
@@ -498,17 +706,14 @@ const CartPage = () => {
                             </span>
                           )}
                         </div>
-
                         <div className="text-3xl font-bold text-blue-600">
-                          ${duration.price.toFixed(2)}
+                          ${(duration.price || 0).toFixed(2)}
                         </div>
-
                         {duration.value && (
                           <div className="text-sm text-gray-600">
                             {duration.value}
                           </div>
                         )}
-
                         {duration.discount && (
                           <div className="text-sm text-green-600 font-medium bg-green-50 py-1 px-3 rounded-full">
                             {duration.discount}
@@ -531,36 +736,38 @@ const CartPage = () => {
                 <div className="p-2 bg-blue-500/10 rounded-lg">
                   <Tag className="w-5 h-5 text-blue-600" />
                 </div>
-                Promo Code & Options
+                Select Table Number
               </h2>
             </div>
-            <div className="p-6 space-y-6">
-              <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <input
-                    type="text"
-                    value={promoCode}
-                    onChange={(e) => setPromoCode(e.target.value)}
-                    placeholder="Enter promo code (try: SAVE20)"
-                    className="flex-1 px-4 py-3 rounded-xl border border-blue-200/50 bg-white/70 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200 text-base"
-                  />
-                  <button
-                    onClick={applyPromo}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg whitespace-nowrap"
-                  >
-                    Apply Code
-                  </button>
+            <div className="p-6">
+              {loading ? (
+                <div className="flex items-center justify-center p-8">
+                  <Loader className="w-8 h-8 animate-spin text-blue-500" />
+                  <span className="ml-3 text-gray-600">
+                    Loading table numbers...
+                  </span>
                 </div>
-
-                {promoApplied && (
-                  <div className="flex items-center gap-2 p-4 bg-green-50/80 border border-green-200/50 rounded-xl text-green-700">
-                    <Check className="w-5 h-5" />
-                    <span>
-                      Promo code applied successfully! You saved {discount}%
-                    </span>
-                  </div>
-                )}
-              </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  {tableNumbers.map((tableNumber) => (
+                    <div
+                      key={tableNumber.id}
+                      onClick={() => setSelectedTableNumber(tableNumber.id)}
+                      className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 transform hover:scale-105 ${
+                        selectedTableNumber === tableNumber.id
+                          ? "bg-gradient-to-br from-blue-100 to-indigo-100 border-blue-400 shadow-lg shadow-blue-200/50"
+                          : "bg-white/70 border-blue-200/50 hover:bg-blue-50/50 shadow-md hover:shadow-lg"
+                      }`}
+                    >
+                      <div className="text-center space-y-2">
+                        <span className="font-bold text-lg text-gray-800">
+                          Table {tableNumber.number}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         );
@@ -568,7 +775,6 @@ const CartPage = () => {
       case 4:
         return (
           <div className="space-y-6">
-            {/* Order Summary */}
             <div className={contentClass}>
               <div className="bg-gradient-to-r from-blue-100/80 to-indigo-100/80 backdrop-blur-sm p-4 border-b border-blue-200/30 rounded-t-2xl">
                 <h2 className="text-lg md:text-xl font-semibold text-gray-800 flex items-center gap-3">
@@ -579,37 +785,43 @@ const CartPage = () => {
                 </h2>
               </div>
               <div className="p-6 space-y-6">
-                {/* Products Summary */}
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-gray-800 border-b border-blue-100 pb-2">
-                    Products
-                  </h3>
-                  {productCart.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex justify-between items-center py-2"
-                    >
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-10 h-10 rounded-lg"
-                        />
-                        <div>
-                          <div className="font-medium text-sm">{item.name}</div>
-                          <div className="text-xs text-gray-500">
-                            Qty: {item.quantity}
+                {productCart.length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-gray-800 border-b border-blue-100 pb-2">
+                      Products
+                    </h3>
+                    {productCart.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex justify-between items-center py-2"
+                      >
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-10 h-10 rounded-lg"
+                            onError={(e) => {
+                              e.target.src =
+                                "https://via.placeholder.com/40x40?text=No+Image";
+                            }}
+                          />
+                          <div>
+                            <div className="font-medium text-sm">
+                              {item.name}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              Qty: {item.quantity}
+                            </div>
                           </div>
                         </div>
+                        <div className="font-semibold">
+                          ${((item.price || 0) * item.quantity).toFixed(2)}
+                        </div>
                       </div>
-                      <div className="font-semibold">
-                        ${(item.price * item.quantity).toFixed(2)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
 
-                {/* Packages Summary */}
                 {packageCart.length > 0 && (
                   <div className="space-y-3">
                     <h3 className="font-semibold text-gray-800 border-b border-blue-100 pb-2">
@@ -625,6 +837,10 @@ const CartPage = () => {
                             src={item.image}
                             alt={item.name}
                             className="w-10 h-10 rounded-lg"
+                            onError={(e) => {
+                              e.target.src =
+                                "https://via.placeholder.com/40x40?text=No+Image";
+                            }}
                           />
                           <div>
                             <div className="font-medium text-sm">
@@ -636,14 +852,13 @@ const CartPage = () => {
                           </div>
                         </div>
                         <div className="font-semibold">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          ${((item.price || 0) * item.quantity).toFixed(2)}
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
 
-                {/* Duration Summary */}
                 {selectedDuration && (
                   <div className="space-y-3">
                     <h3 className="font-semibold text-gray-800 border-b border-blue-100 pb-2">
@@ -665,26 +880,47 @@ const CartPage = () => {
                         </div>
                       </div>
                       <div className="font-semibold">
-                        ${durationPrice.toFixed(2)}
+                        $
+                        {(
+                          durations.find((d) => d.id === selectedDuration)
+                            ?.price || 0
+                        ).toFixed(2)}
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* Price Breakdown */}
+                {selectedTableNumber && (
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-gray-800 border-b border-blue-100 pb-2">
+                      Table Number
+                    </h3>
+                    <div className="flex justify-between items-center py-2">
+                      <div>
+                        <div className="font-medium text-sm">
+                          Table{" "}
+                          {
+                            tableNumbers.find(
+                              (t) => t.id === selectedTableNumber
+                            )?.number
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-3 pt-4 border-t border-blue-200/50">
                   <div className="flex justify-between text-gray-600">
                     <span>Subtotal</span>
                     <span>${subtotal.toFixed(2)}</span>
                   </div>
-
                   {promoApplied && (
                     <div className="flex justify-between text-green-600 font-medium">
                       <span>Discount ({discount}%)</span>
                       <span>-${discountAmount.toFixed(2)}</span>
                     </div>
                   )}
-
                   <div className="flex justify-between text-xl font-bold text-gray-800 pt-3 border-t border-blue-200/50">
                     <span>Total</span>
                     <span className="text-blue-600">${total.toFixed(2)}</span>
@@ -700,7 +936,7 @@ const CartPage = () => {
     }
   };
 
-  if (loading && currentStep === 2) {
+  if (loading && currentStep <= 1) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50/30 flex items-center justify-center">
         <div className="text-center">
@@ -711,10 +947,29 @@ const CartPage = () => {
     );
   }
 
+  if (!userId) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50/30 flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">
+            User ID Required
+          </h2>
+          <p className="text-gray-600 mb-4">Please log in to view your cart.</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50/30">
       <div className="container mx-auto px-4 py-6 md:py-8 max-w-6xl">
-        {/* Header */}
         <div className="text-center mb-8 md:mb-12">
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-4">
             Shopping Cart
@@ -724,7 +979,6 @@ const CartPage = () => {
           </p>
         </div>
 
-        {/* Progress Steps */}
         <div className="mb-8 md:mb-12">
           <div className="flex justify-between items-start max-w-4xl mx-auto relative">
             {steps.map((step, index) => (
@@ -740,26 +994,23 @@ const CartPage = () => {
           </div>
         </div>
 
-        {/* Error Alert */}
         {error && (
           <div className="mb-6 p-4 bg-red-50/80 border border-red-200/50 rounded-xl text-red-700 flex items-center gap-3">
-            <AlertCircle className="w-5 h-5" />
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
             <span className="flex-grow">{error}</span>
             <button
               onClick={() => setError(null)}
-              className="text-red-500 hover:text-red-700"
+              className="text-red-500 hover:text-red-700 flex-shrink-0"
             >
               <Minus className="w-4 h-4" />
             </button>
           </div>
         )}
 
-        {/* Step Content */}
         <div className="mb-8">
           <StepContent />
         </div>
 
-        {/* Navigation Buttons */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 sticky bottom-4 bg-gradient-to-r from-white/90 to-blue-50/90 backdrop-blur-sm p-4 rounded-2xl border border-blue-200/50 shadow-lg">
           <button
             onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}

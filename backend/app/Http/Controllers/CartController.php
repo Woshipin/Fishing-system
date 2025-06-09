@@ -276,113 +276,147 @@ class CartController extends Controller
 
     // 获取购物车项目
     public function getCartItems(Request $request)
-{
-    try {
-        // Retrieve the user ID from the request or session
-        $userId = $request->input('user_id');
-
-        // Validate the user ID
-        if (!$userId) {
-            return response()->json([
-                'error' => 'User ID not provided',
-                'message' => 'You need to provide a user ID to view cart items.'
-            ], 400);
-        }
-
-        // Fetch cart items for the user
-        $cartItems = Cart::with(['product', 'package', 'category'])
-            ->where('user_id', $userId)
-            ->get();
-
-        if ($cartItems->isEmpty()) {
-            return response()->json([
-                'productCart' => [],
-                'packageCart' => [],
-            ]);
-        }
-
-        // Separate products and packages
-        $productCart = $cartItems->filter(function ($item) {
-            return !is_null($item->product_id);
-        })->map(function ($item) {
-            return [
-                'id' => $item->id,
-                'name' => $item->name,
-                'price' => (float) $item->price,
-                'quantity' => $item->quantity,
-                'image' => $item->image,
-                'slug' => $item->slug,
-                'category' => $item->category,
-                'product' => $item->product,
-            ];
-        })->values();
-
-        $packageCart = $cartItems->filter(function ($item) {
-            return !is_null($item->package_id);
-        })->map(function ($item) {
-            // Ensure features is treated as an array and not decoded if already an array
-            $features = is_string($item->features) ? json_decode($item->features, true) : $item->features;
-
-            return [
-                'id' => $item->id,
-                'name' => $item->name,
-                'price' => (float) $item->price,
-                'quantity' => $item->quantity,
-                'features' => $features,
-                'slug' => $item->slug,
-                'package' => $item->package,
-            ];
-        })->values();
-
-        return response()->json([
-            'productCart' => $productCart,
-            'packageCart' => $packageCart,
-        ]);
-
-    } catch (\Exception $e) {
-        // Log the error for debugging
-        \Log::error('Error fetching cart items: ' . $e->getMessage());
-
-        return response()->json([
-            'error' => 'Failed to fetch cart items',
-            'message' => $e->getMessage()
-        ], 500);
-    }
-}
-
-
-    // 更新购物车项目数量
-    public function updateCartItem(Request $request, $id)
     {
-        $request->validate([
-            'quantity' => 'required|integer|min:1',
-        ]);
+        try {
+            // Retrieve the user ID from the request or session
+            $userId = $request->input('user_id');
 
-        $cartItem = Cart::where('user_id', Auth::id())
-            ->where('id', $id)
-            ->firstOrFail();
+            // Validate the user ID
+            if (! $userId) {
+                return response()->json([
+                    'error'   => 'User ID not provided',
+                    'message' => 'You need to provide a user ID to view cart items.',
+                ], 400);
+            }
 
-        $cartItem->quantity = $request->quantity;
-        $cartItem->save();
+            // Fetch cart items for the user with necessary relationships
+            $cartItems = Cart::with(['product', 'package', 'category'])
+                ->where('user_id', $userId)
+                ->get();
 
-        return response()->json([
-            'message'  => 'Cart item updated successfully',
-            'cartItem' => $cartItem,
-        ]);
+            if ($cartItems->isEmpty()) {
+                return response()->json([
+                    'productCart' => [],
+                    'packageCart' => [],
+                ]);
+            }
+
+            // Separate products and packages
+            $productCart = $cartItems->filter(function ($item) {
+                return ! is_null($item->product_id);
+            })->map(function ($item) {
+                return [
+                    'id'       => $item->id,
+                    'name'     => $item->name,
+                    'price'    => (float) $item->price,
+                    'quantity' => $item->quantity,
+                    'image'    => $item->image, // Use the image field directly from the carts table
+                    'slug'     => $item->slug,
+                    'category' => $item->category,
+                    'product'  => $item->product,
+                ];
+            })->values();
+
+            $packageCart = $cartItems->filter(function ($item) {
+                return ! is_null($item->package_id);
+            })->map(function ($item) {
+                // Ensure features is treated as an array and not decoded if already an array
+                $features = is_string($item->features) ? json_decode($item->features, true) : $item->features;
+
+                return [
+                    'id'       => $item->id,
+                    'name'     => $item->name,
+                    'price'    => (float) $item->price,
+                    'quantity' => $item->quantity,
+                    'image'    => $item->image, // Use the image field directly from the carts table
+                    'features' => $features,
+                    'slug'     => $item->slug,
+                    'package'  => $item->package,
+                ];
+            })->values();
+
+            return response()->json([
+                'productCart' => $productCart,
+                'packageCart' => $packageCart,
+            ]);
+
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            \Log::error('Error fetching cart items: ' . $e->getMessage());
+
+            return response()->json([
+                'error'   => 'Failed to fetch cart items',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     // 删除购物车项目
-    public function removeCartItem($id)
+    public function removeCartItem(Request $request, $id)
     {
-        $cartItem = Cart::where('user_id', Auth::id())
-            ->where('id', $id)
-            ->firstOrFail();
+        try {
+            // 从请求中获取 user_id
+            $userId = $request->input('user_id');
 
-        $cartItem->delete();
+            // 验证 user_id 是否提供
+            if (! $userId) {
+                return response()->json([
+                    'error'      => 'User ID not provided',
+                    'message'    => 'You need to provide a user ID to remove cart items.',
+                    'error_code' => 'USER_ID_REQUIRED',
+                ], 400);
+            }
 
-        return response()->json([
-            'message' => 'Cart item removed successfully',
-        ]);
+            \Log::info("Attempting to remove cart item with ID: {$id} for user: {$userId}");
+
+            // 查找购物车项目
+            $cartItem = Cart::where('user_id', $userId)
+                ->where('id', $id)
+                ->first();
+
+            if (! $cartItem) {
+                \Log::warning("Cart item not found - ID: {$id}, User: {$userId}");
+
+                // 检查该ID是否存在（不考虑用户）
+                $existsAnywhere = Cart::where('id', $id)->exists();
+
+                if ($existsAnywhere) {
+                    return response()->json([
+                        'message'    => 'You do not have permission to remove this cart item',
+                        'error_code' => 'PERMISSION_DENIED',
+                    ], 403);
+                } else {
+                    return response()->json([
+                        'message'    => 'Cart item not found',
+                        'error_code' => 'ITEM_NOT_FOUND',
+                    ], 404);
+                }
+            }
+
+            // 删除项目
+            $cartItem->delete();
+
+            \Log::info("Successfully removed cart item with ID: {$id} for user: {$userId}");
+
+            return response()->json([
+                'message' => 'Cart item removed successfully',
+                'item_id' => $id,
+                'user_id' => $userId,
+            ], 200); // 明确指定状态码
+
+        } catch (\Exception $e) {
+            \Log::error('Error removing cart item: ' . $e->getMessage(), [
+                'cart_id' => $id,
+                'user_id' => $request->input('user_id'),
+                'trace'   => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'message'    => 'An error occurred while removing the cart item',
+                'error'      => 'Server error',
+                'error_code' => 'SERVER_ERROR',
+            ], 500);
+        }
     }
 
     // 清空购物车
