@@ -1,5 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronDown, ChevronUp, ShoppingCart, Package, Clock, Trash2, Plus, Minus, Check, Tag, AlertCircle, Loader, ArrowRight, ArrowLeft, Eye } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import {
+  ChevronDown,
+  ChevronUp,
+  ShoppingCart,
+  Package,
+  Clock,
+  Trash2,
+  Plus,
+  Minus,
+  Check,
+  Tag,
+  AlertCircle,
+  Loader,
+  ArrowRight,
+  ArrowLeft,
+  Eye,
+} from "lucide-react";
 
 const CartPage = () => {
   const [productCart, setProductCart] = useState([]);
@@ -15,55 +31,80 @@ const CartPage = () => {
   const [error, setError] = useState(null);
   const [updating, setUpdating] = useState({});
   const [currentStep, setCurrentStep] = useState(1);
+  const [userId, setUserId] = useState(null);
 
-  // Mock data for demo
   useEffect(() => {
-    // Simulate loading
-    setTimeout(() => {
-      setProductCart([
-        {
-          id: 1,
-          name: "Premium Wireless Headphones",
-          price: 199.99,
-          quantity: 1,
-          image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=150&h=150&fit=crop&crop=center"
-        },
-        {
-          id: 2,
-          name: "Smart Watch Series 8",
-          price: 399.99,
-          quantity: 2,
-          image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=150&h=150&fit=crop&crop=center"
-        }
-      ]);
-      
-      setPackageCart([
-        {
-          id: 1,
-          name: "Premium Support Package",
-          price: 49.99,
-          quantity: 1,
-          features: ["24/7 Support", "Priority Queue", "Advanced Analytics"],
-          image: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=150&h=150&fit=crop&crop=center"
-        }
-      ]);
-      
-      setDurations([
-        { id: 1, name: "1 Month", price: 9.99, value: "Monthly billing", popular: false },
-        { id: 2, name: "3 Months", price: 24.99, value: "Save 17%", popular: true, discount: "Best Value" },
-        { id: 3, name: "12 Months", price: 79.99, value: "Save 33%", popular: false, discount: "Maximum Savings" }
-      ]);
-      
-      setSelectedDuration(2);
-      setLoading(false);
-    }, 1000);
+    const storedUserId = localStorage.getItem("userId");
+    setUserId(storedUserId);
+    console.log("User ID:", storedUserId);
   }, []);
 
+  useEffect(() => {
+    if (userId) {
+      fetchCartItems(userId);
+    }
+  }, [userId]);
+
+  const fetchCartItems = async (userId) => {
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `http://127.0.0.1:8000/api/cart/items?user_id=${userId}`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Failed to fetch cart items:", errorData);
+        setError(
+          errorData.message || "Failed to fetch cart items. Please try again."
+        );
+        return;
+      }
+
+      const data = await response.json();
+      console.log("Fetched cart items:", data);
+
+      setProductCart(data.productCart || []);
+      setPackageCart(data.packageCart || []);
+    } catch (err) {
+      console.error("Error fetching cart items:", err);
+      setError("Failed to fetch cart items. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const steps = [
-    { number: 1, title: "Cart Items", icon: ShoppingCart, description: "Review your products and packages" },
-    { number: 2, title: "Duration", icon: Clock, description: "Choose subscription length" },
-    { number: 3, title: "Options", icon: Tag, description: "Apply promo codes and extras" },
-    { number: 4, title: "Review", icon: Eye, description: "Confirm your order" }
+    {
+      number: 1,
+      title: "Cart Items",
+      icon: ShoppingCart,
+      description: "Review your products and packages",
+    },
+    {
+      number: 2,
+      title: "Duration",
+      icon: Clock,
+      description: "Choose subscription length",
+    },
+    {
+      number: 3,
+      title: "Options",
+      icon: Tag,
+      description: "Apply promo codes and extras",
+    },
+    {
+      number: 4,
+      title: "Review",
+      icon: Eye,
+      description: "Confirm your order",
+    },
   ];
 
   // Step validation
@@ -92,40 +133,44 @@ const CartPage = () => {
   // Update quantity function
   const updateQuantity = (type, id, newQuantity) => {
     if (newQuantity < 1) return;
-    
-    setUpdating(prev => ({ ...prev, [`${type}-${id}`]: true }));
-    
+
+    setUpdating((prev) => ({ ...prev, [`${type}-${id}`]: true }));
+
     setTimeout(() => {
-      if (type === 'product') {
-        setProductCart(prev => prev.map(item => 
-          item.id === id ? { ...item, quantity: newQuantity } : item
-        ));
+      if (type === "product") {
+        setProductCart((prev) =>
+          prev.map((item) =>
+            item.id === id ? { ...item, quantity: newQuantity } : item
+          )
+        );
       } else {
-        setPackageCart(prev => prev.map(item => 
-          item.id === id ? { ...item, quantity: newQuantity } : item
-        ));
+        setPackageCart((prev) =>
+          prev.map((item) =>
+            item.id === id ? { ...item, quantity: newQuantity } : item
+          )
+        );
       }
-      setUpdating(prev => ({ ...prev, [`${type}-${id}`]: false }));
+      setUpdating((prev) => ({ ...prev, [`${type}-${id}`]: false }));
     }, 500);
   };
 
   // Remove item function
   const removeItem = (type, id) => {
-    setUpdating(prev => ({ ...prev, [`${type}-${id}`]: true }));
-    
+    setUpdating((prev) => ({ ...prev, [`${type}-${id}`]: true }));
+
     setTimeout(() => {
-      if (type === 'product') {
-        setProductCart(prev => prev.filter(item => item.id !== id));
+      if (type === "product") {
+        setProductCart((prev) => prev.filter((item) => item.id !== id));
       } else {
-        setPackageCart(prev => prev.filter(item => item.id !== id));
+        setPackageCart((prev) => prev.filter((item) => item.id !== id));
       }
-      setUpdating(prev => ({ ...prev, [`${type}-${id}`]: false }));
+      setUpdating((prev) => ({ ...prev, [`${type}-${id}`]: false }));
     }, 500);
   };
 
   // Apply promo function
   const applyPromo = () => {
-    if (promoCode.toLowerCase() === 'save20') {
+    if (promoCode.toLowerCase() === "save20") {
       setPromoApplied(true);
       setDiscount(20);
     } else {
@@ -135,59 +180,82 @@ const CartPage = () => {
   };
 
   // Calculate totals
-  const productTotal = productCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const packageTotal = packageCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const durationPrice = selectedDuration && durations.find(d => d.id === selectedDuration)?.price || 0;
+  const productTotal = productCart.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+  const packageTotal = packageCart.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+  const durationPrice =
+    (selectedDuration &&
+      durations.find((d) => d.id === selectedDuration)?.price) ||
+    0;
   const subtotal = productTotal + packageTotal + durationPrice;
   const discountAmount = subtotal * (discount / 100);
   const total = subtotal - discountAmount;
 
-  // Get line status for each connection - FIXED to show full lines
+  // Get line status for each connection
   const getLineStatus = (stepIndex) => {
-    if (stepIndex >= steps.length - 1) return 'inactive';
-    
+    if (stepIndex >= steps.length - 1) return "inactive";
+
     const stepNumber = stepIndex + 1;
-    
-    // If current step is greater than this step, line should be completed
-    if (currentStep > stepNumber) return 'completed';
-    
-    // If current step equals this step, show active line
-    if (currentStep === stepNumber) return 'active';
-    
-    return 'inactive';
+
+    if (currentStep > stepNumber) return "completed";
+
+    if (currentStep === stepNumber) return "active";
+
+    return "inactive";
   };
 
   // Progress Step Component
-  const ProgressStep = ({ step, isActive, isCompleted, isClickable, index }) => (
+  const ProgressStep = ({
+    step,
+    isActive,
+    isCompleted,
+    isClickable,
+    index,
+  }) => (
     <div className="relative flex-1 flex flex-col items-center">
-      <div 
+      <div
         className={`flex flex-col items-center cursor-pointer transition-all duration-300 z-10 ${
-          isClickable ? 'hover:scale-105' : 'cursor-not-allowed opacity-50'
+          isClickable ? "hover:scale-105" : "cursor-not-allowed opacity-50"
         }`}
         onClick={() => isClickable && setCurrentStep(step.number)}
       >
-        <div className={`relative w-12 h-12 md:w-16 md:h-16 rounded-full border-2 flex items-center justify-center mb-2 transition-all duration-300 ${
-          isCompleted 
-            ? 'bg-gradient-to-r from-green-400 to-green-500 border-green-400 shadow-lg shadow-green-200' 
-            : isActive 
-              ? 'bg-gradient-to-r from-blue-500 to-indigo-600 border-blue-400 shadow-lg shadow-blue-200' 
-              : 'bg-white border-gray-300 shadow-md'
-        }`}>
+        <div
+          className={`relative w-12 h-12 md:w-16 md:h-16 rounded-full border-2 flex items-center justify-center mb-2 transition-all duration-300 ${
+            isCompleted
+              ? "bg-gradient-to-r from-green-400 to-green-500 border-green-400 shadow-lg shadow-green-200"
+              : isActive
+              ? "bg-gradient-to-r from-blue-500 to-indigo-600 border-blue-400 shadow-lg shadow-blue-200"
+              : "bg-white border-gray-300 shadow-md"
+          }`}
+        >
           {isCompleted ? (
             <Check className="w-6 h-6 text-white" />
           ) : (
-            <step.icon className={`w-5 h-5 md:w-6 md:h-6 ${
-              isActive ? 'text-white' : 'text-gray-400'
-            }`} />
+            <step.icon
+              className={`w-5 h-5 md:w-6 md:h-6 ${
+                isActive ? "text-white" : "text-gray-400"
+              }`}
+            />
           )}
           {isActive && (
             <div className="absolute inset-0 rounded-full border-2 border-blue-300 animate-pulse"></div>
           )}
         </div>
         <div className="text-center">
-          <div className={`font-semibold text-xs md:text-sm ${
-            isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-400'
-          }`}>
+          <div
+            className={`font-semibold text-xs md:text-sm ${
+              isActive
+                ? "text-blue-600"
+                : isCompleted
+                ? "text-green-600"
+                : "text-gray-400"
+            }`}
+          >
             {step.title}
           </div>
           <div className="text-xs text-gray-500 mt-1 hidden md:block max-w-24">
@@ -195,34 +263,30 @@ const CartPage = () => {
           </div>
         </div>
       </div>
-      
-      {/* Connection Line - FIXED for full width */}
+
+      {/* Connection Line */}
       {index < steps.length - 1 && (
         <div className="absolute top-6 md:top-8 left-1/2 w-full h-1 flex items-center z-0">
           <div className="w-full relative">
-            {/* Base line */}
             <div className="w-full h-0.5 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full"></div>
-            
-            {/* Progress line - FIXED to show full width when completed */}
-            <div 
+
+            <div
               className={`absolute top-0 h-0.5 rounded-full transition-all duration-700 ease-in-out ${
-                getLineStatus(index) === 'completed' 
-                  ? 'w-full bg-gradient-to-r from-green-400 to-green-500 shadow-sm shadow-green-200' 
-                  : getLineStatus(index) === 'active'
-                    ? 'w-full bg-gradient-to-r from-blue-400 to-indigo-500 shadow-sm shadow-blue-200'
-                    : 'w-0 bg-gray-300'
+                getLineStatus(index) === "completed"
+                  ? "w-full bg-gradient-to-r from-green-400 to-green-500 shadow-sm shadow-green-200"
+                  : getLineStatus(index) === "active"
+                  ? "w-full bg-gradient-to-r from-blue-400 to-indigo-500 shadow-sm shadow-blue-200"
+                  : "w-0 bg-gray-300"
               }`}
             >
-              {/* Animated pulse dot for active line */}
-              {getLineStatus(index) === 'active' && (
+              {getLineStatus(index) === "active" && (
                 <div className="absolute right-0 top-1/2 transform -translate-y-1/2">
                   <div className="w-2 h-2 bg-white rounded-full shadow-lg animate-pulse border-2 border-blue-400"></div>
                 </div>
               )}
             </div>
-            
-            {/* Decorative dots for completed lines */}
-            {getLineStatus(index) === 'completed' && (
+
+            {getLineStatus(index) === "completed" && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-1 h-1 bg-green-300 rounded-full opacity-60"></div>
               </div>
@@ -236,7 +300,7 @@ const CartPage = () => {
   // Cart Item Component
   const CartItem = ({ item, type, showFeatures = false }) => {
     const isUpdating = updating[`${type}-${item.id}`];
-    
+
     return (
       <div className="p-4 md:p-6 hover:bg-blue-50/30 transition-all duration-300 border-b border-blue-100/50 last:border-b-0 relative rounded-lg">
         {isUpdating && (
@@ -244,33 +308,40 @@ const CartPage = () => {
             <Loader className="w-6 h-6 animate-spin text-blue-500" />
           </div>
         )}
-        
+
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           {item.image && (
             <div className="relative group">
-              <img 
-                src={item.image} 
+              <img
+                src={item.image}
                 alt={item.name}
                 className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-xl border border-blue-200/50 shadow-md group-hover:scale-105 transition-transform duration-300"
               />
               <div className="absolute inset-0 bg-blue-500/20 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300"></div>
             </div>
           )}
-          
+
           <div className="flex-grow space-y-2">
-            <h3 className="font-semibold text-base md:text-lg text-gray-800">{item.name}</h3>
-            <p className="text-blue-600 font-bold text-lg">${parseFloat(item.price).toFixed(2)}</p>
-            
+            <h3 className="font-semibold text-base md:text-lg text-gray-800">
+              {item.name}
+            </h3>
+            <p className="text-blue-600 font-bold text-lg">
+              ${parseFloat(item.price).toFixed(2)}
+            </p>
+
             {showFeatures && item.features && item.features.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {item.features.map((feature, idx) => (
-                  <span key={idx} className="px-2 py-1 bg-blue-100/70 text-blue-700 text-xs rounded-full border border-blue-200/50">
+                  <span
+                    key={idx}
+                    className="px-2 py-1 bg-blue-100/70 text-blue-700 text-xs rounded-full border border-blue-200/50"
+                  >
                     {feature}
                   </span>
                 ))}
               </div>
             )}
-            
+
             <div className="flex items-center gap-2">
               <button
                 onClick={() => updateQuantity(type, item.id, item.quantity - 1)}
@@ -291,7 +362,7 @@ const CartPage = () => {
               </button>
             </div>
           </div>
-          
+
           <div className="flex flex-col items-end gap-3">
             <span className="text-lg md:text-xl font-bold text-gray-800">
               ${(parseFloat(item.price) * item.quantity).toFixed(2)}
@@ -312,8 +383,9 @@ const CartPage = () => {
 
   // Step Content Components
   const StepContent = () => {
-    const contentClass = "bg-gradient-to-br from-white via-blue-50/30 to-blue-100/20 backdrop-blur-sm rounded-2xl border border-blue-200/50 shadow-[0_8px_32px_rgba(59,130,246,0.12)] hover:shadow-[0_12px_40px_rgba(59,130,246,0.18)] transition-all duration-300";
-    
+    const contentClass =
+      "bg-gradient-to-br from-white via-blue-50/30 to-blue-100/20 backdrop-blur-sm rounded-2xl border border-blue-200/50 shadow-[0_8px_32px_rgba(59,130,246,0.12)] hover:shadow-[0_12px_40px_rgba(59,130,246,0.18)] transition-all duration-300";
+
     switch (currentStep) {
       case 1:
         return (
@@ -335,7 +407,7 @@ const CartPage = () => {
                     <p>No products in cart</p>
                   </div>
                 ) : (
-                  productCart.map(item => (
+                  productCart.map((item) => (
                     <CartItem key={item.id} item={item} type="product" />
                   ))
                 )}
@@ -359,8 +431,13 @@ const CartPage = () => {
                     <p>No packages selected</p>
                   </div>
                 ) : (
-                  packageCart.map(item => (
-                    <CartItem key={item.id} item={item} type="package" showFeatures />
+                  packageCart.map((item) => (
+                    <CartItem
+                      key={item.id}
+                      item={item}
+                      type="package"
+                      showFeatures
+                    />
                   ))
                 )}
               </div>
@@ -383,43 +460,55 @@ const CartPage = () => {
               {loading ? (
                 <div className="flex items-center justify-center p-8">
                   <Loader className="w-8 h-8 animate-spin text-blue-500" />
-                  <span className="ml-3 text-gray-600">Loading durations...</span>
+                  <span className="ml-3 text-gray-600">
+                    Loading durations...
+                  </span>
                 </div>
               ) : (
                 <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
-                  {durations.map(duration => (
+                  {durations.map((duration) => (
                     <div
                       key={duration.id}
                       onClick={() => setSelectedDuration(duration.id)}
                       className={`p-4 md:p-6 rounded-2xl border-2 cursor-pointer transition-all duration-300 transform hover:scale-105 ${
                         selectedDuration === duration.id
-                          ? 'bg-gradient-to-br from-blue-100 to-indigo-100 border-blue-400 shadow-lg shadow-blue-200/50'
-                          : 'bg-white/70 border-blue-200/50 hover:bg-blue-50/50 shadow-md hover:shadow-lg'
+                          ? "bg-gradient-to-br from-blue-100 to-indigo-100 border-blue-400 shadow-lg shadow-blue-200/50"
+                          : "bg-white/70 border-blue-200/50 hover:bg-blue-50/50 shadow-md hover:shadow-lg"
                       }`}
                     >
                       <div className="text-center space-y-3">
                         <div className="flex items-center justify-center gap-2">
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                            selectedDuration === duration.id ? 'bg-blue-500 border-blue-500' : 'border-gray-300'
-                          }`}>
-                            {selectedDuration === duration.id && <Check className="w-3 h-3 text-white" />}
+                          <div
+                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                              selectedDuration === duration.id
+                                ? "bg-blue-500 border-blue-500"
+                                : "border-gray-300"
+                            }`}
+                          >
+                            {selectedDuration === duration.id && (
+                              <Check className="w-3 h-3 text-white" />
+                            )}
                           </div>
-                          <span className="font-bold text-lg text-gray-800">{duration.name}</span>
+                          <span className="font-bold text-lg text-gray-800">
+                            {duration.name}
+                          </span>
                           {duration.popular && (
                             <span className="px-2 py-1 bg-gradient-to-r from-orange-400 to-orange-500 text-white text-xs rounded-full">
                               Popular
                             </span>
                           )}
                         </div>
-                        
+
                         <div className="text-3xl font-bold text-blue-600">
                           ${duration.price.toFixed(2)}
                         </div>
-                        
+
                         {duration.value && (
-                          <div className="text-sm text-gray-600">{duration.value}</div>
+                          <div className="text-sm text-gray-600">
+                            {duration.value}
+                          </div>
                         )}
-                        
+
                         {duration.discount && (
                           <div className="text-sm text-green-600 font-medium bg-green-50 py-1 px-3 rounded-full">
                             {duration.discount}
@@ -462,11 +551,13 @@ const CartPage = () => {
                     Apply Code
                   </button>
                 </div>
-                
+
                 {promoApplied && (
                   <div className="flex items-center gap-2 p-4 bg-green-50/80 border border-green-200/50 rounded-xl text-green-700">
                     <Check className="w-5 h-5" />
-                    <span>Promo code applied successfully! You saved {discount}%</span>
+                    <span>
+                      Promo code applied successfully! You saved {discount}%
+                    </span>
                   </div>
                 )}
               </div>
@@ -490,17 +581,30 @@ const CartPage = () => {
               <div className="p-6 space-y-6">
                 {/* Products Summary */}
                 <div className="space-y-3">
-                  <h3 className="font-semibold text-gray-800 border-b border-blue-100 pb-2">Products</h3>
-                  {productCart.map(item => (
-                    <div key={item.id} className="flex justify-between items-center py-2">
+                  <h3 className="font-semibold text-gray-800 border-b border-blue-100 pb-2">
+                    Products
+                  </h3>
+                  {productCart.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex justify-between items-center py-2"
+                    >
                       <div className="flex items-center gap-3">
-                        <img src={item.image} alt={item.name} className="w-10 h-10 rounded-lg" />
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-10 h-10 rounded-lg"
+                        />
                         <div>
                           <div className="font-medium text-sm">{item.name}</div>
-                          <div className="text-xs text-gray-500">Qty: {item.quantity}</div>
+                          <div className="text-xs text-gray-500">
+                            Qty: {item.quantity}
+                          </div>
                         </div>
                       </div>
-                      <div className="font-semibold">${(item.price * item.quantity).toFixed(2)}</div>
+                      <div className="font-semibold">
+                        ${(item.price * item.quantity).toFixed(2)}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -508,17 +612,32 @@ const CartPage = () => {
                 {/* Packages Summary */}
                 {packageCart.length > 0 && (
                   <div className="space-y-3">
-                    <h3 className="font-semibold text-gray-800 border-b border-blue-100 pb-2">Packages</h3>
-                    {packageCart.map(item => (
-                      <div key={item.id} className="flex justify-between items-center py-2">
+                    <h3 className="font-semibold text-gray-800 border-b border-blue-100 pb-2">
+                      Packages
+                    </h3>
+                    {packageCart.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex justify-between items-center py-2"
+                      >
                         <div className="flex items-center gap-3">
-                          <img src={item.image} alt={item.name} className="w-10 h-10 rounded-lg" />
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-10 h-10 rounded-lg"
+                          />
                           <div>
-                            <div className="font-medium text-sm">{item.name}</div>
-                            <div className="text-xs text-gray-500">Qty: {item.quantity}</div>
+                            <div className="font-medium text-sm">
+                              {item.name}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              Qty: {item.quantity}
+                            </div>
                           </div>
                         </div>
-                        <div className="font-semibold">${(item.price * item.quantity).toFixed(2)}</div>
+                        <div className="font-semibold">
+                          ${(item.price * item.quantity).toFixed(2)}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -527,17 +646,27 @@ const CartPage = () => {
                 {/* Duration Summary */}
                 {selectedDuration && (
                   <div className="space-y-3">
-                    <h3 className="font-semibold text-gray-800 border-b border-blue-100 pb-2">Subscription</h3>
+                    <h3 className="font-semibold text-gray-800 border-b border-blue-100 pb-2">
+                      Subscription
+                    </h3>
                     <div className="flex justify-between items-center py-2">
                       <div>
                         <div className="font-medium text-sm">
-                          {durations.find(d => d.id === selectedDuration)?.name}
+                          {
+                            durations.find((d) => d.id === selectedDuration)
+                              ?.name
+                          }
                         </div>
                         <div className="text-xs text-gray-500">
-                          {durations.find(d => d.id === selectedDuration)?.value}
+                          {
+                            durations.find((d) => d.id === selectedDuration)
+                              ?.value
+                          }
                         </div>
                       </div>
-                      <div className="font-semibold">${durationPrice.toFixed(2)}</div>
+                      <div className="font-semibold">
+                        ${durationPrice.toFixed(2)}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -548,14 +677,14 @@ const CartPage = () => {
                     <span>Subtotal</span>
                     <span>${subtotal.toFixed(2)}</span>
                   </div>
-                  
+
                   {promoApplied && (
                     <div className="flex justify-between text-green-600 font-medium">
                       <span>Discount ({discount}%)</span>
                       <span>-${discountAmount.toFixed(2)}</span>
                     </div>
                   )}
-                  
+
                   <div className="flex justify-between text-xl font-bold text-gray-800 pt-3 border-t border-blue-200/50">
                     <span>Total</span>
                     <span className="text-blue-600">${total.toFixed(2)}</span>
@@ -590,7 +719,9 @@ const CartPage = () => {
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-4">
             Shopping Cart
           </h1>
-          <p className="text-gray-600 text-base md:text-lg">Complete your purchase in easy steps</p>
+          <p className="text-gray-600 text-base md:text-lg">
+            Complete your purchase in easy steps
+          </p>
         </div>
 
         {/* Progress Steps */}
@@ -614,7 +745,10 @@ const CartPage = () => {
           <div className="mb-6 p-4 bg-red-50/80 border border-red-200/50 rounded-xl text-red-700 flex items-center gap-3">
             <AlertCircle className="w-5 h-5" />
             <span className="flex-grow">{error}</span>
-            <button onClick={() => setError(null)} className="text-red-500 hover:text-red-700">
+            <button
+              onClick={() => setError(null)}
+              className="text-red-500 hover:text-red-700"
+            >
               <Minus className="w-4 h-4" />
             </button>
           </div>

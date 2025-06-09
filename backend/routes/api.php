@@ -45,6 +45,9 @@ Route::post('/cart/product', [CartController::class, 'addProductToCart']);
 // 添加包到购物车
 Route::post('/cart/package', [CartController::class, 'addPackageToCart']);
 
+// 获取购物车项目列表
+Route::get('/cart/items', [CartController::class, 'getCartItems']);
+
 // 删除购物车项目
 Route::delete('/cart/{id}', [CartController::class, 'removeCartItem']);
 

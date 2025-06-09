@@ -275,39 +275,62 @@ class CartController extends Controller
     }
 
     // 获取购物车项目
-    public function getCartItems()
-    {
+    public function getCartItems(Request $request)
+{
+    try {
+        // Retrieve the user ID from the request or session
+        $userId = $request->input('user_id');
+
+        // Validate the user ID
+        if (!$userId) {
+            return response()->json([
+                'error' => 'User ID not provided',
+                'message' => 'You need to provide a user ID to view cart items.'
+            ], 400);
+        }
+
+        // Fetch cart items for the user
         $cartItems = Cart::with(['product', 'package', 'category'])
-            ->where('user_id', Auth::id())
+            ->where('user_id', $userId)
             ->get();
 
-        // 分离产品和包
+        if ($cartItems->isEmpty()) {
+            return response()->json([
+                'productCart' => [],
+                'packageCart' => [],
+            ]);
+        }
+
+        // Separate products and packages
         $productCart = $cartItems->filter(function ($item) {
-            return ! is_null($item->product_id);
+            return !is_null($item->product_id);
         })->map(function ($item) {
             return [
-                'id'       => $item->id,
-                'name'     => $item->name,
-                'price'    => (float) $item->price,
+                'id' => $item->id,
+                'name' => $item->name,
+                'price' => (float) $item->price,
                 'quantity' => $item->quantity,
-                'image'    => $item->image,
-                'slug'     => $item->slug,
+                'image' => $item->image,
+                'slug' => $item->slug,
                 'category' => $item->category,
-                'product'  => $item->product,
+                'product' => $item->product,
             ];
         })->values();
 
         $packageCart = $cartItems->filter(function ($item) {
-            return ! is_null($item->package_id);
+            return !is_null($item->package_id);
         })->map(function ($item) {
+            // Ensure features is treated as an array and not decoded if already an array
+            $features = is_string($item->features) ? json_decode($item->features, true) : $item->features;
+
             return [
-                'id'       => $item->id,
-                'name'     => $item->name,
-                'price'    => (float) $item->price,
+                'id' => $item->id,
+                'name' => $item->name,
+                'price' => (float) $item->price,
                 'quantity' => $item->quantity,
-                'features' => $item->features ? json_decode($item->features) : [],
-                'slug'     => $item->slug,
-                'package'  => $item->package,
+                'features' => $features,
+                'slug' => $item->slug,
+                'package' => $item->package,
             ];
         })->values();
 
@@ -315,7 +338,18 @@ class CartController extends Controller
             'productCart' => $productCart,
             'packageCart' => $packageCart,
         ]);
+
+    } catch (\Exception $e) {
+        // Log the error for debugging
+        \Log::error('Error fetching cart items: ' . $e->getMessage());
+
+        return response()->json([
+            'error' => 'Failed to fetch cart items',
+            'message' => $e->getMessage()
+        ], 500);
     }
+}
+
 
     // 更新购物车项目数量
     public function updateCartItem(Request $request, $id)
