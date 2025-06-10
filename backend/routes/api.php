@@ -9,6 +9,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\TableNumberController;
+use App\Http\Controllers\OrderController;
 
 // Auth 认证路由
 Route::post('/register', [UserController::class, 'register'])->name('register');
@@ -36,9 +37,6 @@ Route::get('/galleries', [GalleryController::class, 'index']);
 // Duration route
 Route::get('/durations', [DurationController::class, 'index']);
 
-// 获取购物车项目
-Route::get('/cart', [CartController::class, 'getCartItems']);
-
 // 添加产品到购物车
 Route::post('/cart/product', [CartController::class, 'addProductToCart']);
 
@@ -50,6 +48,9 @@ Route::get('/cart/items', [CartController::class, 'getCartItems']);
 
 // 删除购物车项目
 Route::delete('/cart/{id}', [CartController::class, 'removeCartItem']);
+
+// 添加包到购物车
+Route::post('/orders', [OrderController::class, 'store']);
 
 // 更新购物车项目数量
 // Route::put('/cart/{id}', [CartController::class, 'updateCartItem']);
