@@ -18,6 +18,13 @@ class Order extends Model
         'status',
     ];
 
+    protected $casts = [
+        'total' => 'decimal:2',
+        'subtotal' => 'decimal:2',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -52,5 +59,18 @@ class Order extends Model
         return $query->whereHas('orderItems', function($q) use ($packageId) {
             $q->where('item_type', 'package')->where('item_id', $packageId);
         });
+    }
+
+    // Helper method to get order type
+    public function getOrderTypeAttribute()
+    {
+        $hasProducts = $this->orderItems->where('item_type', 'product')->count() > 0;
+        return $hasProducts ? 'product' : 'package';
+    }
+
+    // Helper method to calculate tax
+    public function getTaxAttribute()
+    {
+        return $this->total - $this->subtotal;
     }
 }

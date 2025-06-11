@@ -52,6 +52,12 @@ Route::delete('/cart/{id}', [CartController::class, 'removeCartItem']);
 // 添加包到购物车
 Route::post('/orders', [OrderController::class, 'store']);
 
+// 获取用户订单
+Route::get('/get-orders', [OrderController::class, 'getOrdersByUserId']);
+
+// 删除购物车项目
+Route::put('/cancel-order/{id}', [OrderController::class, 'cancelOrder']);
+
 // 更新购物车项目数量
 // Route::put('/cart/{id}', [CartController::class, 'updateCartItem']);
 

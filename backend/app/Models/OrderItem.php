@@ -20,8 +20,29 @@ class OrderItem extends Model
         'image',
     ];
 
+    protected $casts = [
+        'item_price' => 'decimal:2',
+        'quantity' => 'integer',
+    ];
+
     public function order()
     {
         return $this->belongsTo(Order::class);
+    }
+
+    // Get the actual product or package model
+    public function item()
+    {
+        if ($this->item_type === 'product') {
+            return $this->belongsTo(Product::class, 'item_id');
+        } else {
+            return $this->belongsTo(Package::class, 'item_id');
+        }
+    }
+
+    // Helper method to get total price for this item
+    public function getTotalPriceAttribute()
+    {
+        return $this->item_price * $this->quantity;
     }
 }
