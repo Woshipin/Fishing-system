@@ -1,15 +1,16 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\GalleryController;
-use App\Http\Controllers\DurationController;
 use App\Http\Controllers\CartController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\PackageController;
-use App\Http\Controllers\TableNumberController;
+use App\Http\Controllers\CommentController;
+use App\Http\Controllers\DurationController;
+use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PackageController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\TableNumberController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\UserDurationController;
+use Illuminate\Support\Facades\Route;
 
 // Auth 认证路由
 Route::post('/register', [UserController::class, 'register'])->name('register');
@@ -58,11 +59,19 @@ Route::get('/get-orders', [OrderController::class, 'getOrdersByUserId']);
 // 删除购物车项目
 Route::put('/cancel-order/{id}', [OrderController::class, 'cancelOrder']);
 
+// 获取用户Duration信息
+Route::get('/user-durations', [UserDurationController::class, 'index']);
+
+Route::get('/comments', [CommentController::class, 'index']);
+Route::post('/add-comments', [CommentController::class, 'store']);
+Route::post('/comments/{comment}/like', [CommentController::class, 'like']);
+
+// 回复相关路由
+Route::post('/comments/{comment}/replies', [CommentController::class, 'storeReply']);
+Route::post('/comments/{comment}/replies/{reply}/like', [CommentController::class, 'likeReply']);
+
 // 更新购物车项目数量
 // Route::put('/cart/{id}', [CartController::class, 'updateCartItem']);
 
 // 清空购物车
 // Route::delete('/cart', [CartController::class, 'clearCart']);
-
-
-
