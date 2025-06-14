@@ -1,3 +1,4 @@
+// CartPage.jsx - 修复版本
 import React, { useState, useEffect } from "react";
 import {
   ShoppingCart,
@@ -14,9 +15,12 @@ import {
   ArrowLeft,
   Eye,
   RefreshCw,
+  X,
 } from "lucide-react";
+import { useUser } from '../contexts/UserContext';
 
 const CartPage = () => {
+  const { user } = useUser();
   const [productCart, setProductCart] = useState([]);
   const [packageCart, setPackageCart] = useState([]);
   const [durations, setDurations] = useState([]);
@@ -26,34 +30,57 @@ const CartPage = () => {
   const [promoCode, setPromoCode] = useState("");
   const [promoApplied, setPromoApplied] = useState(false);
   const [discount, setDiscount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [updating, setUpdating] = useState({});
   const [currentStep, setCurrentStep] = useState(1);
-  const [userId, setUserId] = useState(null);
+  const [initialLoad, setInitialLoad] = useState(true);
 
+  // 调试信息
   useEffect(() => {
-    const storedUserId = localStorage.getItem("userId");
-    setUserId(storedUserId);
-  }, []);
+    console.log("CartPage: Component mounted");
+    console.log("CartPage: User data:", user);
+  }, [user]);
 
+  // 修复的主要逻辑：只有在用户登录时才加载购物车数据
   useEffect(() => {
-    if (userId) {
-      fetchCartItems(userId);
-      fetchDurations();
-      fetchTableNumbers();
-    }
-  }, [userId]);
+    const initializeCart = async () => {
+      setInitialLoad(true);
+      
+      if (user.isLoggedIn && user.userId) {
+        console.log("CartPage: User is logged in, loading cart data...");
+        await Promise.all([
+          fetchCartItems(user.userId),
+          fetchDurations(),
+          fetchTableNumbers()
+        ]);
+      } else {
+        console.log("CartPage: User not logged in, showing empty cart");
+        // 用户未登录，设置空购物车
+        setProductCart([]);
+        setPackageCart([]);
+        setDurations([]);
+        setTableNumbers([]);
+      }
+      
+      setInitialLoad(false);
+    };
+
+    initializeCart();
+  }, [user.isLoggedIn, user.userId]);
 
   const getHeaders = () => ({
     Accept: "application/json",
     "Content-Type": "application/json",
+    ...(user.token && { 'Authorization': `Bearer ${user.token}` }),
   });
 
   const fetchCartItems = async (userId) => {
     try {
       setLoading(true);
       setError(null);
+
+      console.log("CartPage: Fetching cart items for user:", userId);
 
       const response = await fetch(
         `http://127.0.0.1:8000/api/cart/items?user_id=${userId}`,
@@ -68,11 +95,16 @@ const CartPage = () => {
       }
 
       const data = await response.json();
+      console.log("CartPage: Cart items fetched:", data);
+      
       setProductCart(data.productCart || []);
       setPackageCart(data.packageCart || []);
     } catch (err) {
       console.error("Fetch cart items error:", err);
       setError("Failed to fetch cart items");
+      // 错误时设置空购物车
+      setProductCart([]);
+      setPackageCart([]);
     } finally {
       setLoading(false);
     }
@@ -93,6 +125,7 @@ const CartPage = () => {
       setDurations(data);
     } catch (err) {
       console.error("Error fetching durations:", err);
+      setDurations([]);
     }
   };
 
@@ -111,21 +144,28 @@ const CartPage = () => {
       setTableNumbers(data);
     } catch (err) {
       console.error("Error fetching table numbers:", err);
+      setTableNumbers([]);
     }
   };
 
   const refreshCart = async () => {
-    if (userId) {
-      await fetchCartItems(userId);
+    if (user.isLoggedIn && user.userId) {
+      await fetchCartItems(user.userId);
     }
   };
 
   const order = async () => {
+    if (!user.isLoggedIn) {
+      setError("Please login to complete your order");
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
 
-      // Calculate subtotal and total
+      console.log("CartPage: Creating order for user:", user.userId);
+
       const productTotal = productCart.reduce(
         (sum, item) => sum + (item.price || 0) * item.quantity,
         0
@@ -139,9 +179,8 @@ const CartPage = () => {
       const discountAmount = subtotal * (discount / 100);
       const total = subtotal - discountAmount;
 
-      // Prepare order data
       const orderData = {
-        user_id: userId,
+        user_id: user.userId,
         duration_id: selectedDuration,
         table_number_id: selectedTableNumber,
         subtotal: subtotal,
@@ -169,7 +208,8 @@ const CartPage = () => {
         ],
       };
 
-      // Send order data to the server
+      console.log("CartPage: Order data:", orderData);
+
       const response = await fetch("http://127.0.0.1:8000/api/orders", {
         method: "POST",
         headers: getHeaders(),
@@ -177,15 +217,20 @@ const CartPage = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to complete purchase");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to complete purchase");
       }
 
       const data = await response.json();
       console.log("Order completed:", data);
       alert("Purchase completed successfully!");
+      
+      setProductCart([]);
+      setPackageCart([]);
+      setCurrentStep(1);
     } catch (err) {
       console.error("Order error:", err);
-      setError("Failed to complete purchase");
+      setError("Failed to complete purchase: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -240,32 +285,56 @@ const CartPage = () => {
     return true;
   };
 
-  const updateQuantity = (type, id, newQuantity) => {
-    if (newQuantity < 1) return;
+  const updateQuantity = async (type, id, newQuantity) => {
+    if (newQuantity < 1 || !user.isLoggedIn) return;
 
-    if (type === "product") {
-      setProductCart((prev) =>
-        prev.map((item) =>
-          item.id === id ? { ...item, quantity: newQuantity } : item
-        )
-      );
-    } else {
-      setPackageCart((prev) =>
-        prev.map((item) =>
-          item.id === id ? { ...item, quantity: newQuantity } : item
-        )
-      );
+    setUpdating((prev) => ({ ...prev, [`${type}-${id}`]: true }));
+
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/cart/${id}`, {
+        method: "PUT",
+        headers: getHeaders(),
+        body: JSON.stringify({ 
+          user_id: user.userId,
+          quantity: newQuantity 
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update item quantity");
+      }
+
+      if (type === "product") {
+        setProductCart((prev) =>
+          prev.map((item) =>
+            item.id === id ? { ...item, quantity: newQuantity } : item
+          )
+        );
+      } else {
+        setPackageCart((prev) =>
+          prev.map((item) =>
+            item.id === id ? { ...item, quantity: newQuantity } : item
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error updating quantity:", error);
+      setError(error.message || "Failed to update item quantity");
+    } finally {
+      setUpdating((prev) => ({ ...prev, [`${type}-${id}`]: false }));
     }
   };
 
   const removeItem = async (type, id) => {
+    if (!user.isLoggedIn) return;
+
     setUpdating((prev) => ({ ...prev, [`${type}-${id}`]: true }));
 
     try {
       const response = await fetch(`http://127.0.0.1:8000/api/cart/${id}`, {
         method: "DELETE",
         headers: getHeaders(),
-        body: JSON.stringify({ user_id: userId }),
+        body: JSON.stringify({ user_id: user.userId }),
       });
 
       if (!response.ok) {
@@ -317,13 +386,7 @@ const CartPage = () => {
     return "inactive";
   };
 
-  const ProgressStep = ({
-    step,
-    isActive,
-    isCompleted,
-    isClickable,
-    index,
-  }) => (
+  const ProgressStep = ({ step, isActive, isCompleted, isClickable, index }) => (
     <div className="relative flex-1 flex flex-col items-center">
       <div
         className={`flex flex-col items-center cursor-pointer transition-all duration-300 z-10 ${
@@ -418,8 +481,7 @@ const CartPage = () => {
                 alt={item.name}
                 className="w-16 h-16 object-cover rounded-xl border border-blue-200/50 shadow-md group-hover:scale-105 transition-transform duration-300"
                 onError={(e) => {
-                  e.target.src =
-                    "https://via.placeholder.com/80x80?text=No+Image";
+                  e.target.src = "https://via.placeholder.com/80x80?text=No+Image";
                 }}
               />
               <div className="absolute inset-0 bg-blue-500/20 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300"></div>
@@ -447,7 +509,7 @@ const CartPage = () => {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => updateQuantity(type, item.id, item.quantity - 1)}
-                disabled={item.quantity <= 1}
+                disabled={item.quantity <= 1 || isUpdating || !user.isLoggedIn}
                 className="w-8 h-8 flex items-center justify-center bg-gradient-to-r from-blue-100 to-blue-200 hover:from-blue-200 hover:to-blue-300 text-blue-600 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Minus className="w-3 h-3" />
@@ -457,6 +519,7 @@ const CartPage = () => {
               </span>
               <button
                 onClick={() => updateQuantity(type, item.id, item.quantity + 1)}
+                disabled={isUpdating || !user.isLoggedIn}
                 className="w-8 h-8 flex items-center justify-center bg-gradient-to-r from-blue-100 to-blue-200 hover:from-blue-200 hover:to-blue-300 text-blue-600 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Plus className="w-3 h-3" />
@@ -469,7 +532,7 @@ const CartPage = () => {
             </span>
             <button
               onClick={() => removeItem(type, item.id)}
-              disabled={isUpdating}
+              disabled={isUpdating || !user.isLoggedIn}
               className="flex items-center gap-2 px-3 py-2 text-red-500 hover:text-red-700 hover:bg-red-50/50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Trash2 className="w-4 h-4" />
@@ -500,20 +563,24 @@ const CartPage = () => {
                 <h2 className="text-xl font-semibold text-gray-800">
                   Your Cart Items
                 </h2>
-                {userId && (
-                  <p className="text-sm text-gray-500">User ID: {userId}</p>
+                {user.isLoggedIn ? (
+                  <p className="text-sm text-gray-500">User: {user.name} (ID: {user.userId})</p>
+                ) : (
+                  <p className="text-sm text-red-500">Not logged in - Cart is empty</p>
                 )}
               </div>
-              <button
-                onClick={refreshCart}
-                disabled={loading}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg transition-all duration-200 disabled:opacity-50"
-              >
-                <RefreshCw
-                  className={`w-4 h-4 ${loading ? "animate-spin" : ""}`}
-                />
-                <span className="text-sm">Refresh</span>
-              </button>
+              {user.isLoggedIn && (
+                <button
+                  onClick={refreshCart}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg transition-all duration-200 disabled:opacity-50"
+                >
+                  <RefreshCw
+                    className={`w-4 h-4 ${loading ? "animate-spin" : ""}`}
+                  />
+                  <span className="text-sm">Refresh</span>
+                </button>
+              )}
             </div>
 
             <div className={contentClass}>
@@ -526,7 +593,13 @@ const CartPage = () => {
                 </h2>
               </div>
               <div className={sectionBodyClass}>
-                {productCart.length === 0 ? (
+                {!user.isLoggedIn ? (
+                  <div className="p-8 text-center text-gray-500">
+                    <AlertCircle className="w-12 h-12 mx-auto mb-4 text-orange-400" />
+                    <p className="text-lg font-medium mb-2">Please log in to view your cart</p>
+                    <p className="text-sm">Your cart will be restored once you log in</p>
+                  </div>
+                ) : productCart.length === 0 ? (
                   <div className="p-4 text-center text-gray-500">
                     <ShoppingCart className="w-12 h-12 mx-auto mb-4 text-blue-300" />
                     <p>No products in cart</p>
@@ -549,7 +622,13 @@ const CartPage = () => {
                 </h2>
               </div>
               <div className={sectionBodyClass}>
-                {packageCart.length === 0 ? (
+                {!user.isLoggedIn ? (
+                  <div className="p-8 text-center text-gray-500">
+                    <AlertCircle className="w-12 h-12 mx-auto mb-4 text-orange-400" />
+                    <p className="text-lg font-medium mb-2">Please log in to view your packages</p>
+                    <p className="text-sm">Your packages will be restored once you log in</p>
+                  </div>
+                ) : packageCart.length === 0 ? (
                   <div className="p-4 text-center text-gray-500">
                     <Package className="w-12 h-12 mx-auto mb-4 text-blue-300" />
                     <p>No packages selected</p>
@@ -584,9 +663,7 @@ const CartPage = () => {
               {loading ? (
                 <div className="flex items-center justify-center p-4">
                   <Loader className="w-8 h-8 animate-spin text-blue-500" />
-                  <span className="ml-3 text-gray-600">
-                    Loading durations...
-                  </span>
+                  <span className="ml-3 text-gray-600">Loading durations...</span>
                 </div>
               ) : (
                 <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3 p-4">
@@ -659,9 +736,7 @@ const CartPage = () => {
               {loading ? (
                 <div className="flex items-center justify-center p-4">
                   <Loader className="w-8 h-8 animate-spin text-blue-500" />
-                  <span className="ml-3 text-gray-600">
-                    Loading table numbers...
-                  </span>
+                  <span className="ml-3 text-gray-600">Loading table numbers...</span>
                 </div>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 p-4">
@@ -700,14 +775,13 @@ const CartPage = () => {
               </div>
 
               <div className="p-4 space-y-6">
+                {/* Products Section */}
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-300/50">
                   <h3 className="font-semibold text-gray-800 text-lg mb-4 pb-2 border-b border-blue-200">
                     Products
                   </h3>
                   {productCart.length === 0 ? (
-                    <p className="text-gray-500 text-center py-4">
-                      No products in cart
-                    </p>
+                    <p className="text-gray-500 text-center py-4">No products in cart</p>
                   ) : (
                     productCart.map((item) => (
                       <div
@@ -720,17 +794,12 @@ const CartPage = () => {
                             alt={item.name}
                             className="w-12 h-12 rounded-lg object-cover"
                             onError={(e) => {
-                              e.target.src =
-                                "https://via.placeholder.com/48?text=No+Image";
+                              e.target.src = "https://via.placeholder.com/48?text=No+Image";
                             }}
                           />
                           <div>
-                            <div className="font-medium text-gray-800">
-                              {item.name}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              Qty: {item.quantity}
-                            </div>
+                            <div className="font-medium text-gray-800">{item.name}</div>
+                            <div className="text-sm text-gray-500">Qty: {item.quantity}</div>
                           </div>
                         </div>
                         <div className="font-semibold text-gray-800">
@@ -741,14 +810,13 @@ const CartPage = () => {
                   )}
                 </div>
 
+                {/* Packages Section */}
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-300/50">
                   <h3 className="font-semibold text-gray-800 text-lg mb-4 pb-2 border-b border-blue-200">
                     Packages
                   </h3>
                   {packageCart.length === 0 ? (
-                    <p className="text-gray-500 text-center py-4">
-                      No packages selected
-                    </p>
+                    <p className="text-gray-500 text-center py-4">No packages selected</p>
                   ) : (
                     packageCart.map((item) => (
                       <div
@@ -761,17 +829,12 @@ const CartPage = () => {
                             alt={item.name}
                             className="w-12 h-12 rounded-lg object-cover"
                             onError={(e) => {
-                              e.target.src =
-                                "https://via.placeholder.com/48?text=No+Image";
+                              e.target.src = "https://via.placeholder.com/48?text=No+Image";
                             }}
                           />
                           <div>
-                            <div className="font-medium text-gray-800">
-                              {item.name}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              Qty: {item.quantity}
-                            </div>
+                            <div className="font-medium text-gray-800">{item.name}</div>
+                            <div className="text-sm text-gray-500">Qty: {item.quantity}</div>
                           </div>
                         </div>
                         <div className="font-semibold text-gray-800">
@@ -782,6 +845,7 @@ const CartPage = () => {
                   )}
                 </div>
 
+                {/* Duration Section */}
                 {selectedDuration && (
                   <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-300/50">
                     <h3 className="font-semibold text-gray-800 text-lg mb-4 pb-2 border-b border-blue-200">
@@ -790,29 +854,20 @@ const CartPage = () => {
                     <div className="flex justify-between items-center py-3">
                       <div>
                         <div className="font-medium text-gray-800">
-                          {
-                            durations.find((d) => d.id === selectedDuration)
-                              ?.name
-                          }
+                          {durations.find((d) => d.id === selectedDuration)?.name}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {
-                            durations.find((d) => d.id === selectedDuration)
-                              ?.value
-                          }
+                          {durations.find((d) => d.id === selectedDuration)?.value}
                         </div>
                       </div>
                       <div className="font-semibold text-gray-800">
-                        $
-                        {(
-                          durations.find((d) => d.id === selectedDuration)
-                            ?.price || 0
-                        ).toFixed(2)}
+                        ${(durations.find((d) => d.id === selectedDuration)?.price || 0).toFixed(2)}
                       </div>
                     </div>
                   </div>
                 )}
 
+                {/* Table Number Section */}
                 {selectedTableNumber && (
                   <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-300/50">
                     <h3 className="font-semibold text-gray-800 text-lg mb-4 pb-2 border-b border-blue-200">
@@ -820,16 +875,40 @@ const CartPage = () => {
                     </h3>
                     <div className="flex justify-between items-center py-3">
                       <div className="font-medium text-gray-800">
-                        Table{" "}
-                        {
-                          tableNumbers.find((t) => t.id === selectedTableNumber)
-                            ?.number
-                        }
+                        Table {tableNumbers.find((t) => t.id === selectedTableNumber)?.number}
                       </div>
                     </div>
                   </div>
                 )}
 
+                {/* Promo Code Section */}
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-300/50">
+                  <h3 className="font-semibold text-gray-800 text-lg mb-4 pb-2 border-b border-blue-200">
+                    Promo Code
+                  </h3>
+                  <div className="flex gap-3">
+                    <input
+                      type="text"
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value)}
+                      placeholder="Enter promo code"
+                      className="flex-1 px-4 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    />
+                    <button
+                      onClick={applyPromo}
+                      className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                  {promoApplied && (
+                    <div className="mt-2 text-green-600 text-sm">
+                      ✓ Promo code applied successfully!
+                    </div>
+                  )}
+                </div>
+
+                {/* Order Summary */}
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-300/50">
                   <h3 className="font-semibold text-gray-800 text-lg mb-4 pb-2 border-b border-blue-200">
                     Order Summary
@@ -861,32 +940,13 @@ const CartPage = () => {
     }
   };
 
-  if (loading && currentStep <= 1) {
+  // 修复的加载逻辑：只在初始加载时显示loading页面
+  if (initialLoad) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50/30 flex items-center justify-center">
         <div className="text-center">
           <Loader className="w-12 h-12 animate-spin text-blue-500 mx-auto mb-4" />
-          <p className="text-gray-600 text-lg">Loading your cart...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!userId) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50/30 flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">
-            User ID Required
-          </h2>
-          <p className="text-gray-600 mb-4">Please log in to view your cart.</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-          >
-            Refresh Page
-          </button>
+          <p className="text-gray-600 text-lg">Loading cart...</p>
         </div>
       </div>
     );
@@ -895,6 +955,7 @@ const CartPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50/30">
       <div className="container mx-auto px-4 py-6 md:py-8 max-w-6xl">
+        {/* Header */}
         <div className="text-center mb-8 md:mb-12">
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-4">
             Shopping Cart
@@ -902,8 +963,16 @@ const CartPage = () => {
           <p className="text-gray-600 text-base md:text-lg">
             Complete your purchase in easy steps
           </p>
+          {!user.isLoggedIn && (
+            <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+              <p className="text-orange-700">
+                Please log in to access your cart and complete purchases
+              </p>
+            </div>
+          )}
         </div>
 
+        {/* Progress Steps */}
         <div className="mb-8 md:mb-12">
           <div className="flex justify-between items-start max-w-4xl mx-auto relative">
             {steps.map((step, index) => (
@@ -912,51 +981,48 @@ const CartPage = () => {
                 step={step}
                 isActive={currentStep === step.number}
                 isCompleted={currentStep > step.number}
-                isClickable={canProceedToStep(step.number)}
+                isClickable={user.isLoggedIn && canProceedToStep(step.number)}
                 index={index}
               />
             ))}
           </div>
         </div>
 
+        {/* Error Display */}
         {error && (
           <div className="mb-6 p-4 bg-red-50/80 border border-red-200/50 rounded-xl text-red-700 flex items-center gap-3">
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            <span className="flex-grow">{error}</span>
+            <span>{error}</span>
             <button
               onClick={() => setError(null)}
-              className="text-red-500 hover:text-red-700 flex-shrink-0"
+              className="ml-auto text-red-500 hover:text-red-700"
             >
-              <Minus className="w-4 h-4" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         )}
 
+        {/* Step Content */}
         <div className="mb-8">
           <StepContent />
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 sticky bottom-4 bg-gradient-to-r from-white/90 to-blue-50/90 backdrop-blur-sm p-4 rounded-2xl border border-blue-300/50 shadow-md">
+        {/* Navigation Buttons */}
+        <div className="flex justify-between items-center">
           <button
             onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
             disabled={currentStep === 1}
-            className="w-full sm:w-auto order-2 sm:order-1 flex items-center gap-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ArrowLeft className="w-4 h-4" />
             Previous
           </button>
 
-          <div className="flex items-center gap-4 order-1 sm:order-2">
-            <span className="text-sm text-gray-600">
-              Step {currentStep} of {steps.length}
-            </span>
-          </div>
-
           {currentStep < 4 ? (
             <button
-              onClick={() => setCurrentStep(Math.min(4, currentStep + 1))}
-              disabled={!isStepValid(currentStep)}
-              className="w-full sm:w-auto order-3 flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => setCurrentStep(currentStep + 1)}
+              disabled={!user.isLoggedIn || !isStepValid(currentStep)}
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
             >
               Next
               <ArrowRight className="w-4 h-4" />
@@ -964,10 +1030,20 @@ const CartPage = () => {
           ) : (
             <button
               onClick={order}
-              disabled={productCart.length === 0 && packageCart.length === 0}
-              className="w-full sm:w-auto order-3 px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl font-semibold transition-all duration-300 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading || !user.isLoggedIn || !isStepValid(4)}
+              className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
             >
-              Complete Purchase
+              {loading ? (
+                <>
+                  <Loader className="w-4 h-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Check className="w-4 h-4" />
+                  Complete Purchase
+                </>
+              )}
             </button>
           )}
         </div>

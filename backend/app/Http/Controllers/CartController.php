@@ -419,13 +419,4 @@ class CartController extends Controller
         }
     }
 
-    // 清空购物车
-    public function clearCart()
-    {
-        Cart::where('user_id', Auth::id())->delete();
-
-        return response()->json([
-            'message' => 'Cart cleared successfully',
-        ]);
-    }
 }
