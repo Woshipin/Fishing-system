@@ -1,35 +1,12 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import PageHeader from "../components/PageHeader"
+import PageHeader from "../components/PageHeader";
+import { useUser } from '../contexts/UserContext'; // 添加UserContext
 
-const OrderPage = ({ userId: propUserId }) => {
-  const [userId, setUserId] = useState(() => {
-    if (propUserId !== undefined) {
-      return propUserId;
-    }
-
-    try {
-      const storedUserId = localStorage.getItem("userId");
-      console.log("Getting userId from localStorage:", storedUserId);
-
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        const userObj = JSON.parse(storedUser);
-        console.log("Found user object in localStorage:", userObj);
-        if (userObj && userObj.id) {
-          return userObj.id;
-        }
-      }
-
-      return storedUserId ? parseInt(storedUserId, 10) : null;
-    } catch (error) {
-      console.error("Error reading from localStorage:", error);
-      return null;
-    }
-  });
-
+const OrderPage = () => {
+  const { user } = useUser(); // 获取当前用户信息
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     type: "all",
@@ -40,88 +17,80 @@ const OrderPage = ({ userId: propUserId }) => {
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [cancellingOrders, setCancellingOrders] = useState(new Set());
+  const [initialLoad, setInitialLoad] = useState(true);
 
+  // 调试信息
   useEffect(() => {
-    console.log("Current userId state:", userId);
+    console.log("OrderPage: Component mounted");
+    console.log("OrderPage: User data:", user);
+  }, [user]);
 
-    if (!userId) {
-      try {
-        const storedUserId = localStorage.getItem("userId");
-        const storedUser = localStorage.getItem("user");
-
-        console.log("Stored userId:", storedUserId);
-        console.log("Stored user:", storedUser);
-
-        if (storedUser) {
-          const userObj = JSON.parse(storedUser);
-          if (userObj && userObj.id) {
-            console.log("Setting userId from user object:", userObj.id);
-            setUserId(userObj.id);
-            return;
-          }
-        }
-
-        if (storedUserId) {
-          console.log("Setting userId from direct storage:", storedUserId);
-          setUserId(parseInt(storedUserId, 10));
-        }
-      } catch (error) {
-        console.error("Error reading userId from localStorage:", error);
-      }
-    }
-  }, [userId]);
-
+  // 修复的主要逻辑：只有在用户登录时才加载订单数据
   useEffect(() => {
-    const fetchOrders = async () => {
-      if (!userId) {
-        console.log("No userId available, skipping fetch");
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setError(null);
-
-        const url = `http://localhost:8000/api/get-orders?user_id=${userId}`;
-        console.log("Fetching orders from:", url);
-
-        const response = await fetch(url, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-        });
-
-        console.log("Response status:", response.status);
-        console.log("Response headers:", response.headers);
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Response error:", errorText);
-          throw new Error(
-            `HTTP error! status: ${response.status} - ${errorText}`
-          );
-        }
-
-        const data = await response.json();
-        console.log("Received data from API:", data);
-
-        const ordersArray = Array.isArray(data) ? data : [];
-        console.log("Setting orders:", ordersArray);
-        setOrders(ordersArray);
-      } catch (error) {
-        console.error("Error fetching orders:", error);
-        setError(error.message);
+    const initializeOrders = async () => {
+      setInitialLoad(true);
+      
+      if (user.isLoggedIn && user.userId) {
+        console.log("OrderPage: User is logged in, loading orders...");
+        await fetchOrders(user.userId);
+      } else {
+        console.log("OrderPage: User not logged in, showing empty orders");
+        // 用户未登录，设置空订单
         setOrders([]);
-      } finally {
-        setLoading(false);
       }
+      
+      setInitialLoad(false);
     };
 
-    fetchOrders();
-  }, [userId]);
+    initializeOrders();
+  }, [user.isLoggedIn, user.userId]);
+
+  const getHeaders = () => ({
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    ...(user.token && { 'Authorization': `Bearer ${user.token}` }),
+  });
+
+  const fetchOrders = async (userId) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      console.log("OrderPage: Fetching orders for user:", userId);
+
+      const url = `http://127.0.0.1:8000/api/get-orders?user_id=${userId}`;
+      const response = await fetch(url, {
+        method: "GET",
+        headers: getHeaders(),
+      });
+
+      console.log("Response status:", response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Response error:", errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log("OrderPage: Orders fetched:", data);
+
+      const ordersArray = Array.isArray(data) ? data : [];
+      setOrders(ordersArray);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      setError(error.message);
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const refreshOrders = async () => {
+    if (user.isLoggedIn && user.userId) {
+      await fetchOrders(user.userId);
+    }
+  };
 
   useEffect(() => {
     console.log("Filtering orders. Total orders:", orders.length);
@@ -166,21 +135,23 @@ const OrderPage = ({ userId: propUserId }) => {
   }, [filters, orders]);
 
   const handleCancelOrder = async (orderId) => {
+    if (!user.isLoggedIn) {
+      setError("Please login to cancel orders");
+      return;
+    }
+
     try {
       setCancellingOrders((prev) => new Set(prev).add(orderId));
 
       console.log(`Attempting to cancel order ${orderId}`);
 
       const response = await fetch(
-        `http://localhost:8000/api/cancel-order/${orderId}`,
+        `http://127.0.0.1:8000/api/cancel-order/${orderId}`,
         {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
+          headers: getHeaders(),
           body: JSON.stringify({
-            user_id: userId,
+            user_id: user.userId,
           }),
         }
       );
@@ -207,7 +178,7 @@ const OrderPage = ({ userId: propUserId }) => {
       console.log(`Order ${orderId} successfully cancelled`);
     } catch (error) {
       console.error(`Error cancelling order ${orderId}:`, error);
-      alert(`Failed to cancel order: ${error.message}`);
+      setError(`Failed to cancel order: ${error.message}`);
     } finally {
       setCancellingOrders((prev) => {
         const newSet = new Set(prev);
@@ -273,42 +244,37 @@ const OrderPage = ({ userId: propUserId }) => {
     return numPrice.toFixed(2);
   };
 
-  const DebugInfo = () => (
-    <div className="bg-gray-100 p-4 rounded-lg mb-4 text-sm">
-      <h4 className="font-bold mb-2">Debug Info:</h4>
-      <p>Current userId: {userId || "null"}</p>
-      <p>Loading: {loading.toString()}</p>
-      <p>Error: {error || "none"}</p>
-      <p>Total orders: {orders.length}</p>
-      <p>Filtered orders: {filteredOrders.length}</p>
-      <p>
-        Cancelling orders: {Array.from(cancellingOrders).join(", ") || "none"}
-      </p>
-      <p>
-        LocalStorage userId: {localStorage.getItem("userId") || "not found"}
-      </p>
-      <p>
-        LocalStorage user:{" "}
-        {localStorage.getItem("user") ? "found" : "not found"}
-      </p>
-    </div>
-  );
-
-  if (!userId) {
+  // 修复的加载逻辑：只在初始加载时显示loading页面
+  if (initialLoad) {
     return (
       <div className="min-h-screen bg-gray-50">
-        {/* Hero Section */}
         <PageHeader
           title="My Orders"
           description="View and manage all your orders here"
         />
-
         <div className="flex justify-center items-center py-20">
           <div className="text-center">
-            <DebugInfo />
-            <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading orders...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 检查用户登录状态
+  if (!user.isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <PageHeader
+          title="My Orders"
+          description="View and manage all your orders here"
+        />
+        <div className="flex justify-center items-center py-20">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg
-                className="w-8 h-8 text-yellow-600"
+                className="w-8 h-8 text-orange-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -321,80 +287,17 @@ const OrderPage = ({ userId: propUserId }) => {
                 />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold mb-2 text-yellow-800">
-              User Not Found
+            <h3 className="text-xl font-semibold mb-2 text-orange-800">
+              Login Required
             </h3>
             <p className="text-gray-600 mb-4">
               Please log in to view your orders
             </p>
             <button
-              onClick={() => (window.location.href = "/login")}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Go to Login
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        {/* Hero Section */}
-        <PageHeader
-          title="My Orders"
-          description="View and manage all your orders here"
-        />
-        <div className="flex justify-center items-center py-20">
-          <div className="text-center">
-            <DebugInfo />
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">
-              Loading your orders for user ID: {userId}...
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        {/* Hero Section */}
-        <PageHeader
-          title="My Orders"
-          description="View and manage all your orders here"
-        />
-        <div className="flex justify-center items-center py-20">
-          <div className="text-center">
-            <DebugInfo />
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg
-                className="w-8 h-8 text-red-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z"
-                />
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold mb-2 text-red-800">
-              Error Loading Orders
-            </h3>
-            <p className="text-gray-600 mb-4">{error}</p>
-            <button
               onClick={() => window.location.reload()}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              Retry
+              Refresh Page
             </button>
           </div>
         </div>
@@ -410,10 +313,41 @@ const OrderPage = ({ userId: propUserId }) => {
         description="View and manage all your orders here"
       />
 
-      {/* <div className="container mx-auto px-4 py-4">
-        <DebugInfo />
-      </div> */}
+      {/* User Info Display */}
+      {user.isLoggedIn && (
+        <div className="container mx-auto px-4 py-2">
+          <div className="text-center text-sm text-gray-600">
+            Welcome back, {user.name} (ID: {user.userId})
+            <button
+              onClick={refreshOrders}
+              disabled={loading}
+              className="ml-4 px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded text-xs transition-all duration-200 disabled:opacity-50"
+            >
+              {loading ? "Refreshing..." : "Refresh Orders"}
+            </button>
+          </div>
+        </div>
+      )}
 
+      {/* Error Display */}
+      {error && (
+        <div className="container mx-auto px-4 py-2">
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 flex items-center gap-3">
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <span>{error}</span>
+            <button
+              onClick={() => setError(null)}
+              className="ml-auto text-red-500 hover:text-red-700"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Filters Section */}
       <section className="py-4 bg-white shadow-sm sticky top-0 z-20">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="flex flex-wrap items-center gap-4">
@@ -534,6 +468,7 @@ const OrderPage = ({ userId: propUserId }) => {
         </div>
       </section>
 
+      {/* Orders Section */}
       <section className="py-12">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="space-y-6 sm:space-y-8">
@@ -558,7 +493,10 @@ const OrderPage = ({ userId: propUserId }) => {
                     ? "You don't have any orders yet"
                     : "No orders match your filter criteria"}
                 </p>
-                <button className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm sm:text-base">
+                <button 
+                  onClick={() => window.location.href = '/products'}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm sm:text-base"
+                >
                   Start Shopping
                 </button>
               </div>
@@ -826,9 +764,9 @@ const OrderPage = ({ userId: propUserId }) => {
                                       e.stopPropagation();
                                       handleCancelOrder(order.id);
                                     }}
-                                    disabled={cancellingOrders.has(order.id)}
+                                    disabled={cancellingOrders.has(order.id) || !user.isLoggedIn}
                                     className={`w-full px-4 py-2 border rounded-lg font-medium transition-colors text-sm sm:text-base ${
-                                      cancellingOrders.has(order.id)
+                                      cancellingOrders.has(order.id) || !user.isLoggedIn
                                         ? "border-gray-300 text-gray-400 bg-gray-50 cursor-not-allowed"
                                         : "border-red-500 text-red-500 hover:bg-red-50"
                                     }`}
