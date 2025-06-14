@@ -14,9 +14,19 @@ use App\Http\Controllers\ContactController;
 use Illuminate\Support\Facades\Route;
 
 // Auth 认证路由
+// Route::post('/register', [UserController::class, 'register'])->name('register');
+// Route::post('/login', [UserController::class, 'login'])->name('login');
+// Route::post('/logout', [UserController::class, 'logout'])->name('logout');
+
+// 公开路由（不需要认证）
 Route::post('/register', [UserController::class, 'register'])->name('register');
 Route::post('/login', [UserController::class, 'login'])->name('login');
-Route::post('/logout', [UserController::class, 'logout'])->name('logout');
+
+// 需要认证的路由
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [UserController::class, 'logout'])->name('logout');
+    Route::get('/user', [UserController::class, 'user'])->name('user');
+});
 
 // Restaurant 餐厅路由
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
