@@ -1,7 +1,10 @@
+// CommentPage.jsx
 import React, { useState, useEffect } from 'react';
 import { Heart, MessageCircle, Send, X, Award, Clock, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { useUser } from '../contexts/UserContext';
 
 const CommentPage = () => {
+  const { user } = useUser();
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [replyingTo, setReplyingTo] = useState(null);
@@ -15,59 +18,26 @@ const CommentPage = () => {
   const commentsPerPage = 10;
   const API_BASE_URL = 'http://localhost:8000/api';
 
-  // Mock data for demonstration (remove when connecting to real API)
-  const mockComments = [
-    {
-      id: 1,
-      content: "This is a great discussion starter! I love how we can engage with the community.",
-      user: {
-        id: 1,
-        name: "Sarah Johnson",
-        avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face",
-        isAdmin: true
-      },
-      created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      likes: 5,
-      replies: [
-        {
-          id: 101,
-          content: "Absolutely agree! The community here is amazing.",
-          user: {
-            id: 2,
-            name: "Mike Chen",
-            avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"
-          },
-          created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-          likes: 2
-        }
-      ]
-    },
-    {
-      id: 2,
-      content: "I've been thinking about this topic for a while. What are everyone's thoughts on the future of web development?",
-      user: {
-        id: 3,
-        name: "Alex Rodriguez",
-        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face"
-      },
-      created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-      likes: 8,
-      replies: []
-    }
-  ];
+  // 调试信息
+  useEffect(() => {
+    console.log("CommentPage: Component mounted");
+    console.log("CommentPage: User data:", user);
+  }, [user]);
 
-  // API functions with better error handling
+  // API functions
   const fetchComments = async () => {
     setLoading(true);
     setError(null);
     
     try {
-      // Try to fetch from API first
+      console.log("CommentPage: Fetching comments from API");
+      
       const response = await fetch(`${API_BASE_URL}/comments`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          ...(user.token && { 'Authorization': `Bearer ${user.token}` }),
         },
       });
       
@@ -76,85 +46,77 @@ const CommentPage = () => {
       }
       
       const data = await response.json();
-      const processedComments = Array.isArray(data) ? data : (data.comments || []);
+      console.log("CommentPage: Comments fetched successfully:", data);
       
-      setComments(processedComments.map(comment => ({
-        ...comment,
-        replies: comment.replies || []
-      })));
+      setComments(data || []);
     } catch (error) {
-      console.warn('API not available, using mock data:', error);
-      // Fallback to mock data for demonstration
-      setComments(mockComments);
+      console.error('Error fetching comments:', error);
+      setError(`Failed to load comments: ${error.message}`);
+      setComments([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const postComment = async (commentData) => {
+  const postComment = async (content) => {
     try {
+      console.log("CommentPage: Posting comment:", { content, user_id: user.userId });
+      
       const response = await fetch(`${API_BASE_URL}/add-comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          ...(user.token && { 'Authorization': `Bearer ${user.token}` }),
         },
         body: JSON.stringify({
-          content: commentData.content,
-          user_id: 1, // This should come from authentication
+          content: content,
+          user_id: user.userId,
         })
       });
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json();
+      console.log("CommentPage: Comment posted successfully:", data);
       return data;
     } catch (error) {
-      console.warn('API not available for posting:', error);
-      // Return mock response for demonstration
-      return {
-        id: Date.now(),
-        content: commentData.content,
-        user: commentData.user,
-        created_at: new Date().toISOString(),
-        likes: 0,
-        replies: []
-      };
+      console.error('Error posting comment:', error);
+      throw error;
     }
   };
 
-  const postReply = async (commentId, replyData) => {
+  const postReply = async (commentId, content) => {
     try {
+      console.log("CommentPage: Posting reply:", { commentId, content, user_id: user.userId });
+      
       const response = await fetch(`${API_BASE_URL}/comments/${commentId}/replies`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          ...(user.token && { 'Authorization': `Bearer ${user.token}` }),
         },
         body: JSON.stringify({
-          content: replyData.content,
-          user_id: 1, // This should come from authentication
+          content: content,
+          user_id: user.userId,
         })
       });
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json();
+      console.log("CommentPage: Reply posted successfully:", data);
       return data;
     } catch (error) {
-      console.warn('API not available for reply posting:', error);
-      // Return mock response for demonstration
-      return {
-        id: Date.now(),
-        content: replyData.content,
-        user: replyData.user,
-        created_at: new Date().toISOString(),
-        likes: 0
-      };
+      console.error('Error posting reply:', error);
+      throw error;
     }
   };
 
@@ -164,24 +126,28 @@ const CommentPage = () => {
         ? `${API_BASE_URL}/comments/${commentId}/replies/${replyId}/like`
         : `${API_BASE_URL}/comments/${commentId}/like`;
       
+      console.log("CommentPage: Liking comment/reply:", { commentId, isReply, replyId });
+      
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          ...(user.token && { 'Authorization': `Bearer ${user.token}` }),
         }
       });
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json();
+      console.log("CommentPage: Like successful:", data);
       return data;
     } catch (error) {
-      console.warn('API not available for liking:', error);
-      // Return success for demonstration
-      return { success: true };
+      console.error('Error liking comment/reply:', error);
+      throw error;
     }
   };
 
@@ -228,36 +194,27 @@ const CommentPage = () => {
   // Event handlers
   const handleAddComment = async (e) => {
     if (e) e.preventDefault();
+    
+    if (!user.isLoggedIn) {
+      setError("请先登录后再发表评论。");
+      return;
+    }
+    
     if (!newComment.trim()) return;
 
     setSubmitting(true);
     setError(null);
 
     try {
-      const commentData = {
-        content: newComment,
-        user: {
-          id: 1,
-          name: "You",
-          avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face"
-        }
-      };
-
-      const response = await postComment(commentData);
+      const response = await postComment(newComment.trim());
       
-      const newCommentObj = {
-        id: response.id || Date.now(),
-        user: response.user || commentData.user,
-        content: response.content || newComment,
-        created_at: response.created_at || new Date().toISOString(),
-        likes: response.likes || 0,
-        replies: response.replies || []
-      };
-
-      setComments([newCommentObj, ...comments]);
+      // 重新获取评论列表以确保数据同步
+      await fetchComments();
+      
       setNewComment("");
       setCurrentPage(1);
     } catch (error) {
+      console.error("CommentPage: Failed to add comment:", error);
       setError(`Failed to post comment: ${error.message}`);
     } finally {
       setSubmitting(false);
@@ -265,40 +222,26 @@ const CommentPage = () => {
   };
 
   const handleAddReply = async (commentId) => {
+    if (!user.isLoggedIn) {
+      setError("请先登录后再回复评论。");
+      return;
+    }
+    
     if (!replyContent.trim()) return;
 
     setSubmitting(true);
     setError(null);
 
     try {
-      const replyData = {
-        content: replyContent,
-        user: {
-          id: 1,
-          name: "You",
-          avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face"
-        }
-      };
-
-      const response = await postReply(commentId, replyData);
+      const response = await postReply(commentId, replyContent.trim());
       
-      const newReply = {
-        id: response.id || Date.now(),
-        user: response.user || replyData.user,
-        content: response.content || replyContent,
-        created_at: response.created_at || new Date().toISOString(),
-        likes: response.likes || 0
-      };
-
-      setComments(comments.map(comment => 
-        comment.id === commentId 
-          ? { ...comment, replies: [...(comment.replies || []), newReply] }
-          : comment
-      ));
-
+      // 重新获取评论列表以确保数据同步
+      await fetchComments();
+      
       setReplyingTo(null);
       setReplyContent("");
     } catch (error) {
+      console.error("CommentPage: Failed to add reply:", error);
       setError(`Failed to post reply: ${error.message}`);
     } finally {
       setSubmitting(false);
@@ -306,24 +249,18 @@ const CommentPage = () => {
   };
 
   const handleLike = async (commentId, isReply = false, replyId = null) => {
+    if (!user.isLoggedIn) {
+      setError("请先登录后再点赞。");
+      return;
+    }
+    
     try {
       await likeComment(commentId, isReply, replyId);
       
-      // Update local state optimistically
-      setComments(comments.map(comment => {
-        if (isReply && comment.id === commentId) {
-          return {
-            ...comment,
-            replies: comment.replies.map(reply =>
-              reply.id === replyId ? { ...reply, likes: (reply.likes || 0) + 1 } : reply
-            )
-          };
-        } else if (!isReply && comment.id === commentId) {
-          return { ...comment, likes: (comment.likes || 0) + 1 };
-        }
-        return comment;
-      }));
+      // 重新获取评论列表以确保数据同步
+      await fetchComments();
     } catch (error) {
+      console.error("CommentPage: Failed to like:", error);
       setError(`Failed to like comment: ${error.message}`);
     }
   };
@@ -339,6 +276,46 @@ const CommentPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      {/* 用户状态显示区域 */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-200">
+        <div className="container mx-auto px-4 py-4">
+          <div className="text-center">
+            {user.isLoggedIn ? (
+              <div className="bg-white rounded-lg shadow-sm p-4 inline-block">
+                <div className="flex flex-wrap items-center justify-center space-x-6 text-sm">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-gray-600">登录状态: </span>
+                    <span className="font-bold text-green-600">已登录</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-gray-600">用户ID: </span>
+                    <span className="font-bold text-blue-600">{user.userId}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-gray-600">姓名: </span>
+                    <span className="font-bold text-blue-600">{user.name}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-gray-600">邮箱: </span>
+                    <span className="font-bold text-blue-600">{user.email}</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow-sm p-4 inline-block">
+                <div className="flex items-center space-x-2 text-sm">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <span className="text-gray-600">登录状态: </span>
+                  <span className="font-bold text-red-600">未登录</span>
+                  <span className="text-gray-500 ml-4">请先登录以参与评论讨论</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       <div className="container mx-auto px-6 py-8 max-w-6xl">
         {/* Header Section */}
         <div className="bg-white rounded-3xl shadow-2xl border-2 border-blue-200 shadow-blue-200/50 overflow-hidden mb-8">
@@ -386,41 +363,49 @@ const CommentPage = () => {
             Share Your Thoughts
           </h3>
 
-          <form onSubmit={handleAddComment} className="flex items-start gap-6">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-xl">
-              Y
-            </div>
-            <div className="flex-1">
-              <textarea
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="What's on your mind?"
-                className="w-full px-6 py-4 bg-gray-50 border-2 border-blue-200 shadow-blue-200/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:shadow-blue-400/50 transition-all resize-none text-lg"
-                rows="4"
-                disabled={submitting}
-                required
-              />
-              <div className="mt-4">
-                <button
-                  type="submit"
-                  disabled={!newComment.trim() || submitting}
-                  className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-8 py-3 rounded-xl font-medium hover:from-blue-600 hover:to-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-lg hover:shadow-xl text-lg"
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Posting...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-5 h-5" />
-                      Post Comment
-                    </>
-                  )}
-                </button>
+          {user.isLoggedIn ? (
+            <form onSubmit={handleAddComment} className="flex items-start gap-6">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-xl">
+                {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
               </div>
+              <div className="flex-1">
+                <textarea
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="What's on your mind?"
+                  className="w-full px-6 py-4 bg-gray-50 border-2 border-blue-200 shadow-blue-200/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:shadow-blue-400/50 transition-all resize-none text-lg"
+                  rows="4"
+                  disabled={submitting}
+                  required
+                />
+                <div className="mt-4">
+                  <button
+                    type="submit"
+                    disabled={!newComment.trim() || submitting}
+                    className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-8 py-3 rounded-xl font-medium hover:from-blue-600 hover:to-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-lg hover:shadow-xl text-lg"
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Posting...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-5 h-5" />
+                        Post Comment
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </form>
+          ) : (
+            <div className="text-center py-8">
+              <MessageCircle className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+              <p className="text-xl text-gray-500 mb-2">请先登录以参与讨论</p>
+              <p className="text-gray-400">登录后即可发表评论和回复</p>
             </div>
-          </form>
+          )}
         </div>
 
         {/* Comments Section */}
@@ -491,11 +476,12 @@ const CommentPage = () => {
                         <div className="flex items-center gap-6">
                           <button
                             onClick={() => handleLike(comment.id)}
+                            disabled={!user.isLoggedIn}
                             className={`flex items-center gap-3 px-4 py-2 rounded-full transition-all ${
                               comment.likes > 0 
                                 ? "bg-red-50 text-red-600 hover:bg-red-100 border-2 border-red-200" 
                                 : "text-gray-500 hover:bg-gray-100 border-2 border-gray-200"
-                            }`}
+                            } ${!user.isLoggedIn ? 'opacity-50 cursor-not-allowed' : ''}`}
                           >
                             <Heart className={`w-5 h-5 ${comment.likes > 0 ? "fill-current" : ""}`} />
                             <span className="text-base font-medium">{comment.likes || 0}</span>
@@ -503,7 +489,8 @@ const CommentPage = () => {
                           
                           <button
                             onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-                            className="flex items-center gap-3 px-4 py-2 rounded-full text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-all border-2 border-gray-200 hover:border-blue-200"
+                            disabled={!user.isLoggedIn}
+                            className={`flex items-center gap-3 px-4 py-2 rounded-full text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-all border-2 border-gray-200 hover:border-blue-200 ${!user.isLoggedIn ? 'opacity-50 cursor-not-allowed' : ''}`}
                           >
                             <MessageCircle className="w-5 h-5" />
                             <span className="text-base font-medium">
@@ -513,11 +500,11 @@ const CommentPage = () => {
                         </div>
 
                         {/* Reply Form */}
-                        {replyingTo === comment.id && (
+                        {replyingTo === comment.id && user.isLoggedIn && (
                           <div className="mt-6 pl-6 border-l-2 border-blue-200">
                             <div className="flex gap-4">
                               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold">
-                                Y
+                                {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
                               </div>
                               <div className="flex-1">
                                 <textarea
@@ -583,9 +570,10 @@ const CommentPage = () => {
                                   </p>
                                   <button
                                     onClick={() => handleLike(comment.id, true, reply.id)}
+                                    disabled={!user.isLoggedIn}
                                     className={`flex items-center gap-2 text-sm px-3 py-1 rounded-full border-2 transition-all ${
                                       reply.likes > 0 ? "text-red-500 border-red-200 bg-red-50" : "text-gray-500 border-gray-200 bg-white"
-                                    } hover:text-red-600 hover:border-red-300`}
+                                    } hover:text-red-600 hover:border-red-300 ${!user.isLoggedIn ? 'opacity-50 cursor-not-allowed' : ''}`}
                                   >
                                     <Heart className={`w-4 h-4 ${reply.likes > 0 ? "fill-current" : ""}`} />
                                     <span>{reply.likes || 0}</span>

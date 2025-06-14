@@ -81,7 +81,7 @@ Route::post('/comments/{comment}/like', [CommentController::class, 'like']);
 Route::post('/comments/{comment}/replies', [CommentController::class, 'storeReply']);
 Route::post('/comments/{comment}/replies/{reply}/like', [CommentController::class, 'likeReply']);
 
-Route::post('/contact', [ContactController::class, 'store']);
+Route::post('/add-contact', [ContactController::class, 'store']);
 
 // 更新购物车项目数量
 // Route::put('/cart/{id}', [CartController::class, 'updateCartItem']);

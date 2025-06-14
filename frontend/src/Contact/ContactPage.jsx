@@ -1,187 +1,423 @@
-// src/Contact/ContactPage.jsx
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, ChevronUp, Search } from "lucide-react";
-import AnimatedSection from "../components/AnimatedSection";
-import PageHeader from "../components/PageHeader";
-import { useUser } from "../contexts/UserContext";
+// CommentPage.jsx
+import React, { useState, useEffect } from 'react';
+import { Heart, MessageCircle, Send, X, Award, Clock, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { useUser } from '../contexts/UserContext'; // 导入用户上下文
 
-const ContactPage = () => {
-  const { user } = useUser(); // 修复：从user对象中获取信息
+const CommentPage = () => {
+  const { user } = useUser(); // 获取当前用户信息
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState("");
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyContent, setReplyContent] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  
+  const commentsPerPage = 10;
+  const API_BASE_URL = 'http://localhost:8000/api';
 
   // 调试信息
   useEffect(() => {
-    console.log("ContactPage: Component mounted");
-    console.log("ContactPage: User data:", user);
+    console.log("CommentPage: Component mounted");
+    console.log("CommentPage: User data:", user);
   }, [user]);
 
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    subject: "",
-    message: "",
-  });
-
-  // 当用户信息变化时，更新表单数据
-  useEffect(() => {
-    if (user.isLoggedIn) {
-      setFormData(prev => ({
-        ...prev,
-        name: user.name || "",
-        email: user.email || "",
-      }));
-      console.log("ContactPage: Form data updated with user info:", {
-        name: user.name,
-        email: user.email
-      });
+  // Mock data for demonstration (remove when connecting to real API)
+  const mockComments = [
+    {
+      id: 1,
+      content: "This is a great discussion starter! I love how we can engage with the community.",
+      user: {
+        id: 1,
+        name: "Sarah Johnson",
+        avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face",
+        isAdmin: true
+      },
+      created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      likes: 5,
+      replies: [
+        {
+          id: 101,
+          content: "Absolutely agree! The community here is amazing.",
+          user: {
+            id: 2,
+            name: "Mike Chen",
+            avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"
+          },
+          created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+          likes: 2
+        }
+      ]
+    },
+    {
+      id: 2,
+      content: "I've been thinking about this topic for a while. What are everyone's thoughts on the future of web development?",
+      user: {
+        id: 3,
+        name: "Alex Rodriguez",
+        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face"
+      },
+      created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+      likes: 8,
+      replies: []
     }
-  }, [user]);
+  ];
 
-  const [formStatus, setFormStatus] = useState({
-    submitted: false,
-    success: false,
-    message: "",
-  });
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    console.log("ContactPage: Form field changed:", { [name]: value });
+  // API functions with better error handling
+  const fetchComments = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      console.log("CommentPage: Fetching comments from API");
+      
+      const response = await fetch(`${API_BASE_URL}/comments`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          // 如果需要认证token，添加Authorization header
+          ...(user.token && { 'Authorization': `Bearer ${user.token}` }),
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      const processedComments = Array.isArray(data) ? data : (data.comments || []);
+      
+      console.log("CommentPage: Comments fetched successfully:", processedComments);
+      
+      setComments(processedComments.map(comment => ({
+        ...comment,
+        replies: comment.replies || []
+      })));
+    } catch (error) {
+      console.warn('API not available, using mock data:', error);
+      // Fallback to mock data for demonstration
+      setComments(mockComments);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("ContactPage: Form submitted with data:", formData);
-    
-    setFormStatus({
-      submitted: true,
-      success: true,
-      message: "Thank you for your message! We'll get back to you soon.",
+  const postComment = async (commentData) => {
+    try {
+      console.log("CommentPage: Posting comment:", commentData);
+      
+      const response = await fetch(`${API_BASE_URL}/add-comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          // 如果需要认证token，添加Authorization header
+          ...(user.token && { 'Authorization': `Bearer ${user.token}` }),
+        },
+        body: JSON.stringify({
+          content: commentData.content,
+          user_id: user.userId, // 使用当前用户ID
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log("CommentPage: Comment posted successfully:", data);
+      return data;
+    } catch (error) {
+      console.warn('API not available for posting:', error);
+      // Return mock response for demonstration
+      return {
+        id: Date.now(),
+        content: commentData.content,
+        user: {
+          id: user.userId,
+          name: user.name,
+          avatar: user.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face"
+        },
+        created_at: new Date().toISOString(),
+        likes: 0,
+        replies: []
+      };
+    }
+  };
+
+  const postReply = async (commentId, replyData) => {
+    try {
+      console.log("CommentPage: Posting reply:", { commentId, replyData });
+      
+      const response = await fetch(`${API_BASE_URL}/comments/${commentId}/replies`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          // 如果需要认证token，添加Authorization header
+          ...(user.token && { 'Authorization': `Bearer ${user.token}` }),
+        },
+        body: JSON.stringify({
+          content: replyData.content,
+          user_id: user.userId, // 使用当前用户ID
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log("CommentPage: Reply posted successfully:", data);
+      return data;
+    } catch (error) {
+      console.warn('API not available for reply posting:', error);
+      // Return mock response for demonstration
+      return {
+        id: Date.now(),
+        content: replyData.content,
+        user: {
+          id: user.userId,
+          name: user.name,
+          avatar: user.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face"
+        },
+        created_at: new Date().toISOString(),
+        likes: 0
+      };
+    }
+  };
+
+  const likeComment = async (commentId, isReply = false, replyId = null) => {
+    try {
+      const endpoint = isReply 
+        ? `${API_BASE_URL}/comments/${commentId}/replies/${replyId}/like`
+        : `${API_BASE_URL}/comments/${commentId}/like`;
+      
+      console.log("CommentPage: Liking comment/reply:", { commentId, isReply, replyId });
+      
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          // 如果需要认证token，添加Authorization header
+          ...(user.token && { 'Authorization': `Bearer ${user.token}` }),
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log("CommentPage: Like successful:", data);
+      return data;
+    } catch (error) {
+      console.warn('API not available for liking:', error);
+      // Return success for demonstration
+      return { success: true };
+    }
+  };
+
+  useEffect(() => {
+    fetchComments();
+  }, []);
+
+  // Utility functions
+  const getRelativeTime = (dateString) => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffInSeconds = Math.floor((now - date) / 1000);
+
+    if (diffInSeconds < 60) return "just now";
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const getSortedComments = () => {
+    return [...comments].sort((a, b) => {
+      switch (sortBy) {
+        case "oldest": return new Date(a.created_at) - new Date(b.created_at);
+        case "popular": return (b.likes || 0) - (a.likes || 0);
+        default: return new Date(b.created_at) - new Date(a.created_at);
+      }
     });
+  };
+
+  const getPaginatedComments = () => {
+    const sorted = getSortedComments();
+    const startIndex = (currentPage - 1) * commentsPerPage;
+    return sorted.slice(startIndex, startIndex + commentsPerPage);
+  };
+
+  const getTotalPages = () => Math.ceil(comments.length / commentsPerPage);
+
+  const getCommentStats = () => {
+    const replies = comments.reduce((acc, comment) => acc + (comment.replies?.length || 0), 0);
+    return { total: comments.length, replies };
+  };
+
+  // Event handlers
+  const handleAddComment = async (e) => {
+    if (e) e.preventDefault();
     
-    // 保留用户的姓名和邮箱，清空主题和消息
-    setFormData(prev => ({
-      ...prev,
-      subject: "",
-      message: "",
-    }));
+    // 检查用户是否已登录
+    if (!user.isLoggedIn) {
+      setError("请先登录后再发表评论。");
+      return;
+    }
+    
+    if (!newComment.trim()) return;
+
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      console.log("CommentPage: Adding comment with user:", user);
+      
+      const commentData = {
+        content: newComment,
+        user: {
+          id: user.userId,
+          name: user.name,
+          avatar: user.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face"
+        }
+      };
+
+      const response = await postComment(commentData);
+      
+      const newCommentObj = {
+        id: response.id || Date.now(),
+        user: response.user || commentData.user,
+        content: response.content || newComment,
+        created_at: response.created_at || new Date().toISOString(),
+        likes: response.likes || 0,
+        replies: response.replies || []
+      };
+
+      console.log("CommentPage: New comment created:", newCommentObj);
+
+      setComments([newCommentObj, ...comments]);
+      setNewComment("");
+      setCurrentPage(1);
+    } catch (error) {
+      console.error("CommentPage: Failed to add comment:", error);
+      setError(`Failed to post comment: ${error.message}`);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const officeLocations = [
-    {
-      city: "New York",
-      address: "123 Broadway, New York, NY 10001",
-      phone: "+1 (212) 555-1234",
-      email: "newyork@example.com",
-    },
-    {
-      city: "London",
-      address: "456 Oxford Street, London, W1C 1AP",
-      phone: "+44 20 7123 4567",
-      email: "london@example.com",
-    },
-    {
-      city: "Tokyo",
-      address: "789 Shibuya, Tokyo, 150-0002",
-      phone: "+81 3 1234 5678",
-      email: "tokyo@example.com",
-    },
-  ];
+  const handleAddReply = async (commentId) => {
+    // 检查用户是否已登录
+    if (!user.isLoggedIn) {
+      setError("请先登录后再回复评论。");
+      return;
+    }
+    
+    if (!replyContent.trim()) return;
 
-  const FAQItem = ({ question, answer }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    return (
-      <motion.div
-        className={`bg-white rounded-2xl overflow-hidden transition-all duration-300 ${
-          isOpen ? "shadow-xl border-blue-600" : "shadow-md border-blue-300/30"
-        } border hover:border-blue-500/50`}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className={`w-full p-6 flex items-center justify-between text-left transition-colors ${
-            isOpen ? "bg-blue-50" : "bg-white"
-          }`}
-        >
-          <h3 className={`text-xl font-semibold ${isOpen ? "text-blue-600" : "text-gray-800"}`}>
-            {question}
-          </h3>
-          <div className="text-blue-600 transition-transform duration-300">
-            {isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-          </div>
-        </button>
+    setSubmitting(true);
+    setError(null);
 
-        <AnimatePresence>
-          {isOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="p-6 pt-0 text-gray-600">{answer}</div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-    );
+    try {
+      console.log("CommentPage: Adding reply with user:", user);
+      
+      const replyData = {
+        content: replyContent,
+        user: {
+          id: user.userId,
+          name: user.name,
+          avatar: user.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face"
+        }
+      };
+
+      const response = await postReply(commentId, replyData);
+      
+      const newReply = {
+        id: response.id || Date.now(),
+        user: response.user || replyData.user,
+        content: response.content || replyContent,
+        created_at: response.created_at || new Date().toISOString(),
+        likes: response.likes || 0
+      };
+
+      console.log("CommentPage: New reply created:", newReply);
+
+      setComments(comments.map(comment => 
+        comment.id === commentId 
+          ? { ...comment, replies: [...(comment.replies || []), newReply] }
+          : comment
+      ));
+
+      setReplyingTo(null);
+      setReplyContent("");
+    } catch (error) {
+      console.error("CommentPage: Failed to add reply:", error);
+      setError(`Failed to post reply: ${error.message}`);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const [searchTerm, setSearchTerm] = useState("");
+  const handleLike = async (commentId, isReply = false, replyId = null) => {
+    // 检查用户是否已登录
+    if (!user.isLoggedIn) {
+      setError("请先登录后再点赞。");
+      return;
+    }
+    
+    try {
+      console.log("CommentPage: Liking with user:", user);
+      
+      await likeComment(commentId, isReply, replyId);
+      
+      // Update local state optimistically
+      setComments(comments.map(comment => {
+        if (isReply && comment.id === commentId) {
+          return {
+            ...comment,
+            replies: comment.replies.map(reply =>
+              reply.id === replyId ? { ...reply, likes: (reply.likes || 0) + 1 } : reply
+            )
+          };
+        } else if (!isReply && comment.id === commentId) {
+          return { ...comment, likes: (comment.likes || 0) + 1 };
+        }
+        return comment;
+      }));
+    } catch (error) {
+      console.error("CommentPage: Failed to like:", error);
+      setError(`Failed to like comment: ${error.message}`);
+    }
+  };
 
-  const faqs = [
-    {
-      question: "How quickly can I expect a response to my inquiry?",
-      answer:
-        "We strive to respond to all inquiries within 24 hours during business days. For urgent matters, please call our customer service line.",
-    },
-    {
-      question: "Do you offer international shipping?",
-      answer:
-        "Yes, we ship to most countries worldwide. Shipping rates and delivery times vary by location. Please check our shipping policy for more details.",
-    },
-    {
-      question: "What payment methods do you accept?",
-      answer:
-        "We accept all major credit cards, PayPal, and bank transfers. For large orders, we also offer financing options.",
-    },
-    {
-      question: "Can I schedule a consultation before purchasing?",
-      answer:
-        "We offer free consultations to help you find the right product for your needs. You can schedule a call with one of our experts through the contact form.",
-    },
-    {
-      question: "What is your product warranty period?",
-      answer:
-        "All our products come with a standard one-year warranty. Our premium product line includes an extended three-year warranty. Please refer to the product details page for specific warranty policies.",
-    },
-    {
-      question: "How can I track my order?",
-      answer:
-        "Once your order ships, you'll receive an email with a tracking number. You can use this number to track your package on our website or through the carrier's official channels.",
-    },
-  ];
+  const handleRetry = () => {
+    setError(null);
+    fetchComments();
+  };
 
-  const filteredFAQs = faqs.filter(
-    (faq) =>
-      faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      faq.answer.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const stats = getCommentStats();
+  const totalPages = getTotalPages();
+  const paginatedComments = getPaginatedComments();
 
   return (
-    <div className="min-h-screen">
-      {/* 用户状态显示区域 - 改进版本 */}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      {/* 用户状态显示区域 */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-200">
         <div className="container mx-auto px-4 py-4">
           <div className="text-center">
             {user.isLoggedIn ? (
               <div className="bg-white rounded-lg shadow-sm p-4 inline-block">
-                <div className="flex items-center space-x-6 text-sm">
+                <div className="flex flex-wrap items-center justify-center space-x-6 text-sm">
                   <div className="flex items-center space-x-2">
                     <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                     <span className="text-gray-600">登录状态: </span>
@@ -207,7 +443,7 @@ const ContactPage = () => {
                   <div className="w-3 h-3 bg-red-500 rounded-full"></div>
                   <span className="text-gray-600">登录状态: </span>
                   <span className="font-bold text-red-600">未登录</span>
-                  <span className="text-gray-500 ml-4">请先登录以自动填充联系信息</span>
+                  <span className="text-gray-500 ml-4">请先登录以参与评论讨论</span>
                 </div>
               </div>
             )}
@@ -215,411 +451,329 @@ const ContactPage = () => {
         </div>
       </div>
 
-      {/* Hero Section */}
-      <PageHeader 
-        title="Get in Touch" 
-        description="We'd love to hear from you. Reach out with any questions or feedback." 
-      />
-
-      {/* Contact Form Section */}
-      <section id="form" className="py-20 relative bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-        <div className="absolute inset-0 bg-purple-100 opacity-10 blur-3xl w-96 h-96 rounded-full transform -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 pointer-events-none"></div>
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="grid md:grid-cols-2 gap-12 lg:gap-20 items-start">
-            <AnimatedSection className="space-y-8">
-              <div>
-                <span className="text-blue-600 font-semibold">Contact Form</span>
-                <h2 className="text-3xl lg:text-4xl font-bold mt-2 mb-4">Send Us a Message</h2>
-                <div className="w-20 h-1.5 bg-blue-600 rounded-full mb-6"></div>
-                <p className="text-gray-700 leading-relaxed">
-                  Fill out the form below and we'll get back to you as soon as possible.
-                  {user.isLoggedIn && (
-                    <span className="block mt-2 text-sm text-blue-600 font-medium">
-                      ✓ Your contact information has been automatically filled in
-                    </span>
-                  )}
-                </p>
+      <div className="container mx-auto px-6 py-8 max-w-6xl">
+        {/* Header Section */}
+        <div className="bg-white rounded-3xl shadow-2xl border-2 border-blue-200 shadow-blue-200/50 overflow-hidden mb-8">
+          <div className="bg-gradient-to-r from-blue-400 via-blue-500 to-indigo-500 p-8 text-white relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-4 mb-4">
+                <MessageCircle className="w-10 h-10" />
+                <h1 className="text-4xl font-bold">Community Hub</h1>
               </div>
-
-              <form onSubmit={handleSubmit} className="space-y-6 bg-white rounded-2xl shadow-2xl border border-blue-200 backdrop-blur-sm bg-white/80 p-6 lg:p-8">
-                <div className="grid sm:grid-cols-2 gap-6">
-                  <div>
-                    <label htmlFor="name" className="block text-gray-700 font-medium mb-2">
-                      Your Name
-                      {user.isLoggedIn && <span className="text-green-600 text-sm ml-2">✓ Auto-filled</span>}
-                    </label>
-                    <input
-                      type="text"
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-blue-100/40"
-                      placeholder={user.isLoggedIn ? "Your name is auto-filled" : "Enter your name"}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="email" className="block text-gray-700 font-medium mb-2">
-                      Email Address
-                      {user.isLoggedIn && <span className="text-green-600 text-sm ml-2">✓ Auto-filled</span>}
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-blue-100/40"
-                      placeholder={user.isLoggedIn ? "Your email is auto-filled" : "Enter your email"}
-                    />
-                  </div>
+              <p className="text-blue-100 text-lg mb-6 max-w-2xl">
+                Connect, share, and engage with our vibrant community. Your voice matters!
+              </p>
+              <div className="flex flex-wrap gap-6 text-base">
+                <div className="flex items-center gap-3 bg-white/10 px-4 py-2 rounded-full">
+                  <MessageCircle className="w-5 h-5" />
+                  <span>{stats.total} Comments</span>
                 </div>
-
-                <div>
-                  <label htmlFor="subject" className="block text-gray-700 font-medium mb-2">
-                    Subject
-                  </label>
-                  <input
-                    type="text"
-                    id="subject"
-                    name="subject"
-                    value={formData.subject}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-blue-100/40"
-                    placeholder="What's this message about?"
-                  />
+                <div className="flex items-center gap-3 bg-white/10 px-4 py-2 rounded-full">
+                  <Heart className="w-5 h-5" />
+                  <span>{stats.replies} Replies</span>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-                <div>
-                  <label htmlFor="message" className="block text-gray-700 font-medium mb-2">
-                    Message
-                  </label>
-                  <textarea
-                    id="message"
-                    name="message"
-                    rows="5"
-                    value={formData.message}
-                    onChange={handleChange}
-                    required
-                    placeholder="Tell us more about your inquiry..."
-                    className="w-full px-4 py-3.5 border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none shadow-blue-100/40"
-                  ></textarea>
-                </div>
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-50 border-2 border-red-200 shadow-red-200/50 text-red-600 px-6 py-4 rounded-xl mb-6 flex items-center justify-between">
+            <span>{error}</span>
+            <button
+              onClick={handleRetry}
+              className="ml-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        )}
 
-                <button
-                  type="submit"
-                  className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-xl transition duration-300 shadow-lg hover:shadow-blue-500/40 inline-flex items-center justify-center gap-2"
-                >
-                  <span>Send Message</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </button>
-              </form>
+        {/* Comment Form Section */}
+        <div className="bg-white rounded-2xl shadow-2xl border-2 border-blue-200 shadow-blue-200/50 p-8 mb-8">
+          <h3 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center gap-3">
+            <MessageCircle className="w-6 h-6 text-blue-500" />
+            Share Your Thoughts
+          </h3>
 
-              <AnimatePresence>
-                {formStatus.submitted && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3 }}
-                    className={`p-5 rounded-xl shadow-lg ${
-                      formStatus.success
-                        ? "bg-green-50 text-green-800 border border-green-200"
-                        : "bg-red-50 text-red-800 border border-red-200"
-                    }`}
+          {user.isLoggedIn ? (
+            <form onSubmit={handleAddComment} className="flex items-start gap-6">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-xl">
+                {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+              </div>
+              <div className="flex-1">
+                <textarea
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="What's on your mind?"
+                  className="w-full px-6 py-4 bg-gray-50 border-2 border-blue-200 shadow-blue-200/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:shadow-blue-400/50 transition-all resize-none text-lg"
+                  rows="4"
+                  disabled={submitting}
+                  required
+                />
+                <div className="mt-4">
+                  <button
+                    type="submit"
+                    disabled={!newComment.trim() || submitting}
+                    className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-8 py-3 rounded-xl font-medium hover:from-blue-600 hover:to-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-lg hover:shadow-xl text-lg"
                   >
-                    <div className="flex items-center gap-3">
-                      {formStatus.success ? (
-                        <div className="rounded-full bg-green-100 p-2">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path
-                              fillRule="evenodd"
-                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
+                    {submitting ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Posting...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-5 h-5" />
+                        Post Comment
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </form>
+          ) : (
+            <div className="text-center py-8">
+              <MessageCircle className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+              <p className="text-xl text-gray-500 mb-2">请先登录以参与讨论</p>
+              <p className="text-gray-400">登录后即可发表评论和回复</p>
+            </div>
+          )}
+        </div>
+
+        {/* Comments Section */}
+        <div className="bg-white rounded-2xl shadow-2xl border-2 border-blue-200 shadow-blue-200/50 overflow-hidden">
+          {/* Comments Header */}
+          <div className="p-8 border-b-2 border-blue-100 bg-gradient-to-r from-gray-50 to-blue-50">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+              <h2 className="text-2xl font-semibold text-gray-800">
+                Discussions ({stats.total})
+              </h2>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="px-4 py-3 bg-white border-2 border-blue-200 shadow-blue-200/30 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:shadow-blue-400/50 shadow-sm"
+              >
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="popular">Most Popular</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Loading State */}
+          {loading && (
+            <div className="p-16 text-center">
+              <Loader2 className="w-12 h-12 mx-auto mb-4 text-blue-500 animate-spin" />
+              <p className="text-gray-600 text-lg">Loading comments...</p>
+            </div>
+          )}
+
+          {/* Comments List */}
+          {!loading && (
+            <div className="max-h-[1000px] overflow-y-auto">
+              <div className="p-8 space-y-8">
+                {paginatedComments.map((comment, index) => (
+                  <div
+                    key={comment.id}
+                    className="border-2 border-blue-200 shadow-blue-200/30 rounded-2xl p-8 hover:shadow-lg hover:shadow-blue-300/50 transition-all bg-gradient-to-br from-white to-gray-50"
+                  >
+                    <div className="flex gap-6">
+                      <img
+                        src={comment.user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face'}
+                        alt={comment.user?.name || 'User'}
+                        className="w-16 h-16 rounded-full object-cover border-2 border-blue-200"
+                      />
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-3 mb-4">
+                          <h3 className="font-semibold text-gray-800 text-lg">
+                            {comment.user?.name || 'Anonymous'}
+                          </h3>
+                          {comment.user?.isAdmin && (
+                            <span className="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full font-medium">
+                              <Award className="w-4 h-4" />
+                              Admin
+                            </span>
+                          )}
+                          <span className="text-base text-gray-500 flex items-center gap-2">
+                            <Clock className="w-4 h-4" />
+                            {getRelativeTime(comment.created_at)}
+                          </span>
                         </div>
-                      ) : (
-                        <div className="rounded-full bg-red-100 p-2">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path
-                              fillRule="evenodd"
-                              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 011.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 011.414-1.414z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
+                        
+                        <p className="text-gray-700 mb-6 leading-relaxed text-lg">
+                          {comment.content}
+                        </p>
+                        
+                        <div className="flex items-center gap-6">
+                          <button
+                            onClick={() => handleLike(comment.id)}
+                            disabled={!user.isLoggedIn}
+                            className={`flex items-center gap-3 px-4 py-2 rounded-full transition-all ${
+                              comment.likes > 0 
+                                ? "bg-red-50 text-red-600 hover:bg-red-100 border-2 border-red-200" 
+                                : "text-gray-500 hover:bg-gray-100 border-2 border-gray-200"
+                            } ${!user.isLoggedIn ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          >
+                            <Heart className={`w-5 h-5 ${comment.likes > 0 ? "fill-current" : ""}`} />
+                            <span className="text-base font-medium">{comment.likes || 0}</span>
+                          </button>
+                          
+                          <button
+                            onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                            disabled={!user.isLoggedIn}
+                            className={`flex items-center gap-3 px-4 py-2 rounded-full text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-all border-2 border-gray-200 hover:border-blue-200 ${!user.isLoggedIn ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          >
+                            <MessageCircle className="w-5 h-5" />
+                            <span className="text-base font-medium">
+                              {replyingTo === comment.id ? "Cancel" : "Reply"}
+                            </span>
+                          </button>
                         </div>
-                      )}
-                      <div>
-                        <span className="font-medium">{formStatus.message}</span>
-                        {user.isLoggedIn && formStatus.success && (
-                          <p className="text-sm mt-1">
-                            We have your contact details on file (User ID: {user.userId})
-                          </p>
+
+                        {/* Reply Form */}
+                        {replyingTo === comment.id && user.isLoggedIn && (
+                          <div className="mt-6 pl-6 border-l-2 border-blue-200">
+                            <div className="flex gap-4">
+                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold">
+                                {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                              </div>
+                              <div className="flex-1">
+                                <textarea
+                                  value={replyContent}
+                                  onChange={(e) => setReplyContent(e.target.value)}
+                                  placeholder="Write a thoughtful reply..."
+                                  className="w-full px-4 py-3 border-2 border-blue-200 shadow-blue-200/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:shadow-blue-400/50 text-base resize-none"
+                                  rows="4"
+                                  disabled={submitting}
+                                />
+                                <div className="mt-4 flex gap-3">
+                                  <button
+                                    onClick={() => setReplyingTo(null)}
+                                    className="px-4 py-2 border-2 border-gray-300 rounded-lg text-base text-gray-600 hover:bg-gray-50 transition-colors"
+                                    disabled={submitting}
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button
+                                    onClick={() => handleAddReply(comment.id)}
+                                    disabled={!replyContent.trim() || submitting}
+                                    className="px-4 py-2 bg-blue-500 text-white rounded-lg text-base font-medium hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                  >
+                                    {submitting ? (
+                                      <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        Posting...
+                                      </>
+                                    ) : (
+                                      'Reply'
+                                    )}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Replies */}
+                        {comment.replies?.length > 0 && (
+                          <div className="mt-6 pl-6 border-l-2 border-blue-200 space-y-4">
+                            {comment.replies.map((reply) => (
+                              <div
+                                key={reply.id}
+                                className="flex gap-4 p-6 bg-blue-50 rounded-lg border-2 border-blue-200 shadow-blue-200/30"
+                              >
+                                <img
+                                  src={reply.user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face'}
+                                  alt={reply.user?.name || 'User'}
+                                  className="w-12 h-12 rounded-full object-cover border-2 border-blue-200"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <h4 className="font-medium text-gray-800 text-base">
+                                      {reply.user?.name || 'Anonymous'}
+                                    </h4>
+                                    <span className="text-sm text-gray-500">
+                                      {getRelativeTime(reply.created_at)}
+                                    </span>
+                                  </div>
+                                  <p className="text-base text-gray-700 mb-3">
+                                    {reply.content}
+                                  </p>
+                                  <button
+                                    onClick={() => handleLike(comment.id, true, reply.id)}
+                                    disabled={!user.isLoggedIn}
+                                    className={`flex items-center gap-2 text-sm px-3 py-1 rounded-full border-2 transition-all ${
+                                      reply.likes > 0 ? "text-red-500 border-red-200 bg-red-50" : "text-gray-500 border-gray-200 bg-white"
+                                    } hover:text-red-600 hover:border-red-300 ${!user.isLoggedIn ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                  >
+                                    <Heart className={`w-4 h-4 ${reply.likes > 0 ? "fill-current" : ""}`} />
+                                    <span>{reply.likes || 0}</span>
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         )}
                       </div>
                     </div>
-                  </motion.div>
+                  </div>
+                ))}
+
+                {paginatedComments.length === 0 && !loading && (
+                  <div className="text-center py-16 text-gray-500">
+                    <MessageCircle className="w-20 h-20 mx-auto mb-6 text-gray-300" />
+                    <p className="text-xl">No comments yet</p>
+                    <p className="text-base">Be the first to start the conversation!</p>
+                  </div>
                 )}
-              </AnimatePresence>
-            </AnimatedSection>
-
-            <AnimatedSection id="contact-info" className="space-y-8">
-              <div>
-                <span className="text-blue-600 font-semibold">Get in Touch</span>
-                <h2 className="text-3xl lg:text-4xl font-bold mt-2 mb-4">Contact Information</h2>
-                <div className="w-20 h-1.5 bg-blue-600 rounded-full mb-6"></div>
-                <p className="text-gray-700 leading-relaxed">
-                  You can also reach us using the contact information below. Available Monday through Friday, 9am to 5pm local time.
-                </p>
               </div>
-
-              <div className="space-y-6 bg-white rounded-2xl shadow-2xl border border-blue-200 backdrop-blur-sm bg-white/80 p-6 lg:p-8">
-                <div className="flex items-start space-x-5">
-                  <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-xl shadow-lg transform hover:-translate-y-1 transition duration-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg text-gray-800">Phone</h3>
-                    <p className="text-gray-600">+1 (555) 123-4567</p>
-                    <p className="text-blue-600 text-sm mt-1 font-medium hover:underline cursor-pointer">Call us now</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-5">
-                  <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-xl shadow-lg transform hover:-translate-y-1 transition duration-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg text-gray-800">Email</h3>
-                    <p className="text-gray-600">info@example.com</p>
-                    <p className="text-blue-600 text-sm mt-1 font-medium hover:underline cursor-pointer">Send an email</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-5">
-                  <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-xl shadow-lg transform hover:-translate-y-1 transition duration-300">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                      />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg text-gray-800">Address</h3>
-                    <p className="text-gray-600">123 Main Street, New York, NY 10001</p>
-                    <p className="text-blue-600 text-sm mt-1 font-medium hover:underline cursor-pointer">Get directions</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-8 bg-gradient-to-br from-blue-100 to-indigo-100 p-6 rounded-2xl border border-blue-200 shadow-2xl relative overflow-hidden">
-                <h3 className="text-xl font-semibold mb-4">Business Hours</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center bg-white/70 backdrop-blur-sm p-3 rounded-xl shadow-md">
-                    <span className="text-gray-600 font-medium">Monday - Friday:</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
-                      <span>9:00 AM - 5:00 PM</span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center bg-white/70 backdrop-blur-sm p-3 rounded-xl shadow-md">
-                    <span className="text-gray-600 font-medium">Saturday:</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-yellow-500 animate-pulse"></div>
-                      <span>10:00 AM - 2:00 PM</span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center bg-white/70 backdrop-blur-sm p-3 rounded-xl shadow-md">
-                    <span className="text-gray-600 font-medium">Sunday:</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse"></div>
-                      <span>Closed</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </AnimatedSection>
-          </div>
-        </div>
-      </section>
-
-      {/* Office Locations */}
-      <section className="py-20 relative overflow-hidden">
-        <div className="container mx-auto px-4">
-          <AnimatedSection className="text-center mb-16">
-            <span className="inline-block mb-2 bg-blue-50 px-4 py-1 rounded-full text-primary font-medium">Global Presence</span>
-            <h2 className="text-3xl lg:text-4xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Our Offices</h2>
-            <p className="text-gray-700 max-w-2xl mx-auto">Visit us at one of our global locations.</p>
-          </AnimatedSection>
-
-          <AnimatedSection className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-10" direction="up">
-            {officeLocations.map((office, index) => (
-              <div key={index} className="relative group">
-                <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-blue-100 p-6 lg:p-8 hover:translate-y-[-8px] transition-all duration-500 relative overflow-hidden">
-                  <div className="inline-block px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-xl shadow-lg mb-4">
-                    {office.city}
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-4 group cursor-pointer">
-                      <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-xl shadow-md group-hover:shadow-lg transition-all transform group-hover:scale-105 flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                          />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-800">Address</h3>
-                        <p>{office.address}</p>
-                        <p className="text-blue-600 text-sm mt-1 font-medium group-hover:text-blue-700 transition">Get directions</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start space-x-4 group cursor-pointer">
-                      <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-xl shadow-md group-hover:shadow-lg transition-all transform group-hover:scale-105 flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                          />
-                        </svg>
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-800">Phone</h3>
-                        <p>{office.phone}</p>
-                        <p className="text-blue-600 text-sm mt-1 font-medium group-hover:text-blue-700 transition">Call now</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start space-x-4 group cursor-pointer">
-                      <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-xl shadow-md group-hover:shadow-lg transition-all transform group-hover:scale-105 flex-shrink-0">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5 text-white"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                          />
-                        </svg>
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-800">Email</h3>
-                        <p>{office.email}</p>
-                        <p className="text-blue-600 text-sm mt-1 font-medium group-hover:text-blue-700 transition">Send an email</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-8 pt-4 border-t border-gray-200">
-                    <button className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-xl transition duration-300 shadow-lg hover:shadow-blue-500/30 flex items-center justify-center gap-2">
-                      <span>View Office Details</span>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M13 7l5 5m0 0l-5 5m5-5H6"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </AnimatedSection>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section className="py-20 relative overflow-hidden">
-        <div className="container mx-auto px-4">
-          <AnimatedSection className="text-center mb-12">
-            <div className="inline-block mb-3 bg-blue-50 px-4 py-1 rounded-full">
-              <span className="text-blue-600 font-medium">FAQ</span>
             </div>
-            <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Frequently Asked Questions</h2>
-            <p className="text-gray-700 max-w-2xl mx-auto">
-              Find answers to common questions about our products and services.
-            </p>
-          </AnimatedSection>
+          )}
 
-          <AnimatedSection className="max-w-xl mx-auto mb-10">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search questions..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full py-4 px-12 pl-12 rounded-full border border-blue-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-              />
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-            </div>
-          </AnimatedSection>
-
-          <AnimatedSection className="max-w-3xl mx-auto space-y-4" direction="up">
-            {filteredFAQs.length > 0 ? (
-              filteredFAQs.map((faq, index) => <FAQItem key={index} question={faq.question} answer={faq.answer} />)
-            ) : (
-              <div className="text-center py-12">
-                <p className="text-gray-500">No matching questions found. Try different keywords or contact us directly.</p>
-                <button className="mt-4 inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Ask a new question
+          {/* Pagination */}
+          {totalPages > 1 && !loading && (
+            <div className="p-8 border-t-2 border-blue-100 bg-gray-50">
+              <div className="flex justify-center items-center gap-3">
+                <button
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="p-3 rounded-lg border-2 border-blue-200 shadow-blue-200/30 text-gray-600 hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                
+                {[...Array(totalPages)].map((_, i) => (
+                  <button
+                    key={i + 1}
+                    onClick={() => setCurrentPage(i + 1)}
+                    className={`px-4 py-3 rounded-lg transition-all border-2 ${
+                      currentPage === i + 1
+                        ? "bg-blue-500 text-white shadow-md border-blue-500"
+                        : "border-blue-200 shadow-blue-200/30 text-gray-600 hover:bg-white"
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+                
+                <button
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-3 rounded-lg border-2 border-blue-200 shadow-blue-200/30 text-gray-600 hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight className="w-5 h-5" />
                 </button>
               </div>
-            )}
-          </AnimatedSection>
+            </div>
+          )}
         </div>
-      </section>
+      </div>
     </div>
   );
 };
 
-export default ContactPage;
+export default CommentPage;

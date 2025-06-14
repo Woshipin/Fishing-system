@@ -1,4 +1,5 @@
 <?php
+// app/Http/Controllers/CommentController.php
 
 namespace App\Http\Controllers;
 
@@ -9,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
 class CommentController extends Controller
@@ -31,7 +33,7 @@ class CommentController extends Controller
                         'user' => [
                             'id' => $comment->user->id,
                             'name' => $comment->user->name,
-                            'avatar' => $comment->user->avatar ?? 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face',
+                            'avatar' => $comment->user->avatar ?? null,
                             'isAdmin' => $comment->user->is_admin ?? false,
                         ],
                         'replies' => $comment->replies->map(function ($reply) {
@@ -43,7 +45,7 @@ class CommentController extends Controller
                                 'user' => [
                                     'id' => $reply->user->id,
                                     'name' => $reply->user->name,
-                                    'avatar' => $reply->user->avatar ?? 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face',
+                                    'avatar' => $reply->user->avatar ?? null,
                                 ],
                             ];
                         })->toArray(),
@@ -71,6 +73,14 @@ class CommentController extends Controller
                 'user_id' => 'required|integer|exists:users,id',
             ]);
 
+            // 验证用户ID是否存在
+            $user = User::find($validated['user_id']);
+            if (!$user) {
+                return response()->json([
+                    'error' => 'User not found'
+                ], 404);
+            }
+
             DB::beginTransaction();
 
             $comment = Comment::create([
@@ -91,7 +101,7 @@ class CommentController extends Controller
                 'user' => [
                     'id' => $comment->user->id,
                     'name' => $comment->user->name,
-                    'avatar' => $comment->user->avatar ?? 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face',
+                    'avatar' => $comment->user->avatar ?? null,
                     'isAdmin' => $comment->user->is_admin ?? false,
                 ],
                 'replies' => [],
@@ -152,6 +162,14 @@ class CommentController extends Controller
                 'user_id' => 'required|integer|exists:users,id',
             ]);
 
+            // 验证用户ID是否存在
+            $user = User::find($validated['user_id']);
+            if (!$user) {
+                return response()->json([
+                    'error' => 'User not found'
+                ], 404);
+            }
+
             DB::beginTransaction();
 
             $reply = Reply::create([
@@ -173,7 +191,7 @@ class CommentController extends Controller
                 'user' => [
                     'id' => $reply->user->id,
                     'name' => $reply->user->name,
-                    'avatar' => $reply->user->avatar ?? 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face',
+                    'avatar' => $reply->user->avatar ?? null,
                 ],
             ], 201);
 
