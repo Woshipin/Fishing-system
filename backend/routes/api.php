@@ -72,6 +72,9 @@ Route::put('/cancel-order/{id}', [OrderController::class, 'cancelOrder']);
 
 // 获取用户Duration信息
 Route::get('/user-durations', [UserDurationController::class, 'index']);
+Route::get('/user-selected-durations/active', [UserDurationController::class, 'getActiveSessions']);
+Route::get('/user-selected-durations/completed', [UserDurationController::class, 'getCompletedSessions']);
+Route::put('/user-selected-durations/{id}/status', [UserDurationController::class, 'updateSessionStatus']);
 
 Route::get('/comments', [CommentController::class, 'index']);
 Route::post('/add-comments', [CommentController::class, 'store']);

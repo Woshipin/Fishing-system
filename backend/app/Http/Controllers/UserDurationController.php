@@ -8,10 +8,30 @@ use App\Models\UserSelectedDuration;
 
 class UserDurationController extends Controller
 {
-    public function index()
+    public function getActiveSessions()
     {
-        $userDurations = UserSelectedDuration::with(['user', 'duration'])->get();
+        $activeSessions = UserSelectedDuration::with(['user', 'duration', 'tableNumber'])
+            ->where('status', 'active')
+            ->get();
 
-        return response()->json($userDurations);
+        return response()->json($activeSessions);
+    }
+
+    public function getCompletedSessions()
+    {
+        $completedSessions = UserSelectedDuration::with(['user', 'duration', 'tableNumber'])
+            ->where('status', 'completed')
+            ->get();
+
+        return response()->json($completedSessions);
+    }
+
+    public function updateSessionStatus(Request $request, $id)
+    {
+        $session = UserSelectedDuration::findOrFail($id);
+        $session->status = $request->status;
+        $session->save();
+
+        return response()->json($session);
     }
 }

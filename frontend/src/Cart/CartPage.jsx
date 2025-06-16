@@ -1,4 +1,3 @@
-// CartPage.jsx - 修复版本
 import React, { useState, useEffect } from "react";
 import {
   ShoppingCart,
@@ -36,17 +35,15 @@ const CartPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [initialLoad, setInitialLoad] = useState(true);
 
-  // 调试信息
   useEffect(() => {
     console.log("CartPage: Component mounted");
     console.log("CartPage: User data:", user);
   }, [user]);
 
-  // 修复的主要逻辑：只有在用户登录时才加载购物车数据
   useEffect(() => {
     const initializeCart = async () => {
       setInitialLoad(true);
-      
+
       if (user.isLoggedIn && user.userId) {
         console.log("CartPage: User is logged in, loading cart data...");
         await Promise.all([
@@ -56,13 +53,12 @@ const CartPage = () => {
         ]);
       } else {
         console.log("CartPage: User not logged in, showing empty cart");
-        // 用户未登录，设置空购物车
         setProductCart([]);
         setPackageCart([]);
         setDurations([]);
         setTableNumbers([]);
       }
-      
+
       setInitialLoad(false);
     };
 
@@ -96,13 +92,12 @@ const CartPage = () => {
 
       const data = await response.json();
       console.log("CartPage: Cart items fetched:", data);
-      
+
       setProductCart(data.productCart || []);
       setPackageCart(data.packageCart || []);
     } catch (err) {
       console.error("Fetch cart items error:", err);
       setError("Failed to fetch cart items");
-      // 错误时设置空购物车
       setProductCart([]);
       setPackageCart([]);
     } finally {
@@ -223,11 +218,21 @@ const CartPage = () => {
 
       const data = await response.json();
       console.log("Order completed:", data);
+
       alert("Purchase completed successfully!");
-      
+
+      // ======================================================================
+      // ===== ESTA ES LA CORRECCIÓN CLAVE: Restablecer todo el estado del carrito a su valor inicial =====
+      // ======================================================================
       setProductCart([]);
       setPackageCart([]);
-      setCurrentStep(1);
+      setSelectedDuration(null);
+      setSelectedTableNumber(null);
+      setPromoCode("");
+      setPromoApplied(false);
+      setDiscount(0);
+      setCurrentStep(1); // Volver al primer paso
+
     } catch (err) {
       console.error("Order error:", err);
       setError("Failed to complete purchase: " + err.message);
@@ -237,30 +242,10 @@ const CartPage = () => {
   };
 
   const steps = [
-    {
-      number: 1,
-      title: "Cart Items",
-      icon: ShoppingCart,
-      description: "Review your products and packages",
-    },
-    {
-      number: 2,
-      title: "Duration",
-      icon: Clock,
-      description: "Choose subscription length",
-    },
-    {
-      number: 3,
-      title: "Table Number",
-      icon: Tag,
-      description: "Select table number",
-    },
-    {
-      number: 4,
-      title: "Review",
-      icon: Eye,
-      description: "Confirm your order",
-    },
+    { number: 1, title: "Cart Items", icon: ShoppingCart, description: "Review your products and packages" },
+    { number: 2, title: "Duration", icon: Clock, description: "Choose subscription length" },
+    { number: 3, title: "Table Number", icon: Tag, description: "Select table number" },
+    { number: 4, title: "Review", icon: Eye, description: "Confirm your order" },
   ];
 
   const isStepValid = (step) => {
@@ -294,9 +279,9 @@ const CartPage = () => {
       const response = await fetch(`http://127.0.0.1:8000/api/cart/${id}`, {
         method: "PUT",
         headers: getHeaders(),
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           user_id: user.userId,
-          quantity: newQuantity 
+          quantity: newQuantity
         }),
       });
 
@@ -304,19 +289,12 @@ const CartPage = () => {
         throw new Error("Failed to update item quantity");
       }
 
-      if (type === "product") {
-        setProductCart((prev) =>
-          prev.map((item) =>
-            item.id === id ? { ...item, quantity: newQuantity } : item
-          )
-        );
-      } else {
-        setPackageCart((prev) =>
-          prev.map((item) =>
-            item.id === id ? { ...item, quantity: newQuantity } : item
-          )
-        );
-      }
+      const listSetter = type === "product" ? setProductCart : setPackageCart;
+      listSetter((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, quantity: newQuantity } : item
+        )
+      );
     } catch (error) {
       console.error("Error updating quantity:", error);
       setError(error.message || "Failed to update item quantity");
@@ -340,12 +318,10 @@ const CartPage = () => {
       if (!response.ok) {
         throw new Error("Failed to remove item from cart");
       }
+      
+      const listSetter = type === "product" ? setProductCart : setPackageCart;
+      listSetter((prev) => prev.filter((item) => item.id !== id));
 
-      if (type === "product") {
-        setProductCart((prev) => prev.filter((item) => item.id !== id));
-      } else {
-        setPackageCart((prev) => prev.filter((item) => item.id !== id));
-      }
     } catch (error) {
       console.error("Error removing item:", error);
       setError(error.message || "Failed to remove item from cart");
@@ -775,7 +751,6 @@ const CartPage = () => {
               </div>
 
               <div className="p-4 space-y-6">
-                {/* Products Section */}
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-300/50">
                   <h3 className="font-semibold text-gray-800 text-lg mb-4 pb-2 border-b border-blue-200">
                     Products
@@ -810,7 +785,6 @@ const CartPage = () => {
                   )}
                 </div>
 
-                {/* Packages Section */}
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-300/50">
                   <h3 className="font-semibold text-gray-800 text-lg mb-4 pb-2 border-b border-blue-200">
                     Packages
@@ -845,7 +819,6 @@ const CartPage = () => {
                   )}
                 </div>
 
-                {/* Duration Section */}
                 {selectedDuration && (
                   <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-300/50">
                     <h3 className="font-semibold text-gray-800 text-lg mb-4 pb-2 border-b border-blue-200">
@@ -867,7 +840,6 @@ const CartPage = () => {
                   </div>
                 )}
 
-                {/* Table Number Section */}
                 {selectedTableNumber && (
                   <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-300/50">
                     <h3 className="font-semibold text-gray-800 text-lg mb-4 pb-2 border-b border-blue-200">
@@ -881,7 +853,6 @@ const CartPage = () => {
                   </div>
                 )}
 
-                {/* Promo Code Section */}
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-300/50">
                   <h3 className="font-semibold text-gray-800 text-lg mb-4 pb-2 border-b border-blue-200">
                     Promo Code
@@ -908,7 +879,6 @@ const CartPage = () => {
                   )}
                 </div>
 
-                {/* Order Summary */}
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-300/50">
                   <h3 className="font-semibold text-gray-800 text-lg mb-4 pb-2 border-b border-blue-200">
                     Order Summary
@@ -940,7 +910,6 @@ const CartPage = () => {
     }
   };
 
-  // 修复的加载逻辑：只在初始加载时显示loading页面
   if (initialLoad) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50/30 flex items-center justify-center">
@@ -955,7 +924,6 @@ const CartPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50/30">
       <div className="container mx-auto px-4 py-6 md:py-8 max-w-6xl">
-        {/* Header */}
         <div className="text-center mb-8 md:mb-12">
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-4">
             Shopping Cart
@@ -972,7 +940,6 @@ const CartPage = () => {
           )}
         </div>
 
-        {/* Progress Steps */}
         <div className="mb-8 md:mb-12">
           <div className="flex justify-between items-start max-w-4xl mx-auto relative">
             {steps.map((step, index) => (
@@ -988,7 +955,6 @@ const CartPage = () => {
           </div>
         </div>
 
-        {/* Error Display */}
         {error && (
           <div className="mb-6 p-4 bg-red-50/80 border border-red-200/50 rounded-xl text-red-700 flex items-center gap-3">
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
@@ -1002,12 +968,10 @@ const CartPage = () => {
           </div>
         )}
 
-        {/* Step Content */}
         <div className="mb-8">
           <StepContent />
         </div>
 
-        {/* Navigation Buttons */}
         <div className="flex justify-between items-center">
           <button
             onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
