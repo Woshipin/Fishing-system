@@ -9,9 +9,10 @@ class Package extends Model
         'name', 'category_id', 'description', 'price', 'is_active', 'image',
     ];
 
-    public function category()
+     public function category()
     {
-        return $this->belongsTo(Category::class);
+        // [第二步] 明确指定外键 'category_id'，确保 Eloquent 不会猜错
+        return $this->belongsTo(Category::class, 'category_id');
     }
 
     public function products()

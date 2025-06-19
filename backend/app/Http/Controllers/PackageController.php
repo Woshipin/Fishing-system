@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Package;
+use App\Models\Category;
 use Illuminate\Support\Facades\Storage;
 
 class PackageController extends Controller
@@ -9,22 +10,33 @@ class PackageController extends Controller
     public function index()
     {
         try {
+            $categories = Category::orderBy('name', 'asc')->get();
+
             $packages = Package::with('category')->get()->map(function ($package) {
+                // [最终修正] 直接获取分类的名称 (name)。
+                // 检查 $package->category 关系是否成功加载。
+                // 如果成功，就直接使用 $package->category->name。
+                // 如果没有关联的分类，就返回一个默认字符串 'Uncategorized'。
+                $categoryName = $package->category ? $package->category->name : 'Uncategorized';
+
                 return [
                     'id'          => $package->id,
                     'title'       => $package->name,
                     'description' => $package->description,
-                    'category'    => $package->category ? $package->category->slug : 'uncategorized',
+                    'category'    => $categoryName, // <-- 这里现在直接是分类名称，例如 "Food", "Drinks"
                     'price'       => number_format($package->price, 2),
                     'imageUrl'    => $this->getImageUrl($package->image),
                     'rating'      => $package->rating ?? 4.5,
                 ];
             });
 
-            return response()->json($packages);
+            return response()->json([
+                'categories' => $categories,
+                'packages'   => $packages
+            ], 200);
         } catch (\Exception $e) {
             return response()->json([
-                'error'   => 'Failed to fetch packages',
+                'error'   => '获取套餐数据时发生后端错误。',
                 'message' => $e->getMessage(),
             ], 500);
         }
