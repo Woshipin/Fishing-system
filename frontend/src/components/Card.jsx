@@ -1,188 +1,236 @@
+// --- 导入所需库 ---
+// 导入 framer-motion 库，它提供了强大的动画能力，让界面过渡更生动
 import { motion } from "framer-motion";
+// 导入 React 的核心钩子：useState 用于状态管理，useEffect 用于处理副作用，useRef 用于引用 DOM 元素或存储持久化变量
 import { useState, useEffect, useRef } from "react";
 
+// --- 定义常量 ---
+// 定义一个默认的图片 URL，当传入的图片数组为空或图片加载失败时用作备用
 const DEFAULT_IMAGE_URL = "/assets/About/about-us.png";
 
+// [优化] 将左箭头 SVG 图标提取为常量，以便复用和保持 JSX 清洁
+const PrevIcon = (
+  // SVG 图标本身，定义了视图框、填充颜色和路径数据
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+    <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+  </svg>
+);
+
+// [优化] 将右箭头 SVG 图标提取为常量
+const NextIcon = (
+  // SVG 图标本身，定义了视图框、填充颜色和路径数据
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+    <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+  </svg>
+);
+
+// [优化] 将图片导航按钮的通用样式提取为常量，避免在 JSX 中重复书写
+const imageNavButtonStyle = "absolute top-1/2 -translate-y-1/2 bg-black/25 backdrop-blur-sm text-white w-9 h-9 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black/40 hover:scale-105";
+
+// [优化] 将图片上标签（价格和分类）的通用样式提取为常量
+const imageTagStyle = "absolute bg-black/60 backdrop-blur-sm text-white border border-white/20";
+
+
+// --- 定义重构后的通用 Card 组件 ---
+// 这是卡片组件的主体，通过对象解构接收父组件传入的各种属性 (props)
 const Card = ({
-  children,
-  className = "",
-  imageUrls = [],
-  imageAlt = "Card image",
-  title,
-  subtitle,
-  footer,
-  price,
-  category,
-  rating = 0,
-  autoSlideInterval = 4000, // 自动滑动间隔，默认4秒
-  ...props
+  children,        // 子元素，将被渲染在卡片内容区域的中间
+  className = "",  // 允许外部传入额外的 CSS 类
+  imageUrls = [],  // 图片 URL 数组，默认为空数组
+  imageAlt = "Card image", // 图片的 alt 文本，用于无障碍访问
+  title,           // 卡片标题
+  subtitle,        // 卡片副标题或描述
+  footer,          // 卡片底部内容，将取代默认的按钮区域
+  price,           // 价格，显示在图片左下角
+  category,        // 分类，显示在图片右上角
+  rating = 0,      // 评分 (例如 1-5)，默认为0不显示
+  autoSlideInterval = 4000, // 图片自动轮播的间隔时间（毫秒）
+  ...props         // 接收其他所有传递给根元素的 props
 }) => {
-  // 状态管理
+  // --- State 和 Refs: 状态与引用 ---
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
   const intervalRef = useRef(null);
 
-  // 自动轮播功能
+  // --- Effects: 副作用处理 (自动轮播逻辑) ---
   useEffect(() => {
-    // 只有多张图片时才启用自动轮播
     if (imageUrls.length <= 1) return;
-    
-    // 设置轮播定时器
+
     intervalRef.current = setInterval(() => {
       if (!isHovering) {
-        setCurrentImageIndex(prevIndex => 
-          prevIndex === imageUrls.length - 1 ? 0 : prevIndex + 1
-        );
+        setCurrentImageIndex(prevIndex => (prevIndex + 1) % imageUrls.length);
       }
     }, autoSlideInterval);
-    
-    // 清除定时器
-    return () => intervalRef.current && clearInterval(intervalRef.current);
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
   }, [imageUrls.length, autoSlideInterval, isHovering]);
 
-  // 渲染星级评分
-  const renderStars = count => {
-    return Array(5).fill(0).map((_, index) => (
-      <span
-        key={index}
-        className={`text-lg ${index < count ? "text-yellow-400" : "text-gray-300"}`}
-      >
-        ★
-      </span>
-    ));
-  };
+  // --- Helper Functions: 辅助函数 ---
 
-  // 切换到下一张图片
-  const nextImage = () => {
+  // 切换到下一张图片的函数
+  const nextImage = (e) => {
+    e.stopPropagation();
     if (imageUrls.length === 0) return;
     setCurrentImageIndex(prevIndex => (prevIndex + 1) % imageUrls.length);
   };
 
-  // 切换到上一张图片
-  const prevImage = () => {
+  // 切换到上一张图片的函数
+  const prevImage = (e) => {
+    e.stopPropagation();
     if (imageUrls.length === 0) return;
     setCurrentImageIndex(prevIndex => (prevIndex - 1 + imageUrls.length) % imageUrls.length);
   };
 
-  // 渲染图片指示器
+  // 渲染图片下方指示器小圆点的函数
   const renderImageIndicators = () => {
     if (imageUrls.length <= 1) return null;
-    
     return (
-      <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex justify-center items-center gap-2.5">
         {imageUrls.map((_, index) => (
-          <div 
-            key={index} 
-            className={`w-2 h-2 rounded-full cursor-pointer transition-all duration-300 ${
-              currentImageIndex === index 
-                ? 'bg-blue-500 scale-110' 
-                : 'bg-white/60 hover:bg-white/80'
-            }`}
-            onClick={() => setCurrentImageIndex(index)}
+          <button
+            key={index}
+            className={`w-2 h-2 rounded-full transition-all duration-300 ease-in-out transform
+              ${currentImageIndex === index
+                ? 'bg-white scale-125'
+                : 'bg-white/40 hover:bg-white/70'
+              }`}
+            onClick={(e) => {
+              e.stopPropagation();
+              setCurrentImageIndex(index);
+            }}
+            aria-label={`Go to image ${index + 1}`}
           />
         ))}
       </div>
     );
   };
 
+  // 渲染评分星星的函数
+  const renderStars = (count) => {
+    return Array(5).fill(0).map((_, index) => (
+      <span
+        key={index}
+        className={`text-lg ${index < count ? "text-amber-400" : "text-slate-300"}`}
+      >
+        ★
+      </span>
+    ));
+  };
+
+  // --- 准备渲染数据 ---
+  const displayPrice = parseFloat(price) || 0;
+  const validImageUrls = imageUrls && imageUrls.length > 0 ? imageUrls : [DEFAULT_IMAGE_URL];
+
+  // --- Component Render: 组件渲染 ---
   return (
+    // 卡片根元素，应用与 PackageCard 完全一致的设计
     <motion.div
-      className={`bg-white border border-blue-200/70 overflow-hidden transition-all duration-300 flex flex-col rounded-3xl h-[500px] w-full ${className}`}
-      whileHover={{ y: -4, boxShadow: "0 10px 20px rgba(59, 130, 246, 0.15)" }}
-      style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
-      {...props}
+      // 应用辉光边框、圆角、flex布局、固定高度等样式
+      className={`group bg-white rounded-2xl flex flex-col h-[500px] w-full overflow-hidden
+                 transition-all duration-300 ease-out
+                 shadow-[0_0_0_1px_rgba(59,130,246,0.25),_0_0_15px_rgba(59,130,246,0.1)]
+                 hover:shadow-[0_0_0_2px_rgba(59,130,246,0.4),_0_0_30px_rgba(59,130,246,0.2)]
+                 ${className}`} // 合并外部传入的 className
+      whileHover={{ y: -6 }} // 悬停时上浮动画
+      {...props} // 应用其他所有传入的 props
     >
-      {/* 图片区域 */}
-      <div 
-        className="relative h-[50%] overflow-hidden group"
+      {/* --- 图片区域 (50% 高度) --- */}
+      <div
+        className="relative h-1/2 overflow-hidden bg-slate-100"
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
       >
-        {imageUrls.length > 0 ? (
-          <>
-            <motion.img
-              src={imageUrls[currentImageIndex] || DEFAULT_IMAGE_URL}
-              alt={title || imageAlt}
-              className="w-full h-full object-cover transition-all duration-500"
-              initial={{ opacity: 0.8, scale: 1.05 }}
-              animate={{ opacity: 1, scale: 1 }}
-              key={currentImageIndex}
-              onError={(e) => {
-                e.target.onerror = null; // 防止无限循环
-                e.target.src = DEFAULT_IMAGE_URL;
-              }}
-            />
-            {imageUrls.length > 1 && (
-              <>
-                {/* 上一张按钮 */}
-                <button
-                  onClick={prevImage}
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/40 backdrop-blur-sm text-white w-8 h-8 flex items-center justify-center rounded-full text-lg opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg hover:scale-110"
-                  aria-label="Previous image"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                    <path fillRule="evenodd" d="M7.72 12.53a.75.75 0 010-1.06l7.5-7.5a.75.75 0 111.06 1.06L9.31 12l6.97 6.97a.75.75 0 11-1.06 1.06l-7.5-7.5z" clipRule="evenodd" />
-                  </svg>
-                </button>
-                {/* 下一张按钮 */}
-                <button
-                  onClick={nextImage}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/40 backdrop-blur-sm text-white w-8 h-8 flex items-center justify-center rounded-full text-lg opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg hover:scale-110"
-                  aria-label="Next image"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                    <path fillRule="evenodd" d="M16.28 11.47a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 01-1.06-1.06L14.69 12 7.72 5.03a.75.75 0 011.06-1.06l7.5 7.5z" clipRule="evenodd" />
-                  </svg>
-                </button>
-              </>
-            )}
-            {renderImageIndicators()}
-          </>
-        ) : (
-          <img
-            src={DEFAULT_IMAGE_URL}
-            alt={title || imageAlt}
-            className="w-full h-full object-cover"
-          />
-        )}
+        {/* 图片本身 */}
+        <motion.img
+          key={currentImageIndex}
+          src={validImageUrls[currentImageIndex]}
+          alt={title || imageAlt}
+          className="w-full h-full object-cover"
+          initial={{ opacity: 0.8, scale: 1.05 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, ease: 'easeInOut' }}
+          onError={(e) => {
+            console.error('Image failed to load:', validImageUrls[currentImageIndex]);
+            e.target.onerror = null;
+            e.target.src = DEFAULT_IMAGE_URL;
+          }}
+          loading="lazy"
+        />
+        
+        {/* 渐变遮罩层 */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-70 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-        {/* 价格标签 */}
+        {/* 图片轮播控件 */}
+        {validImageUrls.length > 1 && (
+          <>
+            <button onClick={prevImage} className={`${imageNavButtonStyle} left-3`} aria-label="Previous image">
+              {PrevIcon}
+            </button>
+            <button onClick={nextImage} className={`${imageNavButtonStyle} right-3`} aria-label="Next image">
+              {NextIcon}
+            </button>
+          </>
+        )}
+        
+        {/* 图片指示器 */}
+        {renderImageIndicators()}
+        
+        {/* 价格标签 (仅当 price prop 存在时渲染) */}
         {price && (
-          <div className="absolute bottom-4 left-4 bg-blue-600 text-white px-3 py-1 rounded-md text-sm font-semibold shadow-md">
-            ${price}
+          <div className={`${imageTagStyle} bottom-4 left-4 px-3.5 py-1.5 rounded-lg text-sm font-semibold`}>
+            ${displayPrice.toFixed(2)}
           </div>
         )}
-        {/* 分类标签 */}
+
+        {/* 分类标签 (仅当 category prop 存在时渲染) */}
         {category && (
-          <div className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm text-blue-600 px-3 py-1 rounded-full text-xs font-semibold shadow-sm">
+          <div className={`${imageTagStyle} top-4 right-4 px-4 py-1.5 rounded-full text-xs font-medium`}>
             {category}
           </div>
         )}
       </div>
 
-      {/* 内容区域 */}
-      <div className="p-4 flex flex-col h-[50%] overflow-auto scrollbar-thin">
-        <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-3">
-          {title && (
-            <h3 className="text-lg font-bold text-gray-800 line-clamp-2 max-w-full sm:max-w-[70%]">
-              {title}
-            </h3>
-          )}
-          {rating > 0 && (
-            <div className="flex self-start sm:self-center shrink-0">
-              {renderStars(rating)}
-            </div>
-          )}
-        </div>
-        {subtitle && (
-          <div className="flex-grow overflow-auto mb-3">
-            <p className="text-gray-700 text-sm">{subtitle}</p>
+      {/* --- 内容区域 (50% 高度) --- */}
+      <div className="h-1/2 p-5 flex flex-col justify-between">
+        {/* 顶部：标题和评分 */}
+        <div>
+          <div className="flex justify-between items-start gap-3 mb-2">
+            {/* 标题 */}
+            {title && (
+              <h3 className="text-lg font-bold text-slate-800 line-clamp-2 leading-snug flex-1">
+                {title}
+              </h3>
+            )}
+            {/* 评分 */}
+            {rating > 0 && (
+              <div className="flex shrink-0">
+                {renderStars(rating)}
+              </div>
+            )}
           </div>
-        )}
-        {children}
+        </div>
+
+        {/* 中间：副标题(subtitle)和子元素(children) */}
+        <div className="flex-grow my-2 overflow-y-auto">
+          {/* 副标题 */}
+          {subtitle && (
+            <p className="text-slate-600 text-sm leading-relaxed mb-2 line-clamp-4">
+              {subtitle}
+            </p>
+          )}
+          {/* 渲染传入的任何子元素 */}
+          {children}
+        </div>
+
+        {/* 底部：自定义页脚 */}
         {footer && (
-          <div className="flex items-center justify-between pt-2 border-t border-gray-100 mt-auto">
-            <div className="w-full">{footer}</div>
+          <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+            {/* 渲染传入的 footer 内容 */}
+            {footer}
           </div>
         )}
       </div>

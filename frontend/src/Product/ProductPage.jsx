@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link, useSearchParams } from "react-router-dom";
 // 导入自定义的 UI 组件。
 import AnimatedSection from "../components/AnimatedSection";
-import Card from "../components/Card";
+import Card from "../components/Card"; // 确保你使用的是上一轮重构后的 Card 组件
 import PageHeader from "../components/PageHeader";
 
 // --- 全局常量 ---
@@ -21,21 +21,20 @@ const BASE_IMAGE_URL = "http://127.0.0.1:8000/storage/";
 /**
  * 自定义 Hook: useProductFilters
  * 这个 Hook 封装了所有与产品数据获取、过滤、排序和URL同步相关的复杂逻辑。
- * 这样做可以极大地简化主组件(ProductPage)，使其只关注于UI的布局和组合。
  */
 const useProductFilters = () => {
   // 状态管理
-  const [products, setProducts] = useState([]); // 存储从API获取的原始产品列表。
-  const [categories, setCategories] = useState([]); // 存储所有产品分类。
-  const [isLoading, setIsLoading] = useState(true); // 标记是否正在加载数据。
-  const [error, setError] = useState(null); // 存储数据获取过程中的错误信息。
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // 过滤条件的状态管理
-  const [searchParams, setSearchParams] = useSearchParams(); // Hook，用于读取和写入URL查询参数。
-  const [selectedCategory, setSelectedCategory] = useState("all"); // 当前选中的分类。
-  const [priceRange, setPriceRange] = useState("all"); // 当前选中的价格范围。
-  const [searchTerm, setSearchTerm] = useState(""); // 当前的搜索关键词。
-  const [sortBy, setSortBy] = useState("featured"); // 当前的排序方式。
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [priceRange, setPriceRange] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("featured");
 
   // 定义价格范围的过滤逻辑函数映射。
   const PRICE_FILTERS = {
@@ -56,8 +55,8 @@ const useProductFilters = () => {
 
   // 异步函数：从API获取产品数据。
   const fetchProducts = async () => {
-    setIsLoading(true); // 开始获取前，设置加载状态为 true。
-    setError(null); // 清空之前的错误。
+    setIsLoading(true);
+    setError(null);
     try {
       const response = await fetch("http://127.0.0.1:8000/api/products");
       if (!response.ok)
@@ -75,7 +74,7 @@ const useProductFilters = () => {
           let imageUrls = (product.productImages || []).map(
             (img) => `${BASE_IMAGE_URL}${img.image_path}`
           );
-          if (imageUrls.length === 0) imageUrls = ["/api/placeholder/300/200"];
+          if (imageUrls.length === 0) imageUrls = ["/assets/About/about-us.png"]; // 使用默认占位图
 
           return {
             id: product.id,
@@ -89,10 +88,9 @@ const useProductFilters = () => {
             isActive: !!product.is_active,
           };
         })
-        .filter(Boolean); // 过滤掉所有 null 值。
+        .filter(Boolean);
 
       setProducts(formattedProducts);
-      // 从格式化后的产品数据中提取唯一的分类名称。
       const categoryNames = [
         ...new Set(formattedProducts.map((p) => p.category).filter(Boolean)),
       ];
@@ -108,7 +106,7 @@ const useProductFilters = () => {
   // 使用 useEffect 在组件首次挂载时调用 fetchProducts。
   useEffect(() => {
     fetchProducts();
-  }, []); // 空依赖数组表示此 effect 只运行一次。
+  }, []);
 
   // 使用 useEffect，当URL参数变化时，从URL同步状态到组件内部。
   useEffect(() => {
@@ -184,97 +182,96 @@ const useProductFilters = () => {
 
 /**
  * 过滤侧边栏组件
- * 这是一个纯展示性组件，它接收 props 并渲染 UI，不包含自身的状态逻辑。
  */
 const FilterSidebar = ({ categories, filters, setters, resetFilters }) => {
-  const { selectedCategory, priceRange, sortBy } = filters;
-  const { setSelectedCategory, setPriceRange, setSortBy } = setters;
-
-  return (
-    <AnimatedSection
-      direction="left"
-      className="bg-white rounded-2xl shadow-lg border-2 border-blue-200 p-4 md:p-6 sticky top-4 md:top-24 hover:border-blue-300 transition-all duration-300"
-    >
-      <h2 className="text-lg md:text-xl font-bold mb-4 md:mb-6">Filters</h2>
-
-      <div className="mb-4 md:mb-6">
-        <button
-          onClick={resetFilters}
-          className="w-full px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-        >
-          Reset All Filters
-        </button>
-      </div>
-
-      <div className="mb-4 md:mb-8">
-        <h3 className="font-semibold mb-2 md:mb-3">Fish Categories</h3>
-        <div className="space-y-1 md:space-y-2">
-          {["all", ...categories].map((category) => (
-            <div key={category} className="flex items-center">
-              <input
-                type="radio"
-                id={category}
-                name="category"
-                checked={selectedCategory === category}
-                onChange={() => setSelectedCategory(category)}
-                className="w-4 h-4 text-blue-500 focus:ring-blue-300 border-blue-200"
-              />
-              <label
-                htmlFor={category}
-                className="ml-2 text-gray-700 capitalize"
-              >
-                {category === "all" ? "All Categories" : category}
-              </label>
-            </div>
-          ))}
+    const { selectedCategory, priceRange, sortBy } = filters;
+    const { setSelectedCategory, setPriceRange, setSortBy } = setters;
+  
+    return (
+      <AnimatedSection
+        direction="left"
+        className="bg-white rounded-2xl shadow-lg border-2 border-blue-200 p-4 md:p-6 sticky top-4 md:top-24 hover:border-blue-300 transition-all duration-300"
+      >
+        <h2 className="text-lg md:text-xl font-bold mb-4 md:mb-6">Filters</h2>
+  
+        <div className="mb-4 md:mb-6">
+          <button
+            onClick={resetFilters}
+            className="w-full px-3 py-2 text-sm bg-black text-white rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            Reset All Filters
+          </button>
         </div>
-      </div>
-
-      <div className="mb-4 md:mb-8">
-        <h3 className="font-semibold mb-2 md:mb-3">Price Range</h3>
-        <div className="space-y-1 md:space-y-2">
-          {["all", "0-50", "51-100", "101-200", "200+"].map((range) => (
-            <div key={range} className="flex items-center">
-              <input
-                type="radio"
-                id={`price-${range}`}
-                name="price"
-                checked={priceRange === range}
-                onChange={() => setPriceRange(range)}
-                className="w-4 h-4 text-blue-500 focus:ring-blue-300 border-blue-200"
-              />
-              <label htmlFor={`price-${range}`} className="ml-2 text-gray-700">
-                {range === "all"
-                  ? "All Prices"
-                  : range.includes("+")
-                  ? `$${range}`
-                  : `$${range.replace("-", " - $")}`}
-              </label>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <h3 className="font-semibold mb-2 md:mb-3">Sort By</h3>
-        <div className="space-y-1 md:space-y-2">
-          <div className="flex items-center">
-            <input
-              type="radio"
-              id="sort-rating"
-              name="sort"
-              checked={sortBy === "rating"}
-              onChange={() => setSortBy("rating")}
-              className="w-4 h-4 text-blue-500 focus:ring-blue-300 border-blue-200"
-            />
-            <label htmlFor="sort-rating" className="ml-2 text-gray-700">
-              Highest Rating
-            </label>
+  
+        <div className="mb-4 md:mb-8">
+          <h3 className="font-semibold mb-2 md:mb-3">Categories</h3>
+          <div className="space-y-1 md:space-y-2">
+            {["all", ...categories].map((category) => (
+              <div key={category} className="flex items-center">
+                <input
+                  type="radio"
+                  id={category}
+                  name="category"
+                  checked={selectedCategory === category}
+                  onChange={() => setSelectedCategory(category)}
+                  className="w-4 h-4 text-blue-500 focus:ring-blue-300 border-blue-200"
+                />
+                <label
+                  htmlFor={category}
+                  className="ml-2 text-gray-700 capitalize"
+                >
+                  {category === "all" ? "All Categories" : category}
+                </label>
+              </div>
+            ))}
           </div>
         </div>
-      </div>
-    </AnimatedSection>
-  );
+  
+        <div className="mb-4 md:mb-8">
+          <h3 className="font-semibold mb-2 md:mb-3">Price Range</h3>
+          <div className="space-y-1 md:space-y-2">
+            {["all", "0-50", "51-100", "101-200", "200+"].map((range) => (
+              <div key={range} className="flex items-center">
+                <input
+                  type="radio"
+                  id={`price-${range}`}
+                  name="price"
+                  checked={priceRange === range}
+                  onChange={() => setPriceRange(range)}
+                  className="w-4 h-4 text-blue-500 focus:ring-blue-300 border-blue-200"
+                />
+                <label htmlFor={`price-${range}`} className="ml-2 text-gray-700">
+                  {range === "all"
+                    ? "All Prices"
+                    : range.includes("+")
+                    ? `$${range}`
+                    : `$${range.replace("-", " - $")}`}
+                </label>
+              </div>
+            ))}
+          </div>
+        </div>
+  
+        <div>
+          <h3 className="font-semibold mb-2 md:mb-3">Sort By</h3>
+          <div className="space-y-1 md:space-y-2">
+            <div className="flex items-center">
+              <input
+                type="radio"
+                id="sort-rating"
+                name="sort"
+                checked={sortBy === "rating"}
+                onChange={() => setSortBy("rating")}
+                className="w-4 h-4 text-blue-500 focus:ring-blue-300 border-blue-200"
+              />
+              <label htmlFor="sort-rating" className="ml-2 text-gray-700">
+                Highest Rating
+              </label>
+            </div>
+          </div>
+        </div>
+      </AnimatedSection>
+    );
 };
 
 /**
@@ -290,7 +287,7 @@ const ProductControls = ({
 }) => (
   <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-8 gap-3">
     <p className="text-gray-600 text-sm md:text-base">
-      Showing {filteredCount} fish species out of {totalCount} total
+      Showing {filteredCount} products out of {totalCount} total
     </p>
     <div className="w-full md:w-auto flex flex-col md:flex-row items-stretch md:items-center gap-3 md:space-x-4">
       <div className="flex items-center w-full md:w-auto order-1 md:order-2">
@@ -316,7 +313,7 @@ const ProductControls = ({
       <div className="relative flex-grow order-2 md:order-1">
         <input
           type="text"
-          placeholder="Search fish species..."
+          placeholder="Search products..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full px-3 py-2 pl-10 rounded-lg border-2 border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 shadow-sm hover:border-blue-300 transition-all duration-300"
@@ -342,7 +339,6 @@ const ProductControls = ({
 
 /**
  * 产品网格组件
- * 它负责处理加载、错误、无结果和成功渲染这四种UI状态。
  */
 const ProductGrid = ({
   isLoading,
@@ -377,7 +373,7 @@ const ProductGrid = ({
   if (products.length === 0)
     return (
       <div className="text-center py-12">
-        <h3 className="text-xl font-semibold mb-2">No fish species found</h3>
+        <h3 className="text-xl font-semibold mb-2">No products found</h3>
         <p className="text-gray-600 mb-4">Try adjusting your filters.</p>
         <button
           onClick={resetFilters}
@@ -403,25 +399,33 @@ const ProductGrid = ({
             >
               <Card
                 imageUrls={product.imageUrls}
+                imageAlt={product.name}
                 title={product.name}
                 subtitle={product.description}
                 price={product.price}
                 category={product.category}
                 rating={product.rating}
                 footer={
-                  <div className="flex justify-between items-center">
+                  // [修正] 确保 footer 容器宽度为 100%
+                  <div className="flex justify-between items-center w-full">
+                    {/* [修正] 应用与 PackageCard 一致的标签样式 */}
                     <span
-                      className={`px-2 py-1 rounded-md text-xs ${
-                        product.isActive
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
+                      className={`px-4 py-1.5 rounded-full text-sm font-bold
+                        ${
+                          product.isActive
+                            ? 'bg-teal-100 text-teal-900' // Active 状态样式
+                            : 'bg-rose-100 text-rose-900'  // Inactive 状态样式
+                        }`}
                     >
                       {product.isActive ? "Active" : "Inactive"}
                     </span>
+                    {/* [修正] 应用与 PackageCard 一致的按钮样式 */}
                     <Link
                       to={`/products/${product.id}`}
-                      className="px-3 py-1 md:px-4 md:py-2 rounded-full transition-all duration-300 bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg transform hover:-translate-y-1 text-xs md:text-sm inline-block text-center"
+                      className="px-5 py-2.5 rounded-full bg-blue-600 text-white font-semibold text-sm cursor-pointer
+                                 transition-all duration-300 ease-out
+                                 hover:bg-blue-700 hover:-translate-y-0.5 transform-gpu
+                                 shadow-sm hover:shadow-lg shadow-blue-500/20"
                     >
                       View Details
                     </Link>
@@ -440,9 +444,6 @@ const ProductGrid = ({
 
 /**
  * 产品展示页面主组件
- * 经过重构，此组件现在非常简洁。它的主要职责是：
- * 1. 调用 useProductFilters Hook 获取所有状态和逻辑。
- * 2. 组合各个子组件，并将从 Hook 获取的数据作为 props 传递下去。
  */
 const ProductPage = () => {
   // 从自定义 Hook 中解构出所有需要的数据和函数。
@@ -465,8 +466,8 @@ const ProductPage = () => {
   return (
     <div className="min-h-screen">
       <PageHeader
-        title="Fishing Species Guide"
-        description="Discover various fish species suitable for fishing and learn about their habits and characteristics."
+        title="Product Showcase"
+        description="Discover our wide range of products. Use the filters to find exactly what you're looking for."
       />
       <section className="py-4 md:py-8 lg:py-16">
         <div className="container mx-auto px-2 sm:px-4">
