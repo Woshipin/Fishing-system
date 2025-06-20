@@ -16,7 +16,7 @@ import {
   RefreshCw,
   X,
 } from "lucide-react";
-import { useUser } from '../contexts/UserContext';
+import { useUser } from "../contexts/UserContext";
 
 const CartPage = () => {
   const { user } = useUser();
@@ -35,6 +35,21 @@ const CartPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [initialLoad, setInitialLoad] = useState(true);
 
+  // --- 新增: Toast 状态 ---
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  // --- 新增: Toast 显示/隐藏的辅助函数 ---
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast((prev) => ({ ...prev, show: false }));
+    }, 3000); // 3秒后自动隐藏
+  };
+
   useEffect(() => {
     console.log("CartPage: Component mounted");
     console.log("CartPage: User data:", user);
@@ -46,10 +61,11 @@ const CartPage = () => {
 
       if (user.isLoggedIn && user.userId) {
         console.log("CartPage: User is logged in, loading cart data...");
+        // 将 setLoading(true) 移到 fetchCartItems 内部，以避免影响其他并发请求
         await Promise.all([
           fetchCartItems(user.userId),
           fetchDurations(),
-          fetchTableNumbers()
+          fetchTableNumbers(),
         ]);
       } else {
         console.log("CartPage: User not logged in, showing empty cart");
@@ -68,7 +84,7 @@ const CartPage = () => {
   const getHeaders = () => ({
     Accept: "application/json",
     "Content-Type": "application/json",
-    ...(user.token && { 'Authorization': `Bearer ${user.token}` }),
+    ...(user.token && { Authorization: `Bearer ${user.token}` }),
   });
 
   const fetchCartItems = async (userId) => {
@@ -97,7 +113,9 @@ const CartPage = () => {
       setPackageCart(data.packageCart || []);
     } catch (err) {
       console.error("Fetch cart items error:", err);
-      setError("Failed to fetch cart items");
+      const errorMsg = "Failed to fetch cart items";
+      setError(errorMsg);
+      showToast(errorMsg, "error");
       setProductCart([]);
       setPackageCart([]);
     } finally {
@@ -120,6 +138,7 @@ const CartPage = () => {
       setDurations(data);
     } catch (err) {
       console.error("Error fetching durations:", err);
+      showToast("Failed to load durations.", "error");
       setDurations([]);
     }
   };
@@ -139,6 +158,7 @@ const CartPage = () => {
       setTableNumbers(data);
     } catch (err) {
       console.error("Error fetching table numbers:", err);
+      showToast("Failed to load table numbers.", "error");
       setTableNumbers([]);
     }
   };
@@ -146,12 +166,15 @@ const CartPage = () => {
   const refreshCart = async () => {
     if (user.isLoggedIn && user.userId) {
       await fetchCartItems(user.userId);
+      showToast("Cart refreshed successfully!", "success");
     }
   };
 
   const order = async () => {
     if (!user.isLoggedIn) {
-      setError("Please login to complete your order");
+      const msg = "Please login to complete your order";
+      setError(msg);
+      showToast(msg, "error");
       return;
     }
 
@@ -169,7 +192,8 @@ const CartPage = () => {
         (sum, item) => sum + (item.price || 0) * item.quantity,
         0
       );
-      const durationPrice = durations.find((d) => d.id === selectedDuration)?.price || 0;
+      const durationPrice =
+        durations.find((d) => d.id === selectedDuration)?.price || 0;
       const subtotal = productTotal + packageTotal + durationPrice;
       const discountAmount = subtotal * (discount / 100);
       const total = subtotal - discountAmount;
@@ -219,11 +243,9 @@ const CartPage = () => {
       const data = await response.json();
       console.log("Order completed:", data);
 
-      alert("Purchase completed successfully!");
+      // --- 修改: 使用 Toast 替代 alert ---
+      showToast("Purchase completed successfully!", "success");
 
-      // ======================================================================
-      // ===== ESTA ES LA CORRECCIÓN CLAVE: Restablecer todo el estado del carrito a su valor inicial =====
-      // ======================================================================
       setProductCart([]);
       setPackageCart([]);
       setSelectedDuration(null);
@@ -232,20 +254,42 @@ const CartPage = () => {
       setPromoApplied(false);
       setDiscount(0);
       setCurrentStep(1); // Volver al primer paso
-
     } catch (err) {
       console.error("Order error:", err);
-      setError("Failed to complete purchase: " + err.message);
+      const errorMessage = "Failed to complete purchase: " + err.message;
+      setError(errorMessage);
+      // --- 新增: 显示错误 Toast ---
+      showToast(errorMessage, "error");
     } finally {
       setLoading(false);
     }
   };
 
   const steps = [
-    { number: 1, title: "Cart Items", icon: ShoppingCart, description: "Review your products and packages" },
-    { number: 2, title: "Duration", icon: Clock, description: "Choose subscription length" },
-    { number: 3, title: "Table Number", icon: Tag, description: "Select table number" },
-    { number: 4, title: "Review", icon: Eye, description: "Confirm your order" },
+    {
+      number: 1,
+      title: "Cart Items",
+      icon: ShoppingCart,
+      description: "Review your products and packages",
+    },
+    {
+      number: 2,
+      title: "Duration",
+      icon: Clock,
+      description: "Choose subscription length",
+    },
+    {
+      number: 3,
+      title: "Table Number",
+      icon: Tag,
+      description: "Select table number",
+    },
+    {
+      number: 4,
+      title: "Review",
+      icon: Eye,
+      description: "Confirm your order",
+    },
   ];
 
   const isStepValid = (step) => {
@@ -279,10 +323,7 @@ const CartPage = () => {
       const response = await fetch(`http://127.0.0.1:8000/api/cart/${id}`, {
         method: "PUT",
         headers: getHeaders(),
-        body: JSON.stringify({
-          user_id: user.userId,
-          quantity: newQuantity
-        }),
+        body: JSON.stringify({ user_id: user.userId, quantity: newQuantity }),
       });
 
       if (!response.ok) {
@@ -297,7 +338,9 @@ const CartPage = () => {
       );
     } catch (error) {
       console.error("Error updating quantity:", error);
-      setError(error.message || "Failed to update item quantity");
+      const errorMsg = error.message || "Failed to update item quantity";
+      setError(errorMsg);
+      showToast(errorMsg, "error");
     } finally {
       setUpdating((prev) => ({ ...prev, [`${type}-${id}`]: false }));
     }
@@ -318,25 +361,30 @@ const CartPage = () => {
       if (!response.ok) {
         throw new Error("Failed to remove item from cart");
       }
-      
+
       const listSetter = type === "product" ? setProductCart : setPackageCart;
       listSetter((prev) => prev.filter((item) => item.id !== id));
-
+      showToast("Item removed from cart.", "success");
     } catch (error) {
       console.error("Error removing item:", error);
-      setError(error.message || "Failed to remove item from cart");
+      const errorMsg = error.message || "Failed to remove item from cart";
+      setError(errorMsg);
+      showToast(errorMsg, "error");
     } finally {
       setUpdating((prev) => ({ ...prev, [`${type}-${id}`]: false }));
     }
   };
 
+  // --- 修改: 应用优惠码时显示 Toast ---
   const applyPromo = () => {
     if (promoCode.toLowerCase() === "save20") {
       setPromoApplied(true);
       setDiscount(20);
+      showToast("Promo code applied successfully!", "success");
     } else {
       setPromoApplied(false);
       setDiscount(0);
+      showToast("Invalid promo code.", "error");
     }
   };
 
@@ -362,7 +410,13 @@ const CartPage = () => {
     return "inactive";
   };
 
-  const ProgressStep = ({ step, isActive, isCompleted, isClickable, index }) => (
+  const ProgressStep = ({
+    step,
+    isActive,
+    isCompleted,
+    isClickable,
+    index,
+  }) => (
     <div className="relative flex-1 flex flex-col items-center">
       <div
         className={`flex flex-col items-center cursor-pointer transition-all duration-300 z-10 ${
@@ -457,7 +511,8 @@ const CartPage = () => {
                 alt={item.name}
                 className="w-16 h-16 object-cover rounded-xl border border-blue-200/50 shadow-md group-hover:scale-105 transition-transform duration-300"
                 onError={(e) => {
-                  e.target.src = "https://via.placeholder.com/80x80?text=No+Image";
+                  e.target.src =
+                    "https://via.placeholder.com/80x80?text=No+Image";
                 }}
               />
               <div className="absolute inset-0 bg-blue-500/20 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300"></div>
@@ -523,10 +578,8 @@ const CartPage = () => {
   const StepContent = () => {
     const contentClass =
       "bg-gradient-to-br from-white via-blue-50/30 to-blue-100/20 backdrop-blur-sm rounded-2xl border border-blue-200/50 shadow-md";
-
     const sectionHeaderClass =
       "bg-gradient-to-r from-blue-100 to-indigo-100 p-4 border-b border-blue-200/30 rounded-t-xl";
-
     const sectionBodyClass =
       "bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-b-xl border border-t-0 border-blue-300/50";
 
@@ -540,9 +593,13 @@ const CartPage = () => {
                   Your Cart Items
                 </h2>
                 {user.isLoggedIn ? (
-                  <p className="text-sm text-gray-500">User: {user.name} (ID: {user.userId})</p>
+                  <p className="text-sm text-gray-500">
+                    User: {user.name} (ID: {user.userId})
+                  </p>
                 ) : (
-                  <p className="text-sm text-red-500">Not logged in - Cart is empty</p>
+                  <p className="text-sm text-red-500">
+                    Not logged in - Cart is empty
+                  </p>
                 )}
               </div>
               {user.isLoggedIn && (
@@ -558,7 +615,6 @@ const CartPage = () => {
                 </button>
               )}
             </div>
-
             <div className={contentClass}>
               <div className={sectionHeaderClass}>
                 <h2 className="text-lg md:text-xl font-semibold text-gray-800 flex items-center gap-3">
@@ -572,8 +628,12 @@ const CartPage = () => {
                 {!user.isLoggedIn ? (
                   <div className="p-8 text-center text-gray-500">
                     <AlertCircle className="w-12 h-12 mx-auto mb-4 text-orange-400" />
-                    <p className="text-lg font-medium mb-2">Please log in to view your cart</p>
-                    <p className="text-sm">Your cart will be restored once you log in</p>
+                    <p className="text-lg font-medium mb-2">
+                      Please log in to view your cart
+                    </p>
+                    <p className="text-sm">
+                      Your cart will be restored once you log in
+                    </p>
                   </div>
                 ) : productCart.length === 0 ? (
                   <div className="p-4 text-center text-gray-500">
@@ -587,7 +647,6 @@ const CartPage = () => {
                 )}
               </div>
             </div>
-
             <div className={contentClass}>
               <div className={sectionHeaderClass}>
                 <h2 className="text-lg md:text-xl font-semibold text-gray-800 flex items-center gap-3">
@@ -601,8 +660,12 @@ const CartPage = () => {
                 {!user.isLoggedIn ? (
                   <div className="p-8 text-center text-gray-500">
                     <AlertCircle className="w-12 h-12 mx-auto mb-4 text-orange-400" />
-                    <p className="text-lg font-medium mb-2">Please log in to view your packages</p>
-                    <p className="text-sm">Your packages will be restored once you log in</p>
+                    <p className="text-lg font-medium mb-2">
+                      Please log in to view your packages
+                    </p>
+                    <p className="text-sm">
+                      Your packages will be restored once you log in
+                    </p>
                   </div>
                 ) : packageCart.length === 0 ? (
                   <div className="p-4 text-center text-gray-500">
@@ -623,7 +686,6 @@ const CartPage = () => {
             </div>
           </div>
         );
-
       case 2:
         return (
           <div className={contentClass}>
@@ -636,10 +698,12 @@ const CartPage = () => {
               </h2>
             </div>
             <div className={sectionBodyClass}>
-              {loading ? (
+              {durations.length === 0 ? (
                 <div className="flex items-center justify-center p-4">
                   <Loader className="w-8 h-8 animate-spin text-blue-500" />
-                  <span className="ml-3 text-gray-600">Loading durations...</span>
+                  <span className="ml-3 text-gray-600">
+                    Loading durations...
+                  </span>
                 </div>
               ) : (
                 <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3 p-4">
@@ -696,7 +760,6 @@ const CartPage = () => {
             </div>
           </div>
         );
-
       case 3:
         return (
           <div className={contentClass}>
@@ -709,10 +772,12 @@ const CartPage = () => {
               </h2>
             </div>
             <div className={sectionBodyClass}>
-              {loading ? (
+              {tableNumbers.length === 0 ? (
                 <div className="flex items-center justify-center p-4">
                   <Loader className="w-8 h-8 animate-spin text-blue-500" />
-                  <span className="ml-3 text-gray-600">Loading table numbers...</span>
+                  <span className="ml-3 text-gray-600">
+                    Loading table numbers...
+                  </span>
                 </div>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 p-4">
@@ -738,7 +803,6 @@ const CartPage = () => {
             </div>
           </div>
         );
-
       case 4:
         return (
           <div className="space-y-6">
@@ -749,14 +813,15 @@ const CartPage = () => {
                   Order Review
                 </h2>
               </div>
-
               <div className="p-4 space-y-6">
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-300/50">
                   <h3 className="font-semibold text-gray-800 text-lg mb-4 pb-2 border-b border-blue-200">
                     Products
                   </h3>
                   {productCart.length === 0 ? (
-                    <p className="text-gray-500 text-center py-4">No products in cart</p>
+                    <p className="text-gray-500 text-center py-4">
+                      No products in cart
+                    </p>
                   ) : (
                     productCart.map((item) => (
                       <div
@@ -769,12 +834,17 @@ const CartPage = () => {
                             alt={item.name}
                             className="w-12 h-12 rounded-lg object-cover"
                             onError={(e) => {
-                              e.target.src = "https://via.placeholder.com/48?text=No+Image";
+                              e.target.src =
+                                "https://via.placeholder.com/48?text=No+Image";
                             }}
                           />
                           <div>
-                            <div className="font-medium text-gray-800">{item.name}</div>
-                            <div className="text-sm text-gray-500">Qty: {item.quantity}</div>
+                            <div className="font-medium text-gray-800">
+                              {item.name}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              Qty: {item.quantity}
+                            </div>
                           </div>
                         </div>
                         <div className="font-semibold text-gray-800">
@@ -784,13 +854,14 @@ const CartPage = () => {
                     ))
                   )}
                 </div>
-
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-300/50">
                   <h3 className="font-semibold text-gray-800 text-lg mb-4 pb-2 border-b border-blue-200">
                     Packages
                   </h3>
                   {packageCart.length === 0 ? (
-                    <p className="text-gray-500 text-center py-4">No packages selected</p>
+                    <p className="text-gray-500 text-center py-4">
+                      No packages selected
+                    </p>
                   ) : (
                     packageCart.map((item) => (
                       <div
@@ -803,12 +874,17 @@ const CartPage = () => {
                             alt={item.name}
                             className="w-12 h-12 rounded-lg object-cover"
                             onError={(e) => {
-                              e.target.src = "https://via.placeholder.com/48?text=No+Image";
+                              e.target.src =
+                                "https://via.placeholder.com/48?text=No+Image";
                             }}
                           />
                           <div>
-                            <div className="font-medium text-gray-800">{item.name}</div>
-                            <div className="text-sm text-gray-500">Qty: {item.quantity}</div>
+                            <div className="font-medium text-gray-800">
+                              {item.name}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              Qty: {item.quantity}
+                            </div>
                           </div>
                         </div>
                         <div className="font-semibold text-gray-800">
@@ -818,7 +894,6 @@ const CartPage = () => {
                     ))
                   )}
                 </div>
-
                 {selectedDuration && (
                   <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-300/50">
                     <h3 className="font-semibold text-gray-800 text-lg mb-4 pb-2 border-b border-blue-200">
@@ -827,19 +902,28 @@ const CartPage = () => {
                     <div className="flex justify-between items-center py-3">
                       <div>
                         <div className="font-medium text-gray-800">
-                          {durations.find((d) => d.id === selectedDuration)?.name}
+                          {
+                            durations.find((d) => d.id === selectedDuration)
+                              ?.name
+                          }
                         </div>
                         <div className="text-sm text-gray-500">
-                          {durations.find((d) => d.id === selectedDuration)?.value}
+                          {
+                            durations.find((d) => d.id === selectedDuration)
+                              ?.value
+                          }
                         </div>
                       </div>
                       <div className="font-semibold text-gray-800">
-                        ${(durations.find((d) => d.id === selectedDuration)?.price || 0).toFixed(2)}
+                        $
+                        {(
+                          durations.find((d) => d.id === selectedDuration)
+                            ?.price || 0
+                        ).toFixed(2)}
                       </div>
                     </div>
                   </div>
                 )}
-
                 {selectedTableNumber && (
                   <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-300/50">
                     <h3 className="font-semibold text-gray-800 text-lg mb-4 pb-2 border-b border-blue-200">
@@ -847,12 +931,15 @@ const CartPage = () => {
                     </h3>
                     <div className="flex justify-between items-center py-3">
                       <div className="font-medium text-gray-800">
-                        Table {tableNumbers.find((t) => t.id === selectedTableNumber)?.number}
+                        Table{" "}
+                        {
+                          tableNumbers.find((t) => t.id === selectedTableNumber)
+                            ?.number
+                        }
                       </div>
                     </div>
                   </div>
                 )}
-
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-300/50">
                   <h3 className="font-semibold text-gray-800 text-lg mb-4 pb-2 border-b border-blue-200">
                     Promo Code
@@ -878,7 +965,6 @@ const CartPage = () => {
                     </div>
                   )}
                 </div>
-
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-300/50">
                   <h3 className="font-semibold text-gray-800 text-lg mb-4 pb-2 border-b border-blue-200">
                     Order Summary
@@ -904,7 +990,6 @@ const CartPage = () => {
             </div>
           </div>
         );
-
       default:
         return null;
     }
@@ -923,6 +1008,48 @@ const CartPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50/30">
+      {/* --- 新增: 进度条和 Toast 的 CSS 动画 --- */}
+      <style>{`
+        @keyframes progress-animation {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        .animate-progress {
+          animation: progress-animation 1.5s linear infinite;
+        }
+        @keyframes slide-in-from-right {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        .animate-slide-in {
+          animation: slide-in-from-right 0.5s ease-out forwards;
+        }
+      `}</style>
+
+      {/* --- 新增: 进度条 (在加载时显示) --- */}
+      {loading && (
+        <div className="fixed top-0 left-0 right-0 h-1 bg-blue-200 z-50 overflow-hidden">
+          <div className="h-full w-full absolute top-0 left-0 bg-gradient-to-r from-blue-500 to-indigo-600 animate-progress"></div>
+        </div>
+      )}
+
+      {/* --- 新增: Toast 通知 --- */}
+      {toast.show && (
+        <div
+          className={`fixed top-5 right-5 z-50 flex items-center p-4 rounded-lg shadow-lg text-white transition-transform transform ${
+            toast.type === "success" ? "bg-green-500" : "bg-red-500"
+          } animate-slide-in`}
+        >
+          <span>{toast.message}</span>
+          <button
+            onClick={() => setToast({ ...toast, show: false })}
+            className="ml-4 text-xl font-bold hover:opacity-75"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       <div className="container mx-auto px-4 py-6 md:py-8 max-w-6xl">
         <div className="text-center mb-8 md:mb-12">
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-4">
