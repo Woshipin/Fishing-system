@@ -59,4 +59,15 @@ class User extends Authenticatable
     {
         return $this->hasMany(Reply::class);
     }
+
+    public function productReviews()
+    {
+        // 确保关联到正确的模型 ProductReview
+        return $this->hasMany(ProductReview::class);
+    }
+
+    public function packageReviews()
+    {
+        return $this->hasMany(PackageReview::class);
+    }
 }

@@ -48,4 +48,10 @@ class Product extends Model
     {
         return $this->belongsToMany(Package::class);
     }
+
+    public function productReviews()
+    {
+        // 确保关联到正确的模型 ProductReview
+        return $this->hasMany(ProductReview::class);
+    }
 }

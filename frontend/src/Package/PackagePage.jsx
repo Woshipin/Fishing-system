@@ -79,7 +79,7 @@ const PackagePage = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mx-auto"></div>
           <p className="mt-4 text-lg font-medium text-gray-700">
-            正在加载套餐...
+            Loading packages...
           </p>
         </div>
       </div>
@@ -105,13 +105,15 @@ const PackagePage = () => {
               ></path>
             </svg>
           </div>
-          <h3 className="text-xl font-bold text-gray-800 mb-2">加载套餐失败</h3>
+          <h3 className="text-xl font-bold text-gray-800 mb-2">
+            Failed to load package
+          </h3>
           <p className="text-gray-600 mb-6">{error}</p>
           <button
             onClick={() => window.location.reload()}
             className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300"
           >
-            重试
+            Retry
           </button>
         </div>
       </div>
@@ -128,8 +130,8 @@ const PackagePage = () => {
       </div>
 
       <PageHeader
-        title="我们的套餐"
-        description="选择最适合您需求和预算的完美套餐。所有套餐均提供我们卓越的客户支持。"
+        title="Our Packages"
+        description="Choose the perfect plan that best suits your needs and budget. All plans come with our excellent customer support."
       />
 
       <section className="py-8 bg-white/80 backdrop-blur-sm border-y border-blue-100 relative z-10">
@@ -156,7 +158,7 @@ const PackagePage = () => {
               }}
             >
               <span className="text-lg">🌟</span>
-              <span>所有套餐</span>
+              <span>All packages</span>
               {selectedCategory === "All" && (
                 <span className="ml-1 bg-white/30 text-white text-xs px-2 py-0.5 rounded-full">
                   {filteredPackages.length}
@@ -203,8 +205,8 @@ const PackagePage = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-3">
             <p className="text-gray-600 text-sm md:text-base">
-              正在显示 {filteredPackages.length} 个套餐 (共 {packages.length}{" "}
-              个)
+              Displaying {filteredPackages.length} package(s) out of{" "}
+              {packages.length}
             </p>
           </div>
           <AnimatedSection
@@ -260,16 +262,16 @@ const PackagePage = () => {
                     </svg>
                   </div>
                   <h3 className="text-xl font-bold text-gray-800 mb-2">
-                    未找到任何套餐
+                    No packages found
                   </h3>
                   <p className="text-gray-600 mb-6">
-                    我们在此分类下找不到任何套餐。
+                    We couldn't find any packages in this category.
                   </p>
                   <button
                     onClick={() => setSelectedCategory("All")}
                     className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300"
                   >
-                    查看所有套餐
+                    View all packages
                   </button>
                 </div>
               </div>

@@ -12,47 +12,41 @@ class ProductController extends Controller
     public function index()
     {
         try {
-            // ✅ 使用正确的关系名 productImages
+            // ✅ CHANGED: Added withAvg and withCount for efficiency
             $products = Product::with(['category', 'productImages'])
+                ->withAvg('productReviews', 'rating') // Calculates average rating
+                ->withCount('productReviews')        // Counts total reviews
                 ->orderBy('is_active', 'desc')
                 ->orderBy('name', 'asc')
                 ->get();
 
             $categories = Category::orderBy('name', 'asc')->get();
 
-            // 为每个产品添加图片 URLs 和其他计算属性
             $products->each(function ($product) {
-                // 添加图片 URLs
+                // ... (image processing code remains the same) ...
                 $product->image_urls = $product->productImages
                     ->sortBy('sort_order')
                     ->pluck('image_path')
                     ->map(function ($path) {
                         return Storage::disk('public')->exists($path)
                             ? Storage::disk('public')->url($path)
-                            : asset('images/placeholder.jpg'); // 默认图片
+                            : asset('images/placeholder.jpg');
                     })
                     ->values()
                     ->all();
-
-                // 如果没有关联图片但有单独的 image 字段
                 if (empty($product->image_urls) && $product->image) {
-                    $product->image_urls = [
-                        Storage::disk('public')->exists($product->image)
-                            ? Storage::disk('public')->url($product->image)
-                            : asset('images/placeholder.jpg')
-                    ];
+                     $product->image_urls = [Storage::disk('public')->exists($product->image) ? Storage::disk('public')->url($product->image) : asset('images/placeholder.jpg')];
                 }
-
-                // 确保至少有一个占位图片
                 if (empty($product->image_urls)) {
                     $product->image_urls = [asset('images/placeholder.jpg')];
                 }
 
-                // 添加其他有用的属性
+                // ➕ ADDED: Use the calculated average rating. Round it for display.
+                // The result from withAvg is available as `product_reviews_avg_rating`
+                $product->rating = $product->product_reviews_avg_rating ? round($product->product_reviews_avg_rating) : 0;
+
                 $product->formatted_price = number_format($product->price, 2);
                 $product->status_text = $product->is_active ? 'Active' : 'Inactive';
-
-                // 隐藏不需要的关系以减少响应大小
                 $product->makeHidden(['productImages']);
             });
 
@@ -60,38 +54,32 @@ class ProductController extends Controller
                 'success' => true,
                 'products' => $products,
                 'categories' => $categories,
-                'meta' => [
-                    'total_products' => $products->count(),
-                    'active_products' => $products->where('is_active', true)->count(),
-                    'total_categories' => $categories->count(),
-                ]
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Error fetching products: ' . $e->getMessage());
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch products',
-                'error' => app()->environment('local') ? $e->getMessage() : 'Internal server error'
-            ], 500);
+            Log::error('Error fetching products: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to fetch products'], 500);
         }
     }
 
     public function detail($id)
     {
         try {
-            $product = Product::with(['category', 'productImages'])
+            // ✅ CHANGED: Eager load reviews with user data, and calculate average rating and count.
+            $product = Product::with([
+                    'category',
+                    'productImages',
+                    'productReviews.user' // Eager load reviews AND the 'user' for each review
+                ])
+                ->withAvg('productReviews', 'rating') // Calculates average rating
+                ->withCount('productReviews')        // Counts total reviews
                 ->find($id);
 
             if (!$product) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Product not found'
-                ], 404);
+                return response()->json(['success' => false, 'message' => 'Product not found'], 404);
             }
 
-            // 添加图片 URLs
+            // ... (image processing code remains the same) ...
             $product->image_urls = $product->productImages
                 ->sortBy('sort_order')
                 ->pluck('image_path')
@@ -102,23 +90,16 @@ class ProductController extends Controller
                 })
                 ->values()
                 ->all();
-
-            // 如果没有关联图片但有单独的 image 字段
             if (empty($product->image_urls) && $product->image) {
-                $product->image_urls = [
-                    Storage::disk('public')->exists($product->image)
-                        ? Storage::disk('public')->url($product->image)
-                        : asset('images/placeholder.jpg')
-                ];
+                 $product->image_urls = [Storage::disk('public')->exists($product->image) ? Storage::disk('public')->url($product->image) : asset('images/placeholder.jpg')];
             }
-
-            // 确保至少有一个占位图片
             if (empty($product->image_urls)) {
                 $product->image_urls = [asset('images/placeholder.jpg')];
             }
 
-            $product->formatted_price = number_format($product->price, 2);
-            $product->status_text = $product->is_active ? 'Active' : 'Inactive';
+            // Note: The raw review data (product_reviews) and calculated values
+            // (product_reviews_avg_rating, product_reviews_count) are now
+            // automatically part of the $product object. The frontend will handle them.
 
             return response()->json([
                 'success' => true,
@@ -126,13 +107,8 @@ class ProductController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Error fetching product detail: ' . $e->getMessage());
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch product details',
-                'error' => app()->environment('local') ? $e->getMessage() : 'Internal server error'
-            ], 500);
+            Log::error('Error fetching product detail for ID ' . $id . ': ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to fetch product details'], 500);
         }
     }
 

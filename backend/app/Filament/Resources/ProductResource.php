@@ -78,9 +78,9 @@ class ProductResource extends Resource
 
                     Section::make('Product Images')
                         ->schema([
-                            Repeater::make('images')
+                            Repeater::make('productImages') // 👈 与模型方法一致
                                 ->label('Product Images')
-                                ->relationship('images')
+                                ->relationship('productImages') // 👈 与模型一致
                                 ->schema([
                                     FileUpload::make('image_path')
                                         ->label('Image')
@@ -116,11 +116,11 @@ class ProductResource extends Resource
                     ->sortable()
                     ->limit(30),
 
-                ImageColumn::make('images.0.image_path')
-                    ->label('Product image')
+                ImageColumn::make('productImages.0.image_path') // 👈 使用正确的关系名
+                    ->label('Product Image')
                     ->disk('public')
                     ->defaultImageUrl(function (Product $record) {
-                        $image = $record->images()->first();
+                        $image = $record->productImages()->first();
                         return $image ? Storage::disk('public')->url($image->image_path) : null;
                     }),
 

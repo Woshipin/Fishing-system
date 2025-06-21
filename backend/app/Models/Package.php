@@ -19,4 +19,9 @@ class Package extends Model
     {
         return $this->belongsToMany(Product::class);
     }
+
+    public function packageReviews()
+    {
+        return $this->hasMany(PackageReview::class);
+    }
 }

@@ -11,6 +11,7 @@ use App\Http\Controllers\TableNumberController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserDurationController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\ReviewController;
 use Illuminate\Support\Facades\Route;
 
 // Auth 认证路由
@@ -85,6 +86,10 @@ Route::post('/comments/{comment}/replies', [CommentController::class, 'storeRepl
 Route::post('/comments/{comment}/replies/{reply}/like', [CommentController::class, 'likeReply']);
 
 Route::post('/add-contact', [ContactController::class, 'store']);
+
+Route::post('/products/{product}/reviews', [ReviewController::class, 'ProductReview']);
+
+Route::post('/packages/{package}/reviews', [ReviewController::class, 'PackageReview']);
 
 // 更新购物车项目数量
 // Route::put('/cart/{id}', [CartController::class, 'updateCartItem']);
