@@ -1,5 +1,4 @@
 <?php
-
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
@@ -18,6 +17,10 @@ class DatabaseSeeder extends Seeder
             DurationSeeder::class,
             GallerySeeder::class,
             TableNumberSeeder::class,
+            FishingCmsSeeder::class,
+            AboutPageContentSeeder::class,
+            TeamMemberSeeder::class,
+            MilestoneSeeder::class,
         ]);
     }
 }
