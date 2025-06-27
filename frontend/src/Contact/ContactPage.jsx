@@ -1,21 +1,12 @@
-// src/Contact/ContactPage.jsx
-
-// 导入 React 核心库中的 useState 和 useEffect Hooks，用于状态管理和副作用处理。
 import { useState, useEffect } from "react";
-// 从 framer-motion 库导入 motion 和 AnimatePresence，用于创建丰富的动画效果。
 import { motion, AnimatePresence } from "framer-motion";
-// 从 lucide-react 库导入图标组件，用于美化界面。
 import { ChevronDown, ChevronUp, Search, Loader2 } from "lucide-react";
-// **新增**：从 react-hot-toast 库导入 toast 函数（用于触发通知）和 Toaster 组件（用于渲染通知）。
 import toast, { Toaster } from "react-hot-toast";
-// 导入自定义的动画容器组件，用于分段加载动画。
 import AnimatedSection from "../components/AnimatedSection";
-// 导入自定义的页面头部组件。
 import PageHeader from "../components/PageHeader";
-// 导入自定义的 UserContext Hook，用于获取全局用户状态。
 import { useUser } from "../contexts/UserContext";
 
-// --- 可重用的图标组件 (代码无变化) ---
+// Icon Components
 const PhoneIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -32,6 +23,7 @@ const PhoneIcon = () => (
     />
   </svg>
 );
+
 const EmailIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -48,6 +40,7 @@ const EmailIcon = () => (
     />
   </svg>
 );
+
 const LocationIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -70,6 +63,7 @@ const LocationIcon = () => (
     />
   </svg>
 );
+
 const ArrowRightIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -87,7 +81,7 @@ const ArrowRightIcon = () => (
   </svg>
 );
 
-// --- 可重用的 UI 组件 (代码无变化) ---
+// Reusable UI Components
 const ContactInfoItem = ({ icon, title, text, actionText }) => (
   <div className="flex items-start space-x-5 group cursor-pointer">
     <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-xl shadow-lg transform group-hover:-translate-y-1 group-hover:shadow-xl transition-all duration-300 flex-shrink-0">
@@ -102,6 +96,7 @@ const ContactInfoItem = ({ icon, title, text, actionText }) => (
     </div>
   </div>
 );
+
 const OfficeLocationCard = ({ office }) => (
   <div
     key={office.city}
@@ -138,6 +133,7 @@ const OfficeLocationCard = ({ office }) => (
     </div>
   </div>
 );
+
 const FAQItem = ({ question, answer }) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
@@ -182,32 +178,42 @@ const FAQItem = ({ question, answer }) => {
   );
 };
 
-// --- 主页面组件 ---
+// Main Page Component
 const ContactPage = () => {
-  // 使用 useUser Hook 从上下文中获取当前用户信息。
   const { user } = useUser();
-  // 定义 API 的基础 URL，方便统一管理。
   const API_BASE_URL = "http://localhost:8000/api";
+  const [cmsData, setCmsData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // 使用 useEffect 监听 user 对象的变化，并在控制台打印调试信息。
   useEffect(() => {
-    console.log("ContactPage: Component mounted");
-    console.log("ContactPage: User data:", user);
-  }, [user]);
+    const fetchCMSData = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/fishing-cms');
+        if (!response.ok) {
+          throw new Error('Failed to fetch CMS data');
+        }
+        const data = await response.json();
+        setCmsData(data.cms);
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
 
-  // 使用 useState 管理联系表单的数据。
+    fetchCMSData();
+  }, []);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     subject: "",
     message: "",
   });
-  // 使用 useState 管理表单是否正在提交中，用于UI反馈（如加载动画）。
+
   const [submitting, setSubmitting] = useState(false);
 
-  // **移除**：旧的 formStatus 状态不再需要，已被 react-hot-toast 替代。
-
-  // 当用户信息变化时，自动填充表单。
   useEffect(() => {
     if (user.isLoggedIn) {
       setFormData((prev) => ({
@@ -215,38 +221,25 @@ const ContactPage = () => {
         name: user.name || "",
         email: user.email || "",
       }));
-      console.log("ContactPage: Form data updated with user info:", {
-        name: user.name,
-        email: user.email,
-      });
     }
   }, [user]);
 
-  // 表单输入框内容变化时的统一处理函数。
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 表单提交处理函数，现在使用 react-hot-toast 来显示通知。
   const handleSubmit = async (e) => {
-    // 阻止表单提交的默认行为（即页面刷新）。
     e.preventDefault();
 
-    // 前端验证：确保用户已登录才能提交。
     if (!user.isLoggedIn) {
-      // **改进**：使用 toast.error 弹出错误通知。
       toast.error("Please log in before sending a message.");
       return;
     }
 
-    // 开始提交，设置 `submitting` 状态为 true。
     setSubmitting(true);
-    // 打印将要发送到API的数据，便于调试。
-    console.log("ContactPage: Submitting form data to API:", formData);
 
     try {
-      // 使用 fetch 函数向 Laravel 后端发送 POST 请求。
       const response = await fetch(`${API_BASE_URL}/add-contact`, {
         method: "POST",
         headers: {
@@ -263,30 +256,23 @@ const ContactPage = () => {
         }),
       });
 
-      // 解析服务器返回的 JSON 响应数据。
       const result = await response.json();
-      // 检查HTTP响应状态码，如果不是成功状态（2xx），则抛出错误。
       if (!response.ok) {
         throw new Error(
           result.message || `HTTP error! status: ${response.status}`
         );
       }
 
-      // **改进**：如果请求成功，使用 toast.success 弹出成功通知。
-      toast.success("Thank you! Your Conact Message has been sent.");
-      // 清空主题和消息输入框，保留姓名和邮箱。
+      toast.success("Thank you! Your Contact Message has been sent.");
       setFormData((prev) => ({ ...prev, subject: "", message: "" }));
     } catch (error) {
-      // **改进**：如果发生错误，使用 toast.error 弹出包含错误信息的失败通知。
       toast.error(`Submission failed: ${error.message}`);
       console.error("ContactPage: Failed to submit form:", error);
     } finally {
-      // 无论成功还是失败，最后都将 `submitting` 状态设为 false。
       setSubmitting(false);
     }
   };
 
-  // 静态数据（无变化）。
   const officeLocations = [
     {
       city: "New York",
@@ -307,6 +293,7 @@ const ContactPage = () => {
       email: "tokyo@example.com",
     },
   ];
+
   const faqs = [
     {
       question: "How quickly can I expect a response to my inquiry?",
@@ -339,6 +326,7 @@ const ContactPage = () => {
         "Once your order ships, you'll receive an email with a tracking number. You can use this number to track your package on our website or through the carrier's official channels.",
     },
   ];
+
   const [searchTerm, setSearchTerm] = useState("");
   const filteredFAQs = faqs.filter(
     (faq) =>
@@ -346,55 +334,84 @@ const ContactPage = () => {
       faq.answer.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // 返回页面的JSX结构，用于渲染UI。
+  const getDisplayData = () => {
+    if (!cmsData) return {
+      opening_days_text: "Monday - Friday",
+      closing_day_text: "Sunday",
+      open_time: "09:00",
+      close_time: "18:00",
+      special_holidays_text: "Closed on Public Holidays",
+      address: "123 Main Street, New York, NY 10001",
+      email: "info@example.com",
+      phone_number: "(123) 456-7890",
+    };
+
+    return {
+      opening_days_text: cmsData.opening_days_text || "Monday - Friday",
+      closing_day_text: cmsData.closing_day_text || "Sunday",
+      open_time: cmsData.open_time || "09:00",
+      close_time: cmsData.close_time || "18:00",
+      special_holidays_text: cmsData.special_holidays_text || "Closed on Public Holidays",
+      address: cmsData.address || "123 Main Street, New York, NY 10001",
+      email: cmsData.email || "info@example.com",
+      phone_number: cmsData.phone_number || "(123) 456-7890",
+    };
+  };
+
+  const displayData = getDisplayData();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-xl text-gray-600">Loading...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    console.error('CMS Data Error:', error);
+  }
+
   return (
     <div className="min-h-screen">
-      {/* 
-        **新增**：Toaster 组件是所有弹出通知的容器。
-        它应该被放置在组件树的顶层，以便覆盖整个页面。
-        这里的定制化选项使其外观更美观，并与您的设计系统保持一致。
-      */}
       <Toaster
-        position="top-right" // 设置通知出现在右上角。
-        reverseOrder={false} // 新通知出现在旧通知上方。
+        position="top-right"
+        reverseOrder={false}
         toastOptions={{
-          // 为所有通知定义通用样式。
           className: "",
-          duration: 5000, // 默认持续时间为5秒。
+          duration: 5000,
           style: {
-            background: "#ffffff", // 背景色。
-            color: "#374151", // 文本颜色。
+            background: "#ffffff",
+            color: "#374151",
             boxShadow:
-              "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)", // 阴影。
-            borderRadius: "8px", // 圆角。
-            padding: "16px", // 内边距。
+              "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+            borderRadius: "8px",
+            padding: "16px",
           },
-          // 为特定类型的通知定义样式。
           success: {
-            duration: 3000, // 成功通知持续3秒。
+            duration: 3000,
             style: {
-              background: "#F0FDF4", // 浅绿色背景。
-              color: "#166534", // 深绿色文字。
+              background: "#F0FDF4",
+              color: "#166534",
             },
             iconTheme: {
-              primary: "#22C55E", // 绿色图标。
+              primary: "#22C55E",
               secondary: "#FFFFFF",
             },
           },
           error: {
             style: {
-              background: "#FEF2F2", // 浅红色背景。
-              color: "#991B1B", // 深红色文字。
+              background: "#FEF2F2",
+              color: "#991B1B",
             },
             iconTheme: {
-              primary: "#EF4444", // 红色图标。
+              primary: "#EF4444",
               secondary: "#FFFFFF",
             },
           },
         }}
       />
 
-      {/* 用户状态显示区域 */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-200">
         <div className="container mx-auto px-4 py-4">
           <div className="text-center">
@@ -440,13 +457,11 @@ const ContactPage = () => {
         </div>
       </div>
 
-      {/* 页面头部组件 */}
       <PageHeader
         title="Get in Touch"
         description="We'd love to hear from you. Reach out with any questions or feedback."
       />
 
-      {/* 联系表单和信息区域 */}
       <section
         id="form"
         className="py-20 relative bg-gradient-to-br from-blue-50 via-white to-indigo-50"
@@ -464,12 +479,10 @@ const ContactPage = () => {
                 </h2>
                 <div className="w-20 h-1.5 bg-blue-600 rounded-full mb-6"></div>
                 <p className="text-gray-700 leading-relaxed">
-                  Fill out the form below and we'll get back to you as soon as
-                  possible.
+                  Fill out the form below and we'll get back to you as soon as possible.
                   {user.isLoggedIn && (
                     <span className="block mt-2 text-sm text-blue-600 font-medium">
-                      ✓ Your contact information has been automatically filled
-                      in
+                      ✓ Your contact information has been automatically filled in
                     </span>
                   )}
                 </p>
@@ -588,7 +601,6 @@ const ContactPage = () => {
                   )}
                 </button>
               </form>
-              {/* **移除**：旧的 AnimatePresence 和 motion.div 提示信息已被删除。 */}
             </AnimatedSection>
 
             <AnimatedSection id="contact-info" className="space-y-8">
@@ -609,50 +621,57 @@ const ContactPage = () => {
                 <ContactInfoItem
                   icon={<PhoneIcon />}
                   title="Phone"
-                  text="+1 (555) 123-4567"
+                  text={displayData.phone_number}
                   actionText="Call us now"
                 />
                 <ContactInfoItem
                   icon={<EmailIcon />}
                   title="Email"
-                  text="info@example.com"
+                  text={displayData.email}
                   actionText="Send an email"
                 />
                 <ContactInfoItem
                   icon={<LocationIcon />}
                   title="Address"
-                  text="123 Main Street, New York, NY 10001"
+                  text={displayData.address}
                   actionText="Get directions"
                 />
               </div>
+
               <div className="mt-8 bg-gradient-to-br from-blue-100 to-indigo-100 p-6 rounded-2xl border border-blue-200 shadow-2xl relative overflow-hidden">
                 <h3 className="text-xl font-semibold mb-4">Business Hours</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center bg-white/70 backdrop-blur-sm p-3 rounded-xl shadow-md">
-                    <span className="text-gray-600 font-medium">
-                      Monday - Friday:
-                    </span>
+                    <span className="text-gray-600 font-medium">Open Day:</span>
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
-                      <span>9:00 AM - 5:00 PM</span>
+                      {displayData.opening_days_text}
                     </div>
                   </div>
                   <div className="flex justify-between items-center bg-white/70 backdrop-blur-sm p-3 rounded-xl shadow-md">
-                    <span className="text-gray-600 font-medium">Saturday:</span>
+                    <span className="text-gray-600 font-medium">Close Day:</span>
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full bg-yellow-500 animate-pulse"></div>
-                      <span>10:00 AM - 2:00 PM</span>
+                      {displayData.closing_day_text}
                     </div>
                   </div>
                   <div className="flex justify-between items-center bg-white/70 backdrop-blur-sm p-3 rounded-xl shadow-md">
-                    <span className="text-gray-600 font-medium">Sunday:</span>
+                    <span className="text-gray-600 font-medium">Special Holidays:</span>
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                      <span>Closed</span>
+                      {displayData.special_holidays_text}
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center bg-white/70 backdrop-blur-sm p-3 rounded-xl shadow-md">
+                    <span className="text-gray-600 font-medium">Open TIme:</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
+                      {displayData.open_time} - {displayData.close_time}
                     </div>
                   </div>
                 </div>
               </div>
+
             </AnimatedSection>
           </div>
         </div>
@@ -737,5 +756,4 @@ const ContactPage = () => {
   );
 };
 
-// 导出 ContactPage 组件，使其可以在其他文件中被导入和使用。
 export default ContactPage;

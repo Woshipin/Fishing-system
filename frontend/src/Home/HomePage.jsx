@@ -1,14 +1,36 @@
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import AnimatedSection from "../components/AnimatedSection";
 import CTA from "../components/CTA";
 import PackageCard from "../components/PackageCard";
 
 const HomePage = () => {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [scrollY, setScrollY] = useState(0);
+  const [cmsData, setCmsData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const featuredProducts = [
+  // Fetch CMS data from API
+  useEffect(() => {
+    const fetchCMSData = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/fishing-cms');
+        if (!response.ok) {
+          throw new Error('Failed to fetch CMS data');
+        }
+        const data = await response.json();
+        setCmsData(data.cms);
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+    fetchCMSData();
+  }, []);
+
+  // Default products data (fallback)
+  const defaultProducts = [
     {
       id: 1,
       title: "Product 1",
@@ -83,13 +105,66 @@ const HomePage = () => {
     },
   ];
 
+  // Use CMS data if available, otherwise use default data
+  const getDisplayData = () => {
+    if (!cmsData) return {
+      hero_title: "Beautiful Solutions for Your Business",
+      hero_subtitle: "We provide high-quality products and services to help your business grow and succeed in today's competitive market.",
+      about_title: "About Our Company",
+      about_description: "We are a team of passionate professionals dedicated to providing the best products and services to our clients. With years of experience in the industry, we understand the challenges businesses face and offer tailored solutions to help them succeed.",
+      about_mission: "Our mission is to empower businesses with innovative tools and strategies that drive growth and create lasting value.",
+      products_title: "🎣 Selected fishing equipment",
+      products_subtitle: "Discover our most popular fishing gear that have helped hundreds of anglers achieve their fishing dreams and goals.",
+      view_all_products_text: "🌊 查看所有钓具"
+    };
+    return {
+      hero_title: cmsData.home_title || "Beautiful Solutions for Your Business",
+      hero_subtitle: cmsData.home_description || "We provide high-quality products and services to help your business grow and succeed in today's competitive market.",
+      about_title: cmsData.about_us_title || "About Our Company",
+      about_description: cmsData.about_us_description || "We are a team of passionate professionals dedicated to providing the best products and services to our clients. With years of experience in the industry, we understand the challenges businesses face and offer tailored solutions to help them succeed.",
+      about_mission: cmsData.about_mission || "Our mission is to empower businesses with innovative tools and strategies that drive growth and create lasting value.",
+      products_title: cmsData.products_title || "🎣 Selected fishing equipment",
+      products_subtitle: cmsData.products_subtitle || "Discover our most popular fishing gear that have helped hundreds of anglers achieve their fishing dreams and goals.",
+      view_all_products_text: cmsData.view_all_products_text || "🌊 查看所有钓具"
+    };
+  };
+
+  // Parse products from CMS data if available
+  const getFeaturedProducts = () => {
+    if (!cmsData || !cmsData.featured_products) {
+      return defaultProducts;
+    }
+    try {
+      const products = JSON.parse(cmsData.featured_products);
+      return Array.isArray(products) ? products : defaultProducts;
+    } catch (error) {
+      console.error('Error parsing featured products:', error);
+      return defaultProducts;
+    }
+  };
+
+  const displayData = getDisplayData();
+  const featuredProducts = getFeaturedProducts();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-xl text-gray-600">Loading...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    console.error('CMS Data Error:', error);
+    // Continue with default data on error
+  }
+
   return (
     <>
       {/* Enhanced 3D Ocean Background */}
       <div className="absolute inset-0 overflow-hidden z-0">
         {/* Main Ocean Gradient Background */}
         <div className="absolute inset-0 bg-gradient-to-b from-slate-800 via-blue-900 to-indigo-950"></div>
-
         {/* Layered Ocean Depth Effect */}
         <div className="absolute inset-0">
           {/* Deep Ocean Layer */}
@@ -99,49 +174,43 @@ const HomePage = () => {
               transform: `translateY(${scrollY * 0.1}px) scale(${1 + scrollY * 0.0002})`
             }}
           ></div>
-
           {/* Mid Ocean Layer */}
           <div
             className="ocean-layer mid-ocean"
             style={{
-              transform: `translateY(${scrollY * 0.15}px) translateX(${mousePosition.x * 0.01}px)`
+              transform: `translateY(${scrollY * 0.15}px)`
             }}
           ></div>
-
           {/* Surface Ocean Layer */}
           <div
             className="ocean-layer surface-ocean"
             style={{
-              transform: `translateY(${scrollY * 0.2}px) translateX(${mousePosition.x * 0.02}px)`
+              transform: `translateY(${scrollY * 0.2}px)`
             }}
           ></div>
         </div>
-
         {/* Dynamic Wave System */}
         <div className="absolute inset-0">
           {/* Primary Wave Layers */}
           <div
             className="wave-3d wave-primary"
             style={{
-              transform: `translateX(${-100 + (scrollY * 0.08)}%) rotateX(${5 + scrollY * 0.005}deg) rotateY(${mousePosition.x * 0.01}deg)`
+              transform: `translateX(${-100 + (scrollY * 0.08)}%) rotateX(${5 + scrollY * 0.005}deg)`
             }}
           ></div>
-
           <div
             className="wave-3d wave-secondary"
             style={{
-              transform: `translateX(${-120 + (scrollY * 0.12)}%) rotateX(${-3 + scrollY * 0.003}deg) rotateY(${-mousePosition.x * 0.015}deg)`
+              transform: `translateX(${-120 + (scrollY * 0.12)}%) rotateX(${-3 + scrollY * 0.003}deg)`
             }}
           ></div>
-
           <div
             className="wave-3d wave-tertiary"
             style={{
-              transform: `translateX(${-80 + (scrollY * 0.06)}%) rotateX(${2 + scrollY * 0.004}deg) rotateZ(${mousePosition.y * 0.005}deg)`
+              transform: `translateX(${-80 + (scrollY * 0.06)}%) rotateX(${2 + scrollY * 0.004}deg)`
             }}
           ></div>
         </div>
-
         {/* Advanced Bubble System */}
         <div className="absolute inset-0">
           {[...Array(25)].map((_, i) => {
@@ -149,7 +218,6 @@ const HomePage = () => {
             const delay = Math.random() * 8;
             const duration = 4 + Math.random() * 6;
             const xPos = Math.random() * 100;
-
             return (
               <div
                 key={i}
@@ -160,13 +228,12 @@ const HomePage = () => {
                   animationDuration: `${duration}s`,
                   width: `${size}px`,
                   height: `${size}px`,
-                  transform: `translateY(${scrollY * (0.05 + Math.random() * 0.15)}px) translateX(${mousePosition.x * (0.02 + Math.random() * 0.03)}px)`
+                  transform: `translateY(${scrollY * (0.05 + Math.random() * 0.15)}px)`
                 }}
               ></div>
             );
           })}
         </div>
-
         {/* Enhanced Marine Life */}
         <div className="absolute inset-0">
           {/* Swimming Fish with 3D Movement */}
@@ -175,7 +242,6 @@ const HomePage = () => {
             const fishType = fishTypes[i % fishTypes.length];
             const fishSize = 18 + Math.random() * 12;
             const depth = Math.random();
-
             return (
               <div
                 key={i}
@@ -185,7 +251,7 @@ const HomePage = () => {
                   animationDelay: `${Math.random() * 12}s`,
                   animationDuration: `${10 + Math.random() * 8}s`,
                   fontSize: `${fishSize}px`,
-                  transform: `translateY(${scrollY * (0.03 + depth * 0.08)}px) translateX(${mousePosition.x * (0.01 + depth * 0.02)}px) rotateY(${mousePosition.x * 0.02}deg)`,
+                  transform: `translateY(${scrollY * (0.03 + depth * 0.08)}px)`,
                   zIndex: Math.floor(depth * 10),
                   filter: `hue-rotate(${Math.random() * 180}deg) drop-shadow(0 0 ${8 + depth * 12}px rgba(255, 255, 255, ${0.3 + depth * 0.4})) blur(${(1 - depth) * 0.5}px)`
                 }}
@@ -194,7 +260,6 @@ const HomePage = () => {
               </div>
             );
           })}
-
           {/* Floating Jellyfish */}
           {[...Array(6)].map((_, i) => (
             <div
@@ -204,14 +269,13 @@ const HomePage = () => {
                 left: `${10 + i * 15 + Math.random() * 10}%`,
                 top: `${20 + Math.random() * 40}%`,
                 animationDelay: `${Math.random() * 6}s`,
-                transform: `translateY(${scrollY * 0.04}px) translateX(${mousePosition.x * 0.015}px) rotateZ(${mousePosition.y * 0.01}deg)`
+                transform: `translateY(${scrollY * 0.04}px)`
               }}
             >
               🎐
             </div>
           ))}
         </div>
-
         {/* Ocean Floor with 3D Elements */}
         <div className="absolute bottom-0 left-0 right-0">
           {/* Animated Seaweed Forest */}
@@ -224,11 +288,10 @@ const HomePage = () => {
                 height: `${30 + Math.random() * 50}px`,
                 width: `${3 + Math.random() * 3}px`,
                 animationDelay: `${Math.random() * 4}s`,
-                transform: `translateY(${scrollY * 0.08}px) rotateZ(${scrollY * 0.01 + Math.sin(Date.now() * 0.001 + i) * 3}deg) perspective(100px) rotateX(${mousePosition.y * 0.02}deg)`
+                transform: `translateY(${scrollY * 0.08}px) rotateZ(${scrollY * 0.01 + Math.sin(Date.now() * 0.001 + i) * 3}deg)`
               }}
             ></div>
           ))}
-
           {/* 3D Coral Reef System */}
           {[...Array(12)].map((_, i) => (
             <div
@@ -236,11 +299,10 @@ const HomePage = () => {
               className="coral-3d"
               style={{
                 left: `${i * 8 + Math.random() * 6}%`,
-                transform: `translateY(${scrollY * 0.06}px) scale(${0.7 + Math.random() * 0.6}) perspective(50px) rotateY(${mousePosition.x * 0.01}deg) rotateX(${5 + mousePosition.y * 0.005}deg)`
+                transform: `translateY(${scrollY * 0.06}px) scale(${0.7 + Math.random() * 0.6})`
               }}
             ></div>
           ))}
-
           {/* Ocean Floor Particles */}
           {[...Array(15)].map((_, i) => (
             <div
@@ -249,13 +311,11 @@ const HomePage = () => {
               style={{
                 left: `${Math.random() * 100}%`,
                 bottom: `${Math.random() * 20}px`,
-                animationDelay: `${Math.random() * 10}s`,
-                transform: `translateX(${mousePosition.x * 0.003}px)`
+                animationDelay: `${Math.random() * 10}s`
               }}
             ></div>
           ))}
         </div>
-
         {/* Dynamic Light Ray System */}
         <div className="absolute inset-0">
           {[...Array(5)].map((_, i) => (
@@ -264,19 +324,12 @@ const HomePage = () => {
               className="light-ray-3d"
               style={{
                 left: `${15 + i * 20}%`,
-                transform: `
-                  translateX(${mousePosition.x * (0.002 + i * 0.001)}px)
-                  translateY(${mousePosition.y * (0.001 + i * 0.0005)}px)
-                  rotateZ(${10 + i * 5 + scrollY * 0.01}deg)
-                  perspective(200px)
-                  rotateX(${mousePosition.y * 0.02}deg)
-                `,
+                transform: `rotateZ(${10 + i * 5 + scrollY * 0.01}deg)`,
                 animationDelay: `${i * 1.5}s`
               }}
             ></div>
           ))}
         </div>
-
         {/* Floating Particles System */}
         <div className="absolute inset-0 pointer-events-none">
           {[...Array(60)].map((_, i) => (
@@ -287,13 +340,12 @@ const HomePage = () => {
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
                 animationDelay: `${Math.random() * 15}s`,
-                transform: `translateY(${scrollY * (0.01 + Math.random() * 0.03)}px) translateX(${mousePosition.x * (0.001 + Math.random() * 0.002)}px)`
+                transform: `translateY(${scrollY * (0.01 + Math.random() * 0.03)}px)`
               }}
             ></div>
           ))}
         </div>
       </div>
-
       {/* Hero Section with Fishing Theme 3D Background */}
       <section className="relative h-screen flex items-center overflow-hidden z-10">
         <div className="container mx-auto px-4 z-10 relative">
@@ -304,12 +356,10 @@ const HomePage = () => {
             className="max-w-2xl"
           >
             <h1 className="text-4xl md:text-6xl font-bold mb-6 text-white">
-              <span className="text-white">Beautiful</span> Solutions for Your
-              <span className="text-white"> Business</span>
+              {displayData.hero_title}
             </h1>
             <p className="text-lg md:text-xl mb-8 text-white">
-              We provide high-quality products and services to help your
-              business grow and succeed in today's competitive market.
+              {displayData.hero_subtitle}
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <a
@@ -325,7 +375,6 @@ const HomePage = () => {
           </motion.div>
         </div>
       </section>
-
       {/* Enhanced 3D Ocean CSS Styles */}
       <style jsx="true">{`
         /* Ocean Layer Backgrounds */
@@ -335,21 +384,17 @@ const HomePage = () => {
           opacity: 0.7;
           will-change: transform;
         }
-
         .deep-ocean {
           background: radial-gradient(ellipse at center bottom, rgba(0, 20, 40, 0.8) 0%, transparent 70%);
           filter: blur(2px);
         }
-
         .mid-ocean {
           background: radial-gradient(ellipse at center, rgba(0, 100, 150, 0.6) 20%, transparent 80%);
           filter: blur(1px);
         }
-
         .surface-ocean {
           background: linear-gradient(to bottom, rgba(100, 200, 255, 0.3) 0%, transparent 50%);
         }
-
         /* 3D Wave System */
         .wave-3d {
           position: absolute;
@@ -360,7 +405,6 @@ const HomePage = () => {
           will-change: transform;
           transform-style: preserve-3d;
         }
-
         .wave-primary {
           background: linear-gradient(90deg,
             transparent 0%,
@@ -372,7 +416,6 @@ const HomePage = () => {
           animation: wave-3d-flow 14s ease-in-out infinite;
           box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
         }
-
         .wave-secondary {
           background: linear-gradient(90deg,
             transparent 0%,
@@ -383,7 +426,6 @@ const HomePage = () => {
           animation: wave-3d-flow-alt 18s ease-in-out infinite;
           opacity: 0.8;
         }
-
         .wave-tertiary {
           background: linear-gradient(90deg,
             transparent 0%,
@@ -394,7 +436,6 @@ const HomePage = () => {
           animation: wave-3d-flow-slow 22s ease-in-out infinite;
           opacity: 0.6;
         }
-
         @keyframes wave-3d-flow {
           0%, 100% {
             transform: translateX(-100%) rotateX(0deg) rotateZ(0deg);
@@ -409,7 +450,6 @@ const HomePage = () => {
             transform: translateX(-25%) rotateX(1deg) rotateZ(0.5deg);
           }
         }
-
         @keyframes wave-3d-flow-alt {
           0%, 100% {
             transform: translateX(-120%) rotateX(1deg) rotateY(0deg);
@@ -418,7 +458,6 @@ const HomePage = () => {
             transform: translateX(0%) rotateX(-2deg) rotateY(1deg);
           }
         }
-
         @keyframes wave-3d-flow-slow {
           0%, 100% {
             transform: translateX(-80%) rotateZ(-1deg);
@@ -427,7 +466,6 @@ const HomePage = () => {
             transform: translateX(20%) rotateZ(1deg);
           }
         }
-
         /* Enhanced 3D Bubbles */
         .bubble-3d {
           position: absolute;
@@ -448,7 +486,6 @@ const HomePage = () => {
           will-change: transform;
           transform-style: preserve-3d;
         }
-
         @keyframes bubble-3d-rise {
           0% {
             bottom: -50px;
@@ -474,20 +511,17 @@ const HomePage = () => {
             transform: scale(1.5) rotateY(360deg) rotateX(0deg) translateX(0px);
           }
         }
-
         /* 3D Marine Life */
         .marine-life {
           position: absolute;
           will-change: transform;
           transform-style: preserve-3d;
         }
-
         .fish-3d {
           animation: fish-3d-swim linear infinite;
           transition: transform 0.3s ease-out;
           z-index: 3;
         }
-
         @keyframes fish-3d-swim {
           0% {
             left: -120px;
@@ -519,7 +553,6 @@ const HomePage = () => {
             transform: scaleX(-1) rotateY(0deg) rotateZ(0deg);
           }
         }
-
         .jellyfish-3d {
           position: absolute;
           font-size: 28px;
@@ -527,7 +560,6 @@ const HomePage = () => {
           filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
           transform-style: preserve-3d;
         }
-
         @keyframes jellyfish-float {
           0%, 100% {
             transform: translateY(0) rotateZ(0deg) rotateX(0deg);
@@ -542,7 +574,6 @@ const HomePage = () => {
             transform: translateY(-30px) rotateZ(-3deg) rotateX(1deg);
           }
         }
-
         /* 3D Ocean Floor */
         .seaweed-3d {
           position: absolute;
@@ -562,7 +593,6 @@ const HomePage = () => {
           will-change: transform;
           transform-style: preserve-3d;
         }
-
         @keyframes seaweed-3d-sway {
           0%, 100% {
             transform: rotateZ(-12deg) rotateY(0deg) rotateX(0deg);
@@ -577,7 +607,6 @@ const HomePage = () => {
             transform: rotateZ(8deg) rotateY(-2deg) rotateX(1deg);
           }
         }
-
         .coral-3d {
           position: absolute;
           bottom: 0;
@@ -598,7 +627,6 @@ const HomePage = () => {
           animation: coral-3d-pulse 12s ease-in-out infinite;
           transform-style: preserve-3d;
         }
-
         .coral-3d::before, .coral-3d::after {
           content: '';
           position: absolute;
@@ -609,17 +637,14 @@ const HomePage = () => {
           border-radius: 15px 15px 0 0;
           box-shadow: inherit;
         }
-
         .coral-3d::before {
           left: -10px;
           transform: rotate(-20deg);
         }
-
         .coral-3d::after {
           right: -10px;
           transform: rotate(20deg);
         }
-
         @keyframes coral-3d-pulse {
           0%, 100% {
             transform: scale(1) rotateY(0deg);
@@ -630,7 +655,6 @@ const HomePage = () => {
             filter: hue-rotate(10deg);
           }
         }
-
         /* 3D Light Rays */
         .light-ray-3d {
           position: absolute;
@@ -650,7 +674,6 @@ const HomePage = () => {
           will-change: transform;
           transform-style: preserve-3d;
         }
-
         @keyframes light-ray-3d-dance {
           0%, 100% {
             opacity: 0.3;
@@ -673,7 +696,6 @@ const HomePage = () => {
             transform: rotateZ(-2deg) rotateX(0.5deg);
           }
         }
-
         /* Enhanced Water Particles */
         .water-particle-3d {
           position: absolute;
@@ -688,7 +710,6 @@ const HomePage = () => {
           animation: particle-3d-dance 20s linear infinite;
           box-shadow: 0 0 4px rgba(255, 255, 255, 0.2);
         }
-
         @keyframes particle-3d-dance {
           0% {
             transform: translateY(0) translateX(0) rotateZ(0deg);
@@ -714,7 +735,6 @@ const HomePage = () => {
             opacity: 0;
           }
         }
-
         /* Sand Particles */
         .sand-particle {
           position: absolute;
@@ -724,7 +744,6 @@ const HomePage = () => {
           border-radius: 50%;
           animation: sand-drift 15s ease-in-out infinite;
         }
-
         @keyframes sand-drift {
           0%, 100% {
             transform: translateX(0) scale(1);
@@ -735,7 +754,6 @@ const HomePage = () => {
             opacity: 0.6;
           }
         }
-
         /* Performance Optimizations */
         @media (prefers-reduced-motion: no-preference) {
           .ocean-layer,
@@ -751,7 +769,6 @@ const HomePage = () => {
             will-change: transform, opacity;
           }
         }
-
         @media (prefers-reduced-motion: reduce) {
           .ocean-layer,
           .wave-3d,
@@ -769,21 +786,18 @@ const HomePage = () => {
           }
         }
       `}</style>
-
       {/* Featured Products Section */}
       <section className="py-16 bg-gradient-to-b from-white/90 to-blue-50/90 backdrop-blur-sm relative z-10">
         <div className="container mx-auto px-4">
           <AnimatedSection className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-800">
-              🎣 精选钓具装备
+              {displayData.products_title}
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              发现我们最受欢迎的钓鱼装备，这些产品已经帮助数百位钓鱼爱好者
-              实现了他们的钓鱼梦想和目标。
+              {displayData.products_subtitle}
             </p>
             <div className="h-1 w-24 bg-blue-500 mx-auto mt-6"></div>
           </AnimatedSection>
-
           <AnimatedSection
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 lg:gap-8"
             direction="up"
@@ -792,8 +806,8 @@ const HomePage = () => {
               <PackageCard
                 key={product.id}
                 title={product.title}
-                description={product.subtitle}
-                imageUrl={product.imageUrl}
+                description={product.subtitle || product.description}
+                imageUrl={product.imageUrl || product.image_url || "/assets/About/about-us.png"}
                 buttonLink={`/products/${product.id}`}
                 category={product.category}
                 price={product.price}
@@ -801,28 +815,25 @@ const HomePage = () => {
               />
             ))}
           </AnimatedSection>
-
           <div className="text-center mt-12">
             <a
               href="/products"
               className="inline-block px-6 py-3 rounded-full transition-all duration-300 bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg transform hover:-translate-y-1"
             >
-🌊 查看所有钓具
+              {displayData.view_all_products_text}
             </a>
           </div>
         </div>
       </section>
-
       {/* About Section */}
       <section className="py-16 bg-gradient-to-br from-blue-50/90 to-white/90 backdrop-blur-sm relative z-10">
         <div className="container mx-auto px-4">
           <div className="text-center mb-6">
             <h2 className="text-3xl md:text-4xl font-bold text-black inline-block relative">
-              About Our Company
+              {displayData.about_title}
               <span className="block h-1 w-32 bg-blue-600 mt-2 mx-auto"></span>
             </h2>
           </div>
-
           <div className="flex flex-col md:flex-row gap-4 items-center bg-white/60 rounded-xl p-6 shadow-lg backdrop-blur-sm">
             <div className="md:w-2/5">
               <div className="relative overflow-hidden rounded-xl shadow-md">
@@ -833,24 +844,16 @@ const HomePage = () => {
                 />
               </div>
             </div>
-
             <div className="md:w-3/5 md:pl-8">
               <div className="space-y-4">
                 <p className="text-gray-700 leading-relaxed">
-                  We are a team of passionate professionals dedicated to
-                  providing the best products and services to our clients. With
-                  years of experience in the industry, we understand the
-                  challenges businesses face and offer tailored solutions to
-                  help them succeed.
+                  {displayData.about_description}
                 </p>
-
                 <div className="p-4 bg-blue-50 rounded-lg shadow-sm border-l-4 border-blue-500">
                   <p className="text-gray-700 italic">
-                    "Our mission is to empower businesses with innovative tools
-                    and strategies that drive growth and create lasting value."
+                    "{displayData.about_mission}"
                   </p>
                 </div>
-
                 <a
                   href="/about"
                   className="inline-block mt-2 px-6 py-3 rounded-full bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg transition-all duration-300"
@@ -862,7 +865,6 @@ const HomePage = () => {
           </div>
         </div>
       </section>
-
       {/* CTA Section */}
       <div className="relative z-10">
         <CTA />

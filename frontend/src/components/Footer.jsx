@@ -1,6 +1,68 @@
-import { Link } from "react-router-dom"
+import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 
 const Footer = () => {
+  const [cmsData, setCmsData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchCMSData = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/fishing-cms');
+        if (!response.ok) {
+          throw new Error('Failed to fetch CMS data');
+        }
+        const data = await response.json();
+        setCmsData(data.cms);
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchCMSData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-xl text-gray-600">Loading...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    console.error('CMS Data Error:', error);
+  }
+
+  const getDisplayData = () => {
+    if (!cmsData) return {
+      opening_days_text: "Monday - Friday",
+      closing_day_text: "Sunday",
+      open_time: "09:00",
+      close_time: "18:00",
+      special_holidays_text: "Closed on Public Holidays",
+      address: "123 Main Street, New York, NY 10001",
+      email: "info@example.com",
+      phone_number: "(123) 456-7890",
+    };
+
+    return {
+      opening_days_text: cmsData.opening_days_text || "Monday - Friday",
+      closing_day_text: cmsData.closing_day_text || "Sunday",
+      open_time: cmsData.open_time || "09:00",
+      close_time: cmsData.close_time || "18:00",
+      special_holidays_text: cmsData.special_holidays_text || "Closed on Public Holidays",
+      address: cmsData.address || "123 Main Street, New York, NY 10001",
+      email: cmsData.email || "info@example.com",
+      phone_number: cmsData.phone_number || "(123) 456-7890",
+    };
+  };
+
+  const displayData = getDisplayData();
+
   return (
     <footer className="bg-gray-900 text-white">
       <div className="container mx-auto px-4 py-12">
@@ -69,36 +131,48 @@ const Footer = () => {
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold mb-4">Services</h3>
+            <h3 className="text-lg font-semibold mb-4">Opening Hours</h3>
             <ul className="space-y-2">
-              {[
-                "Premium Support",
-                "Consultation",
-                "Custom Solutions",
-                "Training",
-              ].map((service) => (
-                <li key={service}>
-                  <a href="#" className="text-gray-400 hover:text-primary transition-colors">
-                    {service}
-                  </a>
-                </li>
-              ))}
+              <li>
+                <span className="text-white">Open Day: </span>
+                <span className="text-gray-400">{displayData.opening_days_text}</span>
+              </li>
+              <li>
+                <span className="text-white">Open Time: </span>
+                <span className="text-gray-400">{displayData.open_time} AM - {displayData.close_time} PM</span>
+              </li>
+              <li>
+                <span className="text-white">Close Date: </span>
+                <span className="text-gray-400">{displayData.closing_day_text}</span>
+              </li>
+              <li>
+                <span className="text-white">Special Holidays: </span>
+                <span className="text-gray-400">{displayData.special_holidays_text}</span>
+              </li>
             </ul>
           </div>
 
           <div>
             <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
             <address className="not-italic text-gray-400">
-              <p className="mb-2">123 Main Street</p>
-              <p className="mb-2">New York, NY 10001</p>
-              <p className="mb-2">Email: info@example.com</p>
-              <p>Phone: (123) 456-7890</p>
+              <p className="mb-2">
+                <span className="text-white">Address: </span>
+                {displayData.address}
+              </p>
+              <p className="mb-2">
+                <span className="text-white">Email: </span>
+                {displayData.email}
+              </p>
+              <p>
+                <span className="text-white">Phone: </span>
+                {displayData.phone_number}
+              </p>
             </address>
           </div>
         </div>
       </div>
     </footer>
-  )
-}
+  );
+};
 
-export default Footer
+export default Footer;
