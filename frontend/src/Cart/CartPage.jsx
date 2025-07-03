@@ -931,7 +931,7 @@ const CartPage = () => {
                     </h3>
                     <div className="flex justify-between items-center py-3">
                       <div className="font-medium text-gray-800">
-                        Table{" "}
+                        Table
                         {
                           tableNumbers.find((t) => t.id === selectedTableNumber)
                             ?.number

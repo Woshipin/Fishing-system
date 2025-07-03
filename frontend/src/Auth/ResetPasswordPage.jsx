@@ -117,7 +117,7 @@ const ResetPasswordPage = () => {
 
             <div className="mt-6 text-center">
               <p className="text-gray-600">
-                Remember your password?{" "}
+                Remember your password?
                 <Link to="/login" className="text-indigo-600 hover:text-indigo-800 font-medium">
                   Back to login
                 </Link>

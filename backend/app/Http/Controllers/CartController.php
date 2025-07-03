@@ -3,7 +3,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Cart;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class CartController extends Controller
 {
@@ -11,116 +14,57 @@ class CartController extends Controller
     public function addProductToCart(Request $request)
     {
         try {
-            // 1. 首先记录原始请求数据
-            \Log::info('=== RAW REQUEST DATA ===');
-            \Log::info('Request all(): ', $request->all());
-            \Log::info('Request input category_id: ' . $request->input('category_id'));
-            \Log::info('Request category_id type: ' . gettype($request->input('category_id')));
-            \Log::info('Request has category_id: ' . ($request->has('category_id') ? 'YES' : 'NO'));
-            \Log::info('Request filled category_id: ' . ($request->filled('category_id') ? 'YES' : 'NO'));
-
-            // 2. 检查categories表中是否存在该记录
-            $categoryExists = \DB::table('categories')->where('id', $request->input('category_id'))->exists();
-            \Log::info('Category exists in DB: ' . ($categoryExists ? 'YES' : 'NO'));
-
-            // 3. 验证请求数据
+            // 1. 验证请求数据
             $validatedData = $request->validate([
                 'user_id'     => 'required|integer|exists:users,id',
                 'product_id'  => 'required|integer|exists:products,id',
                 'name'        => 'required|string|max:255',
-                'slug'        => 'nullable|string|max:255',
                 'category_id' => 'nullable|integer|exists:categories,id',
                 'quantity'    => 'required|integer|min:1',
                 'price'       => 'required|numeric|min:0',
                 'image'       => 'nullable|string|max:500',
             ]);
 
-            // 4. 记录验证后的数据
-            \Log::info('=== VALIDATED DATA ===');
-            \Log::info('Validated data: ', $validatedData);
-            \Log::info('Validated category_id: ' . ($validatedData['category_id'] ?? 'NULL'));
-            \Log::info('Validated category_id type: ' . gettype($validatedData['category_id'] ?? null));
-
             $userId = $validatedData['user_id'];
 
-            // 检查购物车中是否已存在该产品
+            // 2. 检查购物车中是否已存在该产品
             $existingCartItem = Cart::where('user_id', $userId)
                 ->where('product_id', $validatedData['product_id'])
                 ->first();
 
             if ($existingCartItem) {
-                // 如果存在，也要更新category_id（以防之前没有）
+                // 3a. 如果存在，更新数量
                 $existingCartItem->quantity += $validatedData['quantity'];
-                if (isset($validatedData['category_id']) && ! is_null($validatedData['category_id'])) {
+                // 如果之前没有category_id，也一并更新
+                if (isset($validatedData['category_id']) && is_null($existingCartItem->category_id)) {
                     $existingCartItem->category_id = $validatedData['category_id'];
                 }
                 $existingCartItem->save();
+
                 $cartItem = $existingCartItem;
                 $message  = 'Product quantity updated in cart successfully';
             } else {
-                // 处理 slug
-                $slug = $validatedData['slug'] ?? null;
-                if (empty($slug)) {
-                    $slug = \Str::slug($validatedData['name'] . '-' . $userId . '-' . time());
-                } else {
-                    $slugExists = Cart::where('slug', $slug)->exists();
-                    if ($slugExists) {
-                        $slug = $slug . '-' . time() . '-' . $userId;
-                    }
+                // 3b. 如果不存在，创建新的购物车项目
+                $slug = Str::slug($validatedData['name'] . '-' . time());
+                if (Cart::where('slug', $slug)->exists()) {
+                    $slug .= '-' . Str::random(4); // 附加随机字符串确保 slug 唯一
                 }
 
-                // 5. 准备创建数据 - 特别处理category_id
-                $cartData = [
-                    'user_id'    => $userId,
-                    'product_id' => $validatedData['product_id'],
-                    'package_id' => null,
-                    'name'       => $validatedData['name'],
-                    'slug'       => $slug,
-                    'image'      => $validatedData['image'] ?? null,
-                    'quantity'   => $validatedData['quantity'],
-                    'price'      => $validatedData['price'],
-                    'features'   => null,
-                ];
+                // 合并验证过的数据和额外生成的数据来创建新记录
+                $cartData = array_merge(
+                    $validatedData,
+                    [
+                        'slug'       => $slug,
+                        'package_id' => null, // 假设产品没有 package
+                        'features'   => null,
+                    ]
+                );
 
-                // 明确处理 category_id
-                if (array_key_exists('category_id', $validatedData) && ! is_null($validatedData['category_id'])) {
-                    $cartData['category_id'] = (int) $validatedData['category_id'];
-                } else {
-                    $cartData['category_id'] = null;
-                }
-
-                \Log::info('=== CART DATA TO CREATE ===');
-                \Log::info('Cart data: ', $cartData);
-                \Log::info('Cart data category_id: ' . ($cartData['category_id'] ?? 'NULL'));
-                \Log::info('Cart data category_id type: ' . gettype($cartData['category_id'] ?? null));
-
-                // 6. 启用查询日志
-                \DB::enableQueryLog();
-
-                // 创建购物车项目
                 $cartItem = Cart::create($cartData);
-
-                // 7. 记录SQL查询
-                $queries = \DB::getQueryLog();
-                \Log::info('=== SQL QUERIES ===');
-                foreach ($queries as $query) {
-                    \Log::info('SQL: ' . $query['query']);
-                    \Log::info('Bindings: ', $query['bindings']);
-                }
-
-                // 8. 记录创建后的数据
-                \Log::info('=== CREATED CART ITEM ===');
-                \Log::info('Created cart item: ', $cartItem->toArray());
-                \Log::info('Created cart item category_id: ' . $cartItem->category_id);
-
-                // 9. 再次从数据库查询确认
-                $freshCartItem = Cart::find($cartItem->id);
-                \Log::info('=== FRESH FROM DB ===');
-                \Log::info('Fresh cart item: ', $freshCartItem->toArray());
-
                 $message = 'Product added to cart successfully';
             }
 
+            // 4. 返回成功的响应
             return response()->json([
                 'success'    => true,
                 'message'    => $message,
@@ -128,26 +72,21 @@ class CartController extends Controller
                 'cart_count' => Cart::where('user_id', $userId)->sum('quantity'),
             ], 200);
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            \Log::error('=== VALIDATION ERROR ===');
-            \Log::error('Validation errors: ', $e->errors());
-            \Log::error('Original request: ', $request->all());
-
+        } catch (ValidationException $e) {
+            // 处理验证失败
+            Log::error('Cart Add Validation Error:', ['errors' => $e->errors(), 'request' => $request->all()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
                 'errors'  => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            \Log::error('=== GENERAL ERROR ===');
-            \Log::error('Error: ' . $e->getMessage());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
-            \Log::error('Request data: ', $request->all());
-
+            // 处理其他所有异常
+            Log::error('Cart Add General Error: ' . $e->getMessage(), ['request' => $request->all()]);
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to add product to cart',
-                'error'   => $e->getMessage(),
+                'message' => 'An unexpected error occurred while adding the product to the cart.',
+                'error'   => $e->getMessage(), // 在开发环境中可以返回具体错误信息
             ], 500);
         }
     }
@@ -156,7 +95,7 @@ class CartController extends Controller
     public function addPackageToCart(Request $request)
     {
         try {
-            // 验证请求数据
+            // 1. 验证请求数据
             $validatedData = $request->validate([
                 'user_id'     => 'required|integer|exists:users,id',
                 'package_id'  => 'required|integer|exists:packages,id',
@@ -170,26 +109,19 @@ class CartController extends Controller
                 'features.*'  => 'string|max:255',
             ]);
 
-            // 从验证后的数据中获取用户ID
             $userId = $validatedData['user_id'];
 
-            // 日志记录用于调试
-            \Log::info('Adding package to cart for user ID: ' . $userId);
-            \Log::info('Package ID: ' . $validatedData['package_id']);
-            \Log::info('Category ID: ' . ($validatedData['category_id'] ?? 'null'));
-            \Log::info('Validated data: ', $validatedData);
-
-            // 检查购物车中是否已存在该套餐
+            // 2. 检查购物车中是否已存在该套餐
             $existingCartItem = Cart::where('user_id', $userId)
                 ->where('package_id', $validatedData['package_id'])
                 ->first();
 
             if ($existingCartItem) {
-                // 如果存在，增加数量并更新其他信息
+                // 3a. 如果存在，更新数量和可能变更的信息
                 $existingCartItem->quantity += $validatedData['quantity'];
+                $existingCartItem->price = $validatedData['price']; // 价格可能变动，最好更新
 
-                // 更新其他可能变更的信息
-                if (isset($validatedData['category_id']) && ! is_null($validatedData['category_id'])) {
+                if (isset($validatedData['category_id'])) {
                     $existingCartItem->category_id = $validatedData['category_id'];
                 }
                 if (isset($validatedData['features'])) {
@@ -203,46 +135,23 @@ class CartController extends Controller
                 $cartItem = $existingCartItem;
                 $message  = 'Package quantity updated in cart successfully';
             } else {
-                // 如果不存在，创建新的购物车项目
-
-                // 处理 slug - 如果没有提供或为空，则生成一个
-                $slug = $validatedData['slug'] ?? null;
-                if (empty($slug)) {
-                    $slug = \Str::slug($validatedData['name'] . '-package-' . $userId . '-' . time());
-                } else {
-                    // 确保slug唯一性
-                    $slugExists = Cart::where('slug', $slug)->exists();
-                    if ($slugExists) {
-                        $slug = $slug . '-' . time() . '-' . $userId;
-                    }
+                // 3b. 如果不存在，创建新的购物车项目
+                $slug = $validatedData['slug'] ?? Str::slug($validatedData['name'] . '-package-' . time());
+                if (Cart::where('slug', $slug)->exists()) {
+                    $slug .= '-' . Str::random(4); // 确保 slug 唯一
                 }
 
-                // 准备创建数据
-                $cartData = [
-                    'user_id'     => $userId,
-                    'product_id'  => null, // 套餐不需要product_id
-                    'package_id'  => $validatedData['package_id'],
-                    'name'        => $validatedData['name'],
-                    'slug'        => $slug,
-                    'image'       => $validatedData['image'] ?? null,
-                    'category_id' => $validatedData['category_id'] ?? null,
-                    'quantity'    => $validatedData['quantity'],
-                    'price'       => $validatedData['price'],
-                    'features'    => $validatedData['features'] ?? null,
-                ];
+                // 合并数据并创建
+                $cartData = array_merge($validatedData, [
+                    'slug'       => $slug,
+                    'product_id' => null, // 明确为套餐时 product_id 为 null
+                ]);
 
-                // 记录即将插入的数据
-                \Log::info('Creating package cart item with data: ', $cartData);
-
-                // 创建新的购物车项目
                 $cartItem = Cart::create($cartData);
-                $message  = 'Package added to cart successfully';
-
-                // 记录创建后的数据
-                \Log::info('Created package cart item: ', $cartItem->toArray());
+                $message = 'Package added to cart successfully';
             }
 
-            // 返回成功响应
+            // 4. 返回成功的响应
             return response()->json([
                 'success'    => true,
                 'message'    => $message,
@@ -250,25 +159,20 @@ class CartController extends Controller
                 'cart_count' => Cart::where('user_id', $userId)->sum('quantity'),
             ], 200);
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            // 验证错误 - 记录详细错误信息
-            \Log::error('Package cart validation failed: ', $e->errors());
-            \Log::error('Request data: ', $request->all());
-
+        } catch (ValidationException $e) {
+            // 处理验证失败
+            Log::error('Package Cart Add Validation Error:', ['errors' => $e->errors(), 'request' => $request->all()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
                 'errors'  => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            // 其他错误
-            \Log::error('Package cart addition error: ' . $e->getMessage());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
-            \Log::error('Request data: ', $request->all());
-
+            // 处理其他所有异常
+            Log::error('Package Cart Add General Error: ' . $e->getMessage(), ['request' => $request->all()]);
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to add package to cart',
+                'message' => 'Failed to add package to cart.',
                 'error'   => $e->getMessage(),
             ], 500);
         }

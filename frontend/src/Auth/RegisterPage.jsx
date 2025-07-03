@@ -245,11 +245,11 @@ const RegisterPage = () => {
                   className="h-4 w-4 mt-1 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                 />
                 <label htmlFor="agreeTerms" className="ml-2 block text-sm text-gray-700">
-                  I agree to the{" "}
+                  I agree to the
                   <a href="#" className="text-indigo-600 hover:text-indigo-800">
                     Terms of Service
-                  </a>{" "}
-                  and{" "}
+                  </a>
+                  and
                   <a href="#" className="text-indigo-600 hover:text-indigo-800">
                     Privacy Policy
                   </a>
@@ -277,7 +277,7 @@ const RegisterPage = () => {
 
             <div className="mt-6 text-center">
               <p className="text-gray-600">
-                Already have an account?{" "}
+                Already have an account?
                 <Link to="/login" className="text-indigo-600 hover:text-indigo-800 font-medium">
                   Sign in
                 </Link>

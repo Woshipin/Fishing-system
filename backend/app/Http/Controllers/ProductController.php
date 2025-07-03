@@ -111,10 +111,6 @@ class ProductController extends Controller
             return response()->json(['success' => false, 'message' => 'Failed to fetch product details'], 500);
         }
     }
-
-    /**
-     * 搜索产品
-     */
     public function search(Request $request)
     {
         try {

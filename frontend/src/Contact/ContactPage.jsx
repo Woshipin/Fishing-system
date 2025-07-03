@@ -97,43 +97,6 @@ const ContactInfoItem = ({ icon, title, text, actionText }) => (
   </div>
 );
 
-const OfficeLocationCard = ({ office }) => (
-  <div
-    key={office.city}
-    className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-blue-100 p-6 lg:p-8 hover:translate-y-[-8px] transition-all duration-500 relative overflow-hidden"
-  >
-    <div className="inline-block px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-xl shadow-lg mb-4">
-      {office.city}
-    </div>
-    <div className="space-y-4">
-      <ContactInfoItem
-        icon={<LocationIcon />}
-        title="Address"
-        text={office.address}
-        actionText="Get directions"
-      />
-      <ContactInfoItem
-        icon={<PhoneIcon />}
-        title="Phone"
-        text={office.phone}
-        actionText="Call now"
-      />
-      <ContactInfoItem
-        icon={<EmailIcon />}
-        title="Email"
-        text={office.email}
-        actionText="Send an email"
-      />
-    </div>
-    <div className="mt-8 pt-4 border-t border-gray-200">
-      <button className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-xl transition duration-300 shadow-lg hover:shadow-blue-500/30 flex items-center justify-center gap-2">
-        <span>View Office Details</span>
-        <ArrowRightIcon />
-      </button>
-    </div>
-  </div>
-);
-
 const FAQItem = ({ question, answer }) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
@@ -175,6 +138,23 @@ const FAQItem = ({ question, answer }) => {
         )}
       </AnimatePresence>
     </motion.div>
+  );
+};
+
+// Google Map Component (Modified to use iframe)
+const GoogleMap = () => {
+  return (
+    <div className="bg-white rounded-2xl shadow-2xl border border-blue-200 overflow-hidden">
+      <iframe
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3988.389126124463!2d103.67928727472494!3d1.5336266984520133!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31da73c109632e0b%3A0x74cda51bf210c304!2z5Y2X5pa55aSn5a2m5a2m6Zmi!5e0!3m2!1szh-CN!2smy!4v1751446048999!5m2!1szh-CN!2smy"
+        className="w-full h-96 lg:h-[500px]"
+        style={{ border: 0 }}
+        allowFullScreen=""
+        loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+        title="Our Office Location"
+      ></iframe>
+    </div>
   );
 };
 
@@ -272,27 +252,6 @@ const ContactPage = () => {
       setSubmitting(false);
     }
   };
-
-  const officeLocations = [
-    {
-      city: "New York",
-      address: "123 Broadway, New York, NY 10001",
-      phone: "+1 (212) 555-1234",
-      email: "newyork@example.com",
-    },
-    {
-      city: "London",
-      address: "456 Oxford Street, London, W1C 1AP",
-      phone: "+44 20 7123 4567",
-      email: "london@example.com",
-    },
-    {
-      city: "Tokyo",
-      address: "789 Shibuya, Tokyo, 150-0002",
-      phone: "+81 3 1234 5678",
-      email: "tokyo@example.com",
-    },
-  ];
 
   const faqs = [
     {
@@ -489,7 +448,7 @@ const ContactPage = () => {
               </div>
               <form
                 onSubmit={handleSubmit}
-                className="space-y-6 bg-white rounded-2xl shadow-2xl border border-blue-200 backdrop-blur-sm bg-white/80 p-6 lg:p-8"
+                className="space-y-6 bg-white rounded-2xl shadow-2xl border border-blue-200 backdrop-blur-sm p-6 lg:p-8"
               >
                 <div className="grid sm:grid-cols-2 gap-6">
                   <div>
@@ -497,7 +456,7 @@ const ContactPage = () => {
                       htmlFor="name"
                       className="block text-gray-700 font-medium mb-2"
                     >
-                      Name{" "}
+                      Name
                       {user.isLoggedIn && (
                         <span className="text-green-600 text-sm ml-2">
                           ✓ Auto-filled
@@ -524,7 +483,7 @@ const ContactPage = () => {
                       htmlFor="email"
                       className="block text-gray-700 font-medium mb-2"
                     >
-                      Email Address{" "}
+                      Email Address
                       {user.isLoggedIn && (
                         <span className="text-green-600 text-sm ml-2">
                           ✓ Auto-filled
@@ -617,7 +576,7 @@ const ContactPage = () => {
                   Available Monday through Friday, 9am to 5pm local time.
                 </p>
               </div>
-              <div className="space-y-6 bg-white rounded-2xl shadow-2xl border border-blue-200 backdrop-blur-sm bg-white/80 p-6 lg:p-8">
+              <div className="space-y-6 bg-white rounded-2xl shadow-2xl border border-blue-200 backdrop-blur-smp-6 lg:p-8">
                 <ContactInfoItem
                   icon={<PhoneIcon />}
                   title="Phone"
@@ -677,6 +636,7 @@ const ContactPage = () => {
         </div>
       </section>
 
+      {/* Google Map Section */}
       <section className="py-20 relative overflow-hidden">
         <div className="container mx-auto px-4">
           <AnimatedSection className="text-center mb-16">
@@ -684,19 +644,14 @@ const ContactPage = () => {
               Global Presence
             </span>
             <h2 className="text-3xl lg:text-4xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              Our Offices
+              Our Office Location
             </h2>
             <p className="text-gray-700 max-w-2xl mx-auto">
-              Visit us at one of our global locations.
+              Find us on the map and get in touch with our office.
             </p>
           </AnimatedSection>
-          <AnimatedSection
-            className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-10"
-            direction="up"
-          >
-            {officeLocations.map((office) => (
-              <OfficeLocationCard key={office.city} office={office} />
-            ))}
+          <AnimatedSection direction="up">
+            <GoogleMap />
           </AnimatedSection>
         </div>
       </section>

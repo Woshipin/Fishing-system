@@ -205,7 +205,7 @@ const PackagePage = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-3">
             <p className="text-gray-600 text-sm md:text-base">
-              Displaying {filteredPackages.length} package(s) out of{" "}
+              Displaying {filteredPackages.length} package(s) out of
               {packages.length}
             </p>
           </div>

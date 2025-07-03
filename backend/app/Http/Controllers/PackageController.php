@@ -98,9 +98,6 @@ class PackageController extends Controller
         }
     }
 
-    /**
-     * Format products for the response
-     */
     private function formatProducts($products)
     {
         return $products->map(function ($product) {
@@ -135,9 +132,6 @@ class PackageController extends Controller
         })->all();
     }
 
-    /**
-     * Get proper image URL
-     */
     private function getImageUrl($imagePath)
     {
         if (! $imagePath) {

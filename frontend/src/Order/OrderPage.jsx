@@ -680,7 +680,7 @@ const OrderPage = () => {
                                         {item.name}
                                       </h5>
                                       <p className="text-gray-600 text-xs sm:text-sm">
-                                        ${formatPrice(item.price)} x{" "}
+                                        ${formatPrice(item.price)} x
                                         {item.quantity}
                                       </p>
                                       {item.description && (
