@@ -131,6 +131,42 @@ class UserController extends Controller
             ], 500);
         }
     }
+    public function update(Request $request)
+    {
+        $validatedData = $request->validate([
+            'user_id' => 'required|integer|exists:users,id',
+            'name' => 'sometimes|required|string|max:255',
+            'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $request->user_id,
+            'password' => 'sometimes|nullable|string|min:6|confirmed',
+        ]);
+
+        $user = User::findOrFail($validatedData['user_id']);
+
+        $dataToUpdate = [];
+        if (isset($validatedData['name'])) {
+            $dataToUpdate['name'] = $validatedData['name'];
+        }
+        if (isset($validatedData['email'])) {
+            $dataToUpdate['email'] = $validatedData['email'];
+        }
+        if (!empty($validatedData['password'])) {
+            $dataToUpdate['password'] = Hash::make($validatedData['password']);
+        }
+
+        if (empty($dataToUpdate)) {
+            return response()->json([
+                'message' => 'No data provided for update.',
+                'user' => $user
+            ], 200);
+        }
+
+        $user->update($dataToUpdate);
+
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'user' => $user->fresh() // Return the updated user model
+        ], 200);
+    }
 
     public function user(Request $request)
     {

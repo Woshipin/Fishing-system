@@ -1,386 +1,212 @@
-"use client"
-
-import { useState } from "react"
-import { Link } from "react-router-dom"
-import AnimatedSection from "../components/AnimatedSection"
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useUser } from '../contexts/UserContext';
 
 const ProfilePage = () => {
-  // Mock user data
-  const [user] = useState({
-    name: "John Doe",
-    email: "john.doe@example.com",
-    avatar: "https://via.placeholder.com/150",
-    joinDate: "January 2023",
-    bio: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-    location: "New York, USA",
-    website: "https://example.com",
-    orders: [
-      {
-        id: "ORD-12345",
-        date: "2023-05-15",
-        status: "Delivered",
-        total: 129.99,
-      },
-      {
-        id: "ORD-67890",
-        date: "2023-04-22",
-        status: "Processing",
-        total: 89.99,
-      },
-    ],
-    wishlist: [
-      {
-        id: 1,
-        name: "Product 1",
-        price: 49.99,
-        image: "https://via.placeholder.com/100",
-      },
-      {
-        id: 2,
-        name: "Product 2",
-        price: 79.99,
-        image: "https://via.placeholder.com/100",
-      },
-    ],
-  })
+  const { user, logout } = useUser();
+  const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState("overview")
+  const [activeTab, setActiveTab] = useState("overview");
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "Delivered":
-        return "bg-green-100 text-green-800"
-      case "Processing":
-        return "bg-blue-100 text-blue-800"
-      case "Shipped":
-        return "bg-purple-100 text-purple-800"
-      case "Cancelled":
-        return "bg-red-100 text-red-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+  };
+
+  const defaultImage = "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face&auto=format&q=80";
 
   return (
-    <div className="min-h-screen pt-20">
+    <div className="min-h-screen pt-20 bg-gray-50">
       <div className="container mx-auto px-4 py-16">
-        <AnimatedSection className="max-w-5xl mx-auto">
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            {/* Profile Header */}
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+            {/* Profile Header - Fixed positioning */}
             <div className="relative">
-              <div className="h-40 bg-gradient-to-r from-blue-400 to-blue-500"></div>
-              <div className="absolute bottom-0 left-0 w-full transform translate-y-1/2 px-6 sm:px-12 flex flex-col sm:flex-row items-center sm:items-end">
-                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white overflow-hidden bg-white">
-                  <img src={user.avatar || "/placeholder.svg"} alt={user.name} className="w-full h-full object-cover" />
-                </div>
-                <div className="mt-4 sm:mt-0 sm:ml-4 text-center sm:text-left pb-4">
-                  <h1 className="text-2xl font-bold text-gray-800">{user.name}</h1>
-                  <p className="text-gray-600">Member since {user.joinDate}</p>
-                </div>
-                <div className="flex-grow"></div>
-                <div className="mt-4 sm:mt-0 pb-4">
-                  <Link
-                    to="/profile/edit"
-                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
-                  >
-                    Edit Profile
-                  </Link>
+              {/* Background with subtle pattern */}
+              <div className="h-40 bg-gradient-to-br from-blue-400 via-blue-500 to-indigo-600 relative overflow-hidden">
+                <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
+                <div className="absolute top-4 right-4 w-32 h-32 bg-white/5 rounded-full"></div>
+                <div className="absolute bottom-4 left-4 w-20 h-20 bg-white/5 rounded-full"></div>
+              </div>
+              
+              {/* Profile content with better spacing */}
+              <div className="relative px-8 pb-8">
+                <div className="flex flex-col sm:flex-row items-center sm:items-start -mt-16">
+                  {/* Avatar section */}
+                  <div className="relative mb-6 sm:mb-0 sm:mr-8">
+                    <div className="w-32 h-32 rounded-full border-4 border-white overflow-hidden bg-white shadow-xl">
+                      <img 
+                        src={defaultImage} 
+                        alt={user.name} 
+                        className="w-full h-full object-cover" 
+                      />
+                    </div>
+                    <div className="absolute bottom-1 right-1 w-7 h-7 bg-green-400 rounded-full border-3 border-white shadow-lg"></div>
+                  </div>
+                  
+                  {/* User info with proper spacing - Modified flex layout */}
+                  <div className="flex-1 text-center sm:text-left pt-8">
+                    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-white/20">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
+                        <div className="mb-4 sm:mb-0">
+                          <h1 className="text-3xl font-bold text-gray-900 mb-2">{user.name}</h1>
+                          <p className="text-gray-600 text-lg mb-4">Active Member</p>
+                          <div className="flex flex-wrap gap-3 justify-center sm:justify-start">
+                            <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                              Member since 2024
+                            </span>
+                            <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                              {user.wishlist?.length || 0} wishlist items
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {/* Edit button moved here - properly positioned */}
+                        <div className="mt-4 sm:mt-0 sm:ml-6">
+                          <button onClick={handleLogout} className="inline-flex items-center px-6 py-3 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-all duration-200 shadow-md hover:shadow-lg border border-red-600">
+                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            Logout
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Profile Tabs */}
-            <div className="mt-16 sm:mt-20 px-4 sm:px-6">
-              <div className="flex flex-wrap border-b">
-                <button
-                  className={`px-4 py-2 font-medium ${
-                    activeTab === "overview"
-                      ? "text-indigo-600 border-b-2 border-indigo-600"
-                      : "text-gray-600 hover:text-indigo-600"
-                  }`}
-                  onClick={() => setActiveTab("overview")}
-                >
-                  Overview
-                </button>
-                <button
-                  className={`px-4 py-2 font-medium ${
-                    activeTab === "orders"
-                      ? "text-indigo-600 border-b-2 border-indigo-600"
-                      : "text-gray-600 hover:text-indigo-600"
-                  }`}
-                  onClick={() => setActiveTab("orders")}
-                >
-                  Orders
-                </button>
-                <button
-                  className={`px-4 py-2 font-medium ${
-                    activeTab === "wishlist"
-                      ? "text-indigo-600 border-b-2 border-indigo-600"
-                      : "text-gray-600 hover:text-indigo-600"
-                  }`}
-                  onClick={() => setActiveTab("wishlist")}
-                >
-                  Wishlist
-                </button>
-                <button
-                  className={`px-4 py-2 font-medium ${
-                    activeTab === "settings"
-                      ? "text-indigo-600 border-b-2 border-indigo-600"
-                      : "text-gray-600 hover:text-indigo-600"
-                  }`}
-                  onClick={() => setActiveTab("settings")}
-                >
-                  Settings
-                </button>
+            <div className="px-8 py-6">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex space-x-1 bg-gray-100 p-1 rounded-xl">
+                  <button
+                    className={`px-6 py-3 font-medium rounded-lg transition-all duration-200 ${
+                      activeTab === "overview"
+                        ? "bg-white text-indigo-600 shadow-sm"
+                        : "text-gray-600 hover:text-indigo-600"
+                    }`}
+                    onClick={() => setActiveTab("overview")}
+                  >
+                    Overview
+                  </button>
+                  <button
+                    className={`px-6 py-3 font-medium rounded-lg transition-all duration-200 ${
+                      activeTab === "wishlist"
+                        ? "bg-white text-indigo-600 shadow-sm"
+                        : "text-gray-600 hover:text-indigo-600"
+                    }`}
+                    onClick={() => setActiveTab("wishlist")}
+                  >
+                    Wishlist
+                  </button>
+                </div>
+                <Link to="/profile/edit" className="inline-flex items-center px-4 py-2 bg-white text-indigo-600 rounded-lg font-medium hover:bg-gray-50 transition-all duration-200 shadow-sm border border-gray-200 text-sm">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
+                  Edit Profile
+                </Link>
               </div>
 
               {/* Tab Content */}
-              <div className="py-6">
+              <div>
                 {activeTab === "overview" && (
-                  <div className="space-y-6">
-                    <div>
-                      <h2 className="text-xl font-semibold mb-4">About</h2>
-                      <p className="text-gray-700">{user.bio}</p>
-                    </div>
+                  <div className="space-y-8">
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8">
+                      <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                        <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+                          <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                        </div>
+                        Personal Information
+                      </h2>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-6">
+                          <div className="bg-white rounded-xl p-6 shadow-sm">
+                            <div className="flex items-center mb-3">
+                              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                              </div>
+                              <div>
+                                <p className="text-sm text-gray-500 font-medium">Full Name</p>
+                                <p className="text-lg font-semibold text-gray-900">{user.name}</p>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="bg-white rounded-xl p-6 shadow-sm">
+                            <div className="flex items-center mb-3">
+                              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                              </div>
+                              <div>
+                                <p className="text-sm text-gray-500 font-medium">Email Address</p>
+                                <p className="text-lg font-semibold text-gray-900">{user.email}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <h2 className="text-xl font-semibold mb-4">Contact Information</h2>
-                        <div className="space-y-3">
-                          <div>
-                            <p className="text-sm text-gray-500">Email</p>
-                            <p className="text-gray-800">{user.email}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-gray-500">Location</p>
-                            <p className="text-gray-800">{user.location}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-gray-500">Website</p>
-                            <a href={user.website} className="text-indigo-600 hover:text-indigo-800">
-                              {user.website}
-                            </a>
+                        <div className="bg-white rounded-xl p-6 shadow-sm">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
+                          <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                              <span className="text-gray-600">Member Since</span>
+                              <span className="font-medium text-gray-900">2024</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-gray-600">Wishlist Items</span>
+                              <span className="font-medium text-indigo-600">{user.wishlist?.length || 0}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-gray-600">Account Status</span>
+                              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">Active</span>
+                            </div>
                           </div>
                         </div>
                       </div>
-
-                      <div>
-                        <h2 className="text-xl font-semibold mb-4">Recent Orders</h2>
-                        {user.orders.length > 0 ? (
-                          <div className="space-y-3">
-                            {user.orders.slice(0, 2).map((order) => (
-                              <div
-                                key={order.id}
-                                className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
-                              >
-                                <div>
-                                  <p className="font-medium">{order.id}</p>
-                                  <p className="text-sm text-gray-500">{new Date(order.date).toLocaleDateString()}</p>
-                                </div>
-                                <div className="text-right">
-                                  <span
-                                    className={`inline-block px-2 py-1 rounded-full text-xs ${getStatusColor(
-                                      order.status,
-                                    )}`}
-                                  >
-                                    {order.status}
-                                  </span>
-                                  <p className="font-medium mt-1">${order.total.toFixed(2)}</p>
-                                </div>
-                              </div>
-                            ))}
-                            <Link
-                              to="#"
-                              onClick={() => setActiveTab("orders")}
-                              className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
-                            >
-                              View all orders →
-                            </Link>
-                          </div>
-                        ) : (
-                          <p className="text-gray-600">No orders yet.</p>
-                        )}
-                      </div>
                     </div>
-                  </div>
-                )}
-
-                {activeTab === "orders" && (
-                  <div>
-                    <h2 className="text-xl font-semibold mb-4">Your Orders</h2>
-                    {user.orders.length > 0 ? (
-                      <div className="space-y-4">
-                        {user.orders.map((order) => (
-                          <div
-                            key={order.id}
-                            className="p-4 border border-gray-200 rounded-lg hover:shadow-sm transition-shadow"
-                          >
-                            <div className="flex flex-wrap justify-between items-center">
-                              <div className="space-y-1 mb-2 md:mb-0">
-                                <h3 className="text-lg font-semibold">Order #{order.id}</h3>
-                                <p className="text-gray-600">Placed on {new Date(order.date).toLocaleDateString()}</p>
-                              </div>
-                              <div className="flex items-center space-x-4">
-                                <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(order.status)}`}>
-                                  {order.status}
-                                </span>
-                                <span className="font-semibold">${order.total.toFixed(2)}</span>
-                              </div>
-                            </div>
-                            <div className="mt-4 flex justify-end">
-                              <Link
-                                to={`/orders/${order.id}`}
-                                className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
-                              >
-                                View Order Details →
-                              </Link>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8">
-                        <p className="text-gray-600 mb-4">You haven't placed any orders yet.</p>
-                        <Link to="/products" className="btn btn-primary">
-                          Start Shopping
-                        </Link>
-                      </div>
-                    )}
                   </div>
                 )}
 
                 {activeTab === "wishlist" && (
                   <div>
-                    <h2 className="text-xl font-semibold mb-4">Your Wishlist</h2>
-                    {user.wishlist.length > 0 ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                        {user.wishlist.map((item) => (
-                          <div
-                            key={item.id}
-                            className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow"
-                          >
-                            <div className="flex items-start space-x-4">
-                              <img
-                                src={item.image || "/placeholder.svg"}
-                                alt={item.name}
-                                className="w-16 h-16 object-cover rounded-lg"
-                              />
-                              <div className="flex-1">
-                                <h3 className="font-medium">{item.name}</h3>
-                                <p className="text-gray-600">${item.price.toFixed(2)}</p>
-                                <div className="mt-2 flex space-x-2">
-                                  <button className="text-xs bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700 transition-colors">
-                                    Add to Cart
-                                  </button>
-                                  <button className="text-xs text-red-600 hover:text-red-800 px-2 py-1">Remove</button>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-2xl font-bold text-gray-900 flex items-center">
+                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                          <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                          </svg>
+                        </div>
+                        Your Wishlist
+                      </h2>
+                      {user.wishlist?.length > 0 && (
+                        <span className="px-4 py-2 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium">
+                          {user.wishlist.length} items
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="text-center py-16 bg-gray-50 rounded-2xl">
+                      <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
                       </div>
-                    ) : (
-                      <div className="text-center py-8">
-                        <p className="text-gray-600 mb-4">Your wishlist is empty.</p>
-                        <Link to="/products" className="btn btn-primary">
-                          Explore Products
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {activeTab === "settings" && (
-                  <div>
-                    <h2 className="text-xl font-semibold mb-4">Account Settings</h2>
-                    <div className="space-y-4">
-                      <Link
-                        to="/profile/edit"
-                        className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h3 className="font-medium">Edit Profile</h3>
-                            <p className="text-sm text-gray-600">Update your personal information</p>
-                          </div>
-                          <svg
-                            className="w-5 h-5 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-                          </svg>
-                        </div>
-                      </Link>
-
-                      <Link
-                        to="#"
-                        className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h3 className="font-medium">Change Password</h3>
-                            <p className="text-sm text-gray-600">Update your password</p>
-                          </div>
-                          <svg
-                            className="w-5 h-5 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-                          </svg>
-                        </div>
-                      </Link>
-
-                      <Link
-                        to="#"
-                        className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h3 className="font-medium">Notification Settings</h3>
-                            <p className="text-sm text-gray-600">Manage your notification preferences</p>
-                          </div>
-                          <svg
-                            className="w-5 h-5 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-                          </svg>
-                        </div>
-                      </Link>
-
-                      <Link
-                        to="#"
-                        className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h3 className="font-medium">Privacy Settings</h3>
-                            <p className="text-sm text-gray-600">Manage your privacy preferences</p>
-                          </div>
-                          <svg
-                            className="w-5 h-5 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-                          </svg>
-                        </div>
-                      </Link>
-
-                      <button className="w-full p-4 text-left border border-red-200 rounded-lg text-red-600 hover:bg-red-50 transition-colors">
-                        <h3 className="font-medium">Delete Account</h3>
-                        <p className="text-sm text-red-500">Permanently delete your account and all associated data</p>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Your wishlist is empty</h3>
+                      <p className="text-gray-600 mb-8">Discover amazing products and add them to your wishlist</p>
+                      <button className="inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors">
+                        Explore Products
+                        <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
                       </button>
                     </div>
                   </div>
@@ -388,10 +214,10 @@ const ProfilePage = () => {
               </div>
             </div>
           </div>
-        </AnimatedSection>
+        </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ProfilePage
+export default ProfilePage;

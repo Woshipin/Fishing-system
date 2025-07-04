@@ -1,40 +1,17 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useUser } from "../contexts/UserContext";
 
 const Navbar = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { user, logout } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeLink, setActiveLink] = useState("/");
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const checkLoginStatus = () => {
-      const token = localStorage.getItem("token");
-      setIsLoggedIn(!!token);
-    };
-
-    checkLoginStatus(); // 初始检查
-
-    // 监听 storage 事件
-    window.addEventListener("storage", checkLoginStatus);
-    // 添加自定义事件监听器，以便在登录/登出时更新状态
-    window.addEventListener("login-status-change", checkLoginStatus);
-
-    return () => {
-      window.removeEventListener("storage", checkLoginStatus);
-      window.removeEventListener("login-status-change", checkLoginStatus);
-    };
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    setIsLoggedIn(false);
-    // 触发自定义事件，确保所有组件都能感知到登录状态变化
-    window.dispatchEvent(new Event("login-status-change"));
-    // 触发 storage 事件，确保其他标签页也能感知到登录状态变化
-    window.dispatchEvent(new Event("storage"));
+  const handleLogout = async () => {
+    await logout();
     navigate("/");
   };
 
@@ -170,18 +147,27 @@ const Navbar = () => {
             ))}
 
             {/* Auth Buttons - 优化尺寸 */}
-            {isLoggedIn ? (
+            {user.isLoggedIn ? (
               <motion.button
-                onClick={handleLogout}
-                className="px-3 xl:px-5 py-2 xl:py-2.5 rounded-xl text-xs xl:text-sm font-semibold text-white bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 shadow-lg hover:shadow-xl transition-all duration-300 border border-red-500/20"
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                style={{
-                  boxShadow:
-                    "0 4px 15px rgba(239, 68, 68, 0.3), 0 0 0 1px rgba(239, 68, 68, 0.2)",
-                }}
+                onClick={() => handleLinkClick("/profile")}
+                className="p-2 xl:p-2.5 rounded-xl transition-all duration-300 text-gray-700 hover:text-blue-600 hover:bg-blue-50/50 hover:shadow-sm"
+                whileHover={{ scale: 1.1, y: -2 }}
+                whileTap={{ scale: 0.9 }}
+                aria-label="Profile"
               >
-                Logout
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
+                </svg>
               </motion.button>
             ) : (
               <div className="flex items-center space-x-1 xl:space-x-2 ml-2 xl:ml-4">
@@ -301,21 +287,30 @@ const Navbar = () => {
             </div>
 
             {/* Mobile Auth Buttons */}
-            {isLoggedIn ? (
-              <motion.button
-                onClick={handleLogout}
-                className="w-full px-4 py-3 rounded-xl text-base font-semibold text-white bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 shadow-lg hover:shadow-xl transition-all duration-300 border border-red-500/20"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: isOpen ? 1 : 0, y: isOpen ? 0 : 20 }}
+            {user.isLoggedIn ? (
+               <motion.button
+                onClick={() => handleLinkClick("/profile")}
+                className="w-full text-left px-4 py-3 rounded-xl text-base font-medium transition-all duration-300 text-gray-700 hover:text-blue-600 hover:bg-blue-50/50 hover:shadow-sm flex items-center"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: isOpen ? 1 : 0, x: isOpen ? 0 : -20 }}
                 transition={{ delay: 0.2 }}
-                whileHover={{ scale: 1.02, y: -3 }}
+                whileHover={{ scale: 1.02, x: 4, y: -2 }}
                 whileTap={{ scale: 0.98 }}
-                style={{
-                  boxShadow:
-                    "0 4px 15px rgba(239, 68, 68, 0.3), 0 0 0 1px rgba(239, 68, 68, 0.2)",
-                }}
               >
-                Logout
+                <svg
+                  className="h-6 w-6 mr-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
+                </svg>
+                Profile
               </motion.button>
             ) : (
               <div className="space-y-3">

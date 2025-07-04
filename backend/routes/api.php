@@ -31,10 +31,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [UserController::class, 'user'])->name('user');
 });
 
-// Restaurant 餐厅路由
+Route::put('/user', [UserController::class, 'update'])->name('user.update');
+
+// Products routes
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 
-// Restaurant {id} 是餐厅的 ID
+// Products {id} 是产品 ID
+// Products popular route
+Route::get('/products/popular', [ProductController::class, 'products_popular']);
+
 Route::get('/products/{id}', [ProductController::class, 'detail'])->name('products.detail');
 
 // Package routes
