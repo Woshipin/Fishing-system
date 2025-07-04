@@ -22,6 +22,18 @@ class GalleryResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-photo';
 
+    protected static ?int $navigationSort = 15;
+
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): string|array|null
+    {
+        return 'success';
+    }
+
     public static function form(Form $form): Form
     {
         // 判断是创建还是编辑页面
@@ -109,7 +121,7 @@ class GalleryResource extends Resource
                     ->disk('public'),
             ])
             ->filters([
-                
+
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),

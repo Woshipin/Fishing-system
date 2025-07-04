@@ -19,8 +19,20 @@ class TableNumberResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-hashtag';
     protected static ?string $navigationLabel = 'Table Numbers';
+
+    protected static ?int $navigationSort = 14;
     protected static ?string $pluralModelLabel = 'Table Numbers';
     protected static ?string $modelLabel = 'Table Number';
+
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): string|array|null
+    {
+        return 'success';
+    }
 
     public static function form(Form $form): Form
     {

@@ -22,6 +22,10 @@ class FishingCMSResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
 
+    protected static ?string $navigationGroup = 'Fishing CMS';
+
+    protected static ?int $navigationSort = 1;
+
     /**
      * 定义 Edit 页面的表单结构 (Form)
      */

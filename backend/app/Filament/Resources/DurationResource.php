@@ -25,6 +25,18 @@ class DurationResource extends Resource
     // 侧边栏显示的菜单文字
     protected static ?string $navigationLabel = 'Duration Options';
 
+    protected static ?int $navigationSort = 13;
+
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): string|array|null
+    {
+        return 'success';
+    }
+
     // 数据表复数名
     protected static ?string $pluralModelLabel = 'Duration List';
 

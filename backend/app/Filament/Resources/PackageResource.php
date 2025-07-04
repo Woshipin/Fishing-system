@@ -25,8 +25,20 @@ class PackageResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-archive-box';
     protected static ?string $navigationLabel = 'Packages';
+    protected static ?int $navigationSort = 12;
+
     protected static ?string $pluralModelLabel = 'Packages';
     protected static ?string $modelLabel = 'Package';
+
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): string|array|null
+    {
+        return 'success';
+    }
 
     public static function form(Form $form): Form
     {

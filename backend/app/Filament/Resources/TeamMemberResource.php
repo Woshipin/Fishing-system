@@ -31,7 +31,18 @@ class TeamMemberResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-users';   // 设置在侧边导航栏中显示的图标。
     protected static ?string $navigationGroup = 'About Us Page CMS'; // 将此资源归类到 "About Us Page CMS" 导航组下。
+    protected static ?int $navigationSort = 2;
     protected static ?string $recordTitleAttribute = 'name';         // 当在其他地方引用此记录时，默认使用 'name' 字段作为显示标题。
+
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): string|array|null
+    {
+        return 'success';
+    }
 
     /**
      * 定义用于创建和编辑记录的表单结构。

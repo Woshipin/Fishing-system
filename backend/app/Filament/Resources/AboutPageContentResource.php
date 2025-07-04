@@ -27,8 +27,19 @@ class AboutPageContentResource extends Resource
     protected static ?string $model = AboutPageContent::class; // 指定此资源管理的 Eloquent 模型类。
 
     protected static ?string $navigationIcon  = 'heroicon-o-document-text'; // 设置在侧边导航栏中显示的图标。
-    protected static ?string $navigationGroup = 'About Us Page CMS';        // 将此资源归类到 "About Us Page CMS" 导航组下。
     protected static ?string $navigationLabel = 'Story Content';            // 设置在侧边导航栏中显示的名称。
+    protected static ?string $navigationGroup = 'About Us Page CMS';
+    protected static ?int $navigationSort = 2;
+
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): string|array|null
+    {
+        return 'success';
+    }
 
     /**
      * 定义用于创建和编辑记录的表单结构。
