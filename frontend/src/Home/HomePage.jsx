@@ -1,244 +1,201 @@
+// src/pages/HomePage.js
+
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+
+// 确保这些组件的路径相对于您的项目结构是正确的
 import AnimatedSection from "../components/AnimatedSection";
 import CTA from "../components/CTA";
-import PackageCard from "../components/PackageCard";
+import Card from "../components/Card";
 
 const HomePage = () => {
+  // --- 状态管理 ---
   const [scrollY, setScrollY] = useState(0);
   const [cmsData, setCmsData] = useState(null);
+  const [popularProducts, setPopularProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch CMS data from API
+  // --- API 配置 ---
+  const API_BASE_URL = "http://127.0.0.1:8000/api";
+
+  // --- 数据获取的副作用 ---
   useEffect(() => {
-    const fetchCMSData = async () => {
+    // 处理滚动以实现视差效果
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/fishing-cms');
-        if (!response.ok) {
-          throw new Error('Failed to fetch CMS data');
-        }
-        const data = await response.json();
-        setCmsData(data.cms);
-        setLoading(false);
+        const [cmsResponse, productsResponse] = await Promise.all([
+          fetch(`${API_BASE_URL}/fishing-cms`),
+          fetch(`${API_BASE_URL}/products/popular`),
+        ]);
+
+        if (!cmsResponse.ok)
+          throw new Error(
+            `CMS data could not be loaded (status: ${cmsResponse.status})`
+          );
+        if (!productsResponse.ok)
+          throw new Error(
+            `Popular products could not be loaded (status: ${productsResponse.status})`
+          );
+
+        const cmsResult = await cmsResponse.json();
+        const productsResult = await productsResponse.json();
+
+        setCmsData(cmsResult.cms);
+        setPopularProducts(productsResult.data || []);
       } catch (err) {
         setError(err.message);
+        console.error("API Fetch Error:", err);
+      } finally {
         setLoading(false);
       }
     };
-    fetchCMSData();
+
+    fetchData();
+
+    // 组件卸载时清理监听器
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Default products data (fallback)
-  const defaultProducts = [
-    {
-      id: 1,
-      title: "Product 1",
-      subtitle: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor...",
-      imageUrl: "/assets/About/about-us.png",
-      price: "26",
-      category: "Electronics",
-      rating: 5,
-    },
-    {
-      id: 2,
-      title: "Product 10",
-      subtitle: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor...",
-      imageUrl: "/assets/About/about-us.png",
-      price: "112",
-      category: "Home",
-      rating: 3,
-    },
-    {
-      id: 3,
-      title: "Product 8",
-      subtitle: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor...",
-      imageUrl: "/assets/About/about-us.png",
-      price: "129",
-      category: "Home",
-      rating: 2,
-    },
-    {
-      id: 4,
-      title: "Product 5",
-      subtitle: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor...",
-      imageUrl: "/assets/About/about-us.png",
-      price: "89",
-      category: "Office",
-      rating: 4,
-    },
-    {
-      id: 5,
-      title: "Product 12",
-      subtitle: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor...",
-      imageUrl: "/assets/About/about-us.png",
-      price: "199",
-      category: "Electronics",
-      rating: 5,
-    },
-    {
-      id: 6,
-      title: "Product 7",
-      subtitle: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor...",
-      imageUrl: "/assets/About/about-us.png",
-      price: "75",
-      category: "Home",
-      rating: 3,
-    },
-    {
-      id: 7,
-      title: "Product 3",
-      subtitle: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor...",
-      imageUrl: "/assets/About/about-us.png",
-      price: "45",
-      category: "Office",
-      rating: 4,
-    },
-    {
-      id: 8,
-      title: "Product 9",
-      subtitle: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor...",
-      imageUrl: "/assets/About/about-us.png",
-      price: "149",
-      category: "Electronics",
-      rating: 5,
-    },
-  ];
-
-  // Use CMS data if available, otherwise use default data
+  // --- 辅助函数：获取带回退值的显示数据 ---
   const getDisplayData = () => {
-    if (!cmsData) return {
-      hero_title: "Beautiful Solutions for Your Business",
-      hero_subtitle: "We provide high-quality products and services to help your business grow and succeed in today's competitive market.",
-      about_title: "About Our Company",
-      about_description: "We are a team of passionate professionals dedicated to providing the best products and services to our clients. With years of experience in the industry, we understand the challenges businesses face and offer tailored solutions to help them succeed.",
-      about_mission: "Our mission is to empower businesses with innovative tools and strategies that drive growth and create lasting value.",
-      products_title: "🎣 Selected fishing equipment",
-      products_subtitle: "Discover our most popular fishing gear that have helped hundreds of anglers achieve their fishing dreams and goals.",
-      view_all_products_text: "🌊 查看所有钓具"
+    const defaults = {
+      hero_title: "探索深海的奇遇",
+      hero_subtitle: "我们提供高品质的渔具和服务，助您征服每一片水域。",
+      about_title: "我们的故事",
+      about_description:
+        "我们是一群充满热情的钓鱼爱好者，致力于为钓鱼社区提供最优质的产品和体验。",
+      about_mission:
+        "我们的使命是通过创新的工具和对户外运动的热情，为每一位垂钓者赋能。",
+      products_title: "🎣 本季热门渔具",
+      products_subtitle: "探索我们最受欢迎的渔具，深受数百名垂钓者的信赖。",
+      view_all_products_text: "🌊 查看所有装备",
     };
-    return {
-      hero_title: cmsData.home_title || "Beautiful Solutions for Your Business",
-      hero_subtitle: cmsData.home_description || "We provide high-quality products and services to help your business grow and succeed in today's competitive market.",
-      about_title: cmsData.about_us_title || "About Our Company",
-      about_description: cmsData.about_us_description || "We are a team of passionate professionals dedicated to providing the best products and services to our clients. With years of experience in the industry, we understand the challenges businesses face and offer tailored solutions to help them succeed.",
-      about_mission: cmsData.about_mission || "Our mission is to empower businesses with innovative tools and strategies that drive growth and create lasting value.",
-      products_title: cmsData.products_title || "🎣 Selected fishing equipment",
-      products_subtitle: cmsData.products_subtitle || "Discover our most popular fishing gear that have helped hundreds of anglers achieve their fishing dreams and goals.",
-      view_all_products_text: cmsData.view_all_products_text || "🌊 查看所有钓具"
-    };
-  };
 
-  // Parse products from CMS data if available
-  const getFeaturedProducts = () => {
-    if (!cmsData || !cmsData.featured_products) {
-      return defaultProducts;
-    }
-    try {
-      const products = JSON.parse(cmsData.featured_products);
-      return Array.isArray(products) ? products : defaultProducts;
-    } catch (error) {
-      console.error('Error parsing featured products:', error);
-      return defaultProducts;
-    }
+    if (!cmsData) return defaults;
+
+    return {
+      hero_title: cmsData.home_title || defaults.hero_title,
+      hero_subtitle: cmsData.home_description || defaults.hero_subtitle,
+      about_title: cmsData.about_us_title || defaults.about_title,
+      about_description:
+        cmsData.about_us_description || defaults.about_description,
+      about_mission: cmsData.about_mission || defaults.about_mission,
+      products_title: cmsData.products_title || defaults.products_title,
+      products_subtitle:
+        cmsData.products_subtitle || defaults.products_subtitle,
+      view_all_products_text:
+        cmsData.view_all_products_text || defaults.view_all_products_text,
+    };
   };
 
   const displayData = getDisplayData();
-  const featuredProducts = getFeaturedProducts();
 
+  // --- 渲染逻辑 ---
+
+  // 1. 加载状态
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-xl text-gray-600">Loading...</div>
+      <div className="flex items-center justify-center h-screen bg-slate-800 text-white">
+        <div className="text-xl animate-pulse">正在撒网捕捞数据...</div>
       </div>
     );
   }
 
-  if (error) {
-    console.error('CMS Data Error:', error);
-    // Continue with default data on error
+  // 2. 错误状态
+  if (error && !cmsData && popularProducts.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-rose-50 text-rose-700 p-4 text-center">
+        <h2 className="text-2xl font-bold mb-4">糟糕！出现了一些问题。</h2>
+        <p className="max-w-md">{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-6 px-4 py-2 bg-rose-600 text-white rounded hover:bg-rose-700 transition-colors"
+        >
+          重试
+        </button>
+      </div>
+    );
   }
 
+  // 3. 正常渲染
   return (
     <>
-      {/* Enhanced 3D Ocean Background */}
+      {/* ====================================================================== */}
+      {/* ==================== 3D OCEAN BACKGROUND & HERO ====================== */}
+      {/* ====================================================================== */}
       <div className="absolute inset-0 overflow-hidden z-0">
-        {/* Main Ocean Gradient Background */}
         <div className="absolute inset-0 bg-gradient-to-b from-slate-800 via-blue-900 to-indigo-950"></div>
-        {/* Layered Ocean Depth Effect */}
         <div className="absolute inset-0">
-          {/* Deep Ocean Layer */}
           <div
             className="ocean-layer deep-ocean"
             style={{
-              transform: `translateY(${scrollY * 0.1}px) scale(${1 + scrollY * 0.0002})`
+              transform: `translateY(${scrollY * 0.1}px) scale(${
+                1 + scrollY * 0.0002
+              })`,
             }}
           ></div>
-          {/* Mid Ocean Layer */}
           <div
             className="ocean-layer mid-ocean"
-            style={{
-              transform: `translateY(${scrollY * 0.15}px)`
-            }}
+            style={{ transform: `translateY(${scrollY * 0.15}px)` }}
           ></div>
-          {/* Surface Ocean Layer */}
           <div
             className="ocean-layer surface-ocean"
-            style={{
-              transform: `translateY(${scrollY * 0.2}px)`
-            }}
+            style={{ transform: `translateY(${scrollY * 0.2}px)` }}
           ></div>
         </div>
-        {/* Dynamic Wave System */}
         <div className="absolute inset-0">
-          {/* Primary Wave Layers */}
           <div
             className="wave-3d wave-primary"
             style={{
-              transform: `translateX(${-100 + (scrollY * 0.08)}%) rotateX(${5 + scrollY * 0.005}deg)`
+              transform: `translateX(${-100 + scrollY * 0.08}%) rotateX(${
+                5 + scrollY * 0.005
+              }deg)`,
             }}
           ></div>
           <div
             className="wave-3d wave-secondary"
             style={{
-              transform: `translateX(${-120 + (scrollY * 0.12)}%) rotateX(${-3 + scrollY * 0.003}deg)`
+              transform: `translateX(${-120 + scrollY * 0.12}%) rotateX(${
+                -3 + scrollY * 0.003
+              }deg)`,
             }}
           ></div>
           <div
             className="wave-3d wave-tertiary"
             style={{
-              transform: `translateX(${-80 + (scrollY * 0.06)}%) rotateX(${2 + scrollY * 0.004}deg)`
+              transform: `translateX(${-80 + scrollY * 0.06}%) rotateX(${
+                2 + scrollY * 0.004
+              }deg)`,
             }}
           ></div>
         </div>
-        {/* Advanced Bubble System */}
         <div className="absolute inset-0">
-          {[...Array(25)].map((_, i) => {
-            const size = 4 + Math.random() * 12;
-            const delay = Math.random() * 8;
-            const duration = 4 + Math.random() * 6;
-            const xPos = Math.random() * 100;
-            return (
-              <div
-                key={i}
-                className="bubble-3d"
-                style={{
-                  left: `${xPos}%`,
-                  animationDelay: `${delay}s`,
-                  animationDuration: `${duration}s`,
-                  width: `${size}px`,
-                  height: `${size}px`,
-                  transform: `translateY(${scrollY * (0.05 + Math.random() * 0.15)}px)`
-                }}
-              ></div>
-            );
-          })}
+          {[...Array(25)].map((_, i) => (
+            <div
+              key={i}
+              className="bubble-3d"
+              style={{
+                left: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 8}s`,
+                animationDuration: `${4 + Math.random() * 6}s`,
+                width: `${4 + Math.random() * 12}px`,
+                height: `${4 + Math.random() * 12}px`,
+                transform: `translateY(${
+                  scrollY * (0.05 + Math.random() * 0.15)
+                }px)`,
+              }}
+            ></div>
+          ))}
         </div>
-        {/* Enhanced Marine Life */}
         <div className="absolute inset-0">
-          {/* Swimming Fish with 3D Movement */}
           {[...Array(12)].map((_, i) => {
-            const fishTypes = ['🐠', '🐡', '🐟', '🐙', '🦈'];
+            const fishTypes = ["🐠", "🐡", "🐟", "🐙", "🦈"];
             const fishType = fishTypes[i % fishTypes.length];
             const fishSize = 18 + Math.random() * 12;
             const depth = Math.random();
@@ -253,14 +210,19 @@ const HomePage = () => {
                   fontSize: `${fishSize}px`,
                   transform: `translateY(${scrollY * (0.03 + depth * 0.08)}px)`,
                   zIndex: Math.floor(depth * 10),
-                  filter: `hue-rotate(${Math.random() * 180}deg) drop-shadow(0 0 ${8 + depth * 12}px rgba(255, 255, 255, ${0.3 + depth * 0.4})) blur(${(1 - depth) * 0.5}px)`
+                  filter: `hue-rotate(${
+                    Math.random() * 180
+                  }deg) drop-shadow(0 0 ${
+                    8 + depth * 12
+                  }px rgba(255, 255, 255, ${0.3 + depth * 0.4})) blur(${
+                    (1 - depth) * 0.5
+                  }px)`,
                 }}
               >
                 {fishType}
               </div>
             );
           })}
-          {/* Floating Jellyfish */}
           {[...Array(6)].map((_, i) => (
             <div
               key={i}
@@ -269,16 +231,14 @@ const HomePage = () => {
                 left: `${10 + i * 15 + Math.random() * 10}%`,
                 top: `${20 + Math.random() * 40}%`,
                 animationDelay: `${Math.random() * 6}s`,
-                transform: `translateY(${scrollY * 0.04}px)`
+                transform: `translateY(${scrollY * 0.04}px)`,
               }}
             >
               🎐
             </div>
           ))}
         </div>
-        {/* Ocean Floor with 3D Elements */}
         <div className="absolute bottom-0 left-0 right-0">
-          {/* Animated Seaweed Forest */}
           {[...Array(20)].map((_, i) => (
             <div
               key={i}
@@ -288,22 +248,24 @@ const HomePage = () => {
                 height: `${30 + Math.random() * 50}px`,
                 width: `${3 + Math.random() * 3}px`,
                 animationDelay: `${Math.random() * 4}s`,
-                transform: `translateY(${scrollY * 0.08}px) rotateZ(${scrollY * 0.01 + Math.sin(Date.now() * 0.001 + i) * 3}deg)`
+                transform: `translateY(${scrollY * 0.08}px) rotateZ(${
+                  scrollY * 0.01 + Math.sin(Date.now() * 0.001 + i) * 3
+                }deg)`,
               }}
             ></div>
           ))}
-          {/* 3D Coral Reef System */}
           {[...Array(12)].map((_, i) => (
             <div
               key={i}
               className="coral-3d"
               style={{
                 left: `${i * 8 + Math.random() * 6}%`,
-                transform: `translateY(${scrollY * 0.06}px) scale(${0.7 + Math.random() * 0.6})`
+                transform: `translateY(${scrollY * 0.06}px) scale(${
+                  0.7 + Math.random() * 0.6
+                })`,
               }}
             ></div>
           ))}
-          {/* Ocean Floor Particles */}
           {[...Array(15)].map((_, i) => (
             <div
               key={i}
@@ -311,12 +273,11 @@ const HomePage = () => {
               style={{
                 left: `${Math.random() * 100}%`,
                 bottom: `${Math.random() * 20}px`,
-                animationDelay: `${Math.random() * 10}s`
+                animationDelay: `${Math.random() * 10}s`,
               }}
             ></div>
           ))}
         </div>
-        {/* Dynamic Light Ray System */}
         <div className="absolute inset-0">
           {[...Array(5)].map((_, i) => (
             <div
@@ -325,12 +286,11 @@ const HomePage = () => {
               style={{
                 left: `${15 + i * 20}%`,
                 transform: `rotateZ(${10 + i * 5 + scrollY * 0.01}deg)`,
-                animationDelay: `${i * 1.5}s`
+                animationDelay: `${i * 1.5}s`,
               }}
             ></div>
           ))}
         </div>
-        {/* Floating Particles System */}
         <div className="absolute inset-0 pointer-events-none">
           {[...Array(60)].map((_, i) => (
             <div
@@ -340,13 +300,15 @@ const HomePage = () => {
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
                 animationDelay: `${Math.random() * 15}s`,
-                transform: `translateY(${scrollY * (0.01 + Math.random() * 0.03)}px)`
+                transform: `translateY(${
+                  scrollY * (0.01 + Math.random() * 0.03)
+                }px)`,
               }}
             ></div>
           ))}
         </div>
       </div>
-      {/* Hero Section with Fishing Theme 3D Background */}
+
       <section className="relative h-screen flex items-center overflow-hidden z-10">
         <div className="container mx-auto px-4 z-10 relative">
           <motion.div
@@ -368,14 +330,17 @@ const HomePage = () => {
               >
                 Explore Products
               </a>
-              <a href="/contact" className="btn btn-outline rounded-full shadow-md hover:shadow-lg transform hover:-translate-y-1">
+              <a
+                href="/contact"
+                className="btn btn-outline rounded-full shadow-md hover:shadow-lg transform hover:-translate-y-1"
+              >
                 Contact Us
               </a>
             </div>
           </motion.div>
         </div>
       </section>
-      {/* Enhanced 3D Ocean CSS Styles */}
+
       <style jsx="true">{`
         /* Ocean Layer Backgrounds */
         .ocean-layer {
@@ -385,17 +350,28 @@ const HomePage = () => {
           will-change: transform;
         }
         .deep-ocean {
-          background: radial-gradient(ellipse at center bottom, rgba(0, 20, 40, 0.8) 0%, transparent 70%);
+          background: radial-gradient(
+            ellipse at center bottom,
+            rgba(0, 20, 40, 0.8) 0%,
+            transparent 70%
+          );
           filter: blur(2px);
         }
         .mid-ocean {
-          background: radial-gradient(ellipse at center, rgba(0, 100, 150, 0.6) 20%, transparent 80%);
+          background: radial-gradient(
+            ellipse at center,
+            rgba(0, 100, 150, 0.6) 20%,
+            transparent 80%
+          );
           filter: blur(1px);
         }
         .surface-ocean {
-          background: linear-gradient(to bottom, rgba(100, 200, 255, 0.3) 0%, transparent 50%);
-        }
-        /* 3D Wave System */
+          background: linear-gradient(
+            to bottom,
+            rgba(100, 200, 255, 0.3) 0%,
+            transparent 50%
+          );
+        } /* 3D Wave System */
         .wave-3d {
           position: absolute;
           top: 0;
@@ -406,7 +382,8 @@ const HomePage = () => {
           transform-style: preserve-3d;
         }
         .wave-primary {
-          background: linear-gradient(90deg,
+          background: linear-gradient(
+            90deg,
             transparent 0%,
             rgba(255, 255, 255, 0.15) 25%,
             rgba(173, 216, 230, 0.2) 50%,
@@ -417,7 +394,8 @@ const HomePage = () => {
           box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
         }
         .wave-secondary {
-          background: linear-gradient(90deg,
+          background: linear-gradient(
+            90deg,
             transparent 0%,
             rgba(135, 206, 235, 0.2) 30%,
             rgba(255, 255, 255, 0.1) 60%,
@@ -427,7 +405,8 @@ const HomePage = () => {
           opacity: 0.8;
         }
         .wave-tertiary {
-          background: linear-gradient(90deg,
+          background: linear-gradient(
+            90deg,
             transparent 0%,
             rgba(0, 150, 200, 0.15) 40%,
             rgba(255, 255, 255, 0.08) 70%,
@@ -437,7 +416,8 @@ const HomePage = () => {
           opacity: 0.6;
         }
         @keyframes wave-3d-flow {
-          0%, 100% {
+          0%,
+          100% {
             transform: translateX(-100%) rotateX(0deg) rotateZ(0deg);
           }
           25% {
@@ -451,7 +431,8 @@ const HomePage = () => {
           }
         }
         @keyframes wave-3d-flow-alt {
-          0%, 100% {
+          0%,
+          100% {
             transform: translateX(-120%) rotateX(1deg) rotateY(0deg);
           }
           50% {
@@ -459,14 +440,14 @@ const HomePage = () => {
           }
         }
         @keyframes wave-3d-flow-slow {
-          0%, 100% {
+          0%,
+          100% {
             transform: translateX(-80%) rotateZ(-1deg);
           }
           50% {
             transform: translateX(20%) rotateZ(1deg);
           }
-        }
-        /* Enhanced 3D Bubbles */
+        } /* Enhanced 3D Bubbles */
         .bubble-3d {
           position: absolute;
           bottom: -50px;
@@ -479,8 +460,7 @@ const HomePage = () => {
           );
           border-radius: 50%;
           animation: bubble-3d-rise linear infinite;
-          box-shadow:
-            0 0 10px rgba(255, 255, 255, 0.4),
+          box-shadow: 0 0 10px rgba(255, 255, 255, 0.4),
             inset -2px -2px 4px rgba(255, 255, 255, 0.2),
             inset 2px 2px 4px rgba(0, 100, 150, 0.1);
           will-change: transform;
@@ -500,7 +480,8 @@ const HomePage = () => {
             transform: scale(1) rotateY(180deg) rotateX(-5deg) translateX(20px);
           }
           80% {
-            transform: scale(1.2) rotateY(270deg) rotateX(5deg) translateX(-15px);
+            transform: scale(1.2) rotateY(270deg) rotateX(5deg)
+              translateX(-15px);
           }
           90% {
             opacity: 1;
@@ -510,8 +491,7 @@ const HomePage = () => {
             opacity: 0;
             transform: scale(1.5) rotateY(360deg) rotateX(0deg) translateX(0px);
           }
-        }
-        /* 3D Marine Life */
+        } /* 3D Marine Life */
         .marine-life {
           position: absolute;
           will-change: transform;
@@ -543,7 +523,8 @@ const HomePage = () => {
             transform: scaleX(-1) rotateY(5deg) rotateZ(2deg) translateY(15px);
           }
           80% {
-            transform: scaleX(-1) rotateY(-5deg) rotateZ(-2deg) translateY(-10px);
+            transform: scaleX(-1) rotateY(-5deg) rotateZ(-2deg)
+              translateY(-10px);
           }
           95% {
             transform: scaleX(-1) rotateY(0deg) rotateZ(0deg) translateY(5px);
@@ -561,7 +542,8 @@ const HomePage = () => {
           transform-style: preserve-3d;
         }
         @keyframes jellyfish-float {
-          0%, 100% {
+          0%,
+          100% {
             transform: translateY(0) rotateZ(0deg) rotateX(0deg);
           }
           25% {
@@ -573,12 +555,12 @@ const HomePage = () => {
           75% {
             transform: translateY(-30px) rotateZ(-3deg) rotateX(1deg);
           }
-        }
-        /* 3D Ocean Floor */
+        } /* 3D Ocean Floor */
         .seaweed-3d {
           position: absolute;
           bottom: 0;
-          background: linear-gradient(to top,
+          background: linear-gradient(
+            to top,
             #1a4d3a 0%,
             #2d7a4f 30%,
             #4a9d6f 60%,
@@ -587,14 +569,14 @@ const HomePage = () => {
           border-radius: 50% 50% 0 0;
           transform-origin: bottom center;
           animation: seaweed-3d-sway 8s ease-in-out infinite;
-          box-shadow:
-            2px 0 4px rgba(0, 0, 0, 0.2),
+          box-shadow: 2px 0 4px rgba(0, 0, 0, 0.2),
             -1px 0 2px rgba(255, 255, 255, 0.1);
           will-change: transform;
           transform-style: preserve-3d;
         }
         @keyframes seaweed-3d-sway {
-          0%, 100% {
+          0%,
+          100% {
             transform: rotateZ(-12deg) rotateY(0deg) rotateX(0deg);
           }
           25% {
@@ -612,7 +594,8 @@ const HomePage = () => {
           bottom: 0;
           width: 35px;
           height: 30px;
-          background: linear-gradient(135deg,
+          background: linear-gradient(
+            135deg,
             #ff6b6b 0%,
             #ff8e8e 25%,
             #ffb3b3 50%,
@@ -620,15 +603,15 @@ const HomePage = () => {
             #ff7777 100%
           );
           border-radius: 20px 20px 0 0;
-          box-shadow:
-            0 0 8px rgba(255, 107, 107, 0.4),
+          box-shadow: 0 0 8px rgba(255, 107, 107, 0.4),
             inset -2px -2px 4px rgba(0, 0, 0, 0.2),
             inset 2px 2px 4px rgba(255, 255, 255, 0.3);
           animation: coral-3d-pulse 12s ease-in-out infinite;
           transform-style: preserve-3d;
         }
-        .coral-3d::before, .coral-3d::after {
-          content: '';
+        .coral-3d::before,
+        .coral-3d::after {
+          content: "";
           position: absolute;
           bottom: 0;
           width: 18px;
@@ -646,7 +629,8 @@ const HomePage = () => {
           transform: rotate(20deg);
         }
         @keyframes coral-3d-pulse {
-          0%, 100% {
+          0%,
+          100% {
             transform: scale(1) rotateY(0deg);
             filter: hue-rotate(0deg);
           }
@@ -654,14 +638,14 @@ const HomePage = () => {
             transform: scale(1.05) rotateY(5deg);
             filter: hue-rotate(10deg);
           }
-        }
-        /* 3D Light Rays */
+        } /* 3D Light Rays */
         .light-ray-3d {
           position: absolute;
           top: -10%;
           width: 120px;
           height: 110%;
-          background: linear-gradient(to bottom,
+          background: linear-gradient(
+            to bottom,
             rgba(255, 255, 255, 0.25) 0%,
             rgba(255, 255, 255, 0.15) 20%,
             rgba(173, 216, 230, 0.1) 40%,
@@ -675,7 +659,8 @@ const HomePage = () => {
           transform-style: preserve-3d;
         }
         @keyframes light-ray-3d-dance {
-          0%, 100% {
+          0%,
+          100% {
             opacity: 0.3;
             width: 120px;
             transform: rotateZ(0deg) rotateX(0deg);
@@ -695,13 +680,13 @@ const HomePage = () => {
             width: 130px;
             transform: rotateZ(-2deg) rotateX(0.5deg);
           }
-        }
-        /* Enhanced Water Particles */
+        } /* Enhanced Water Particles */
         .water-particle-3d {
           position: absolute;
           width: 3px;
           height: 3px;
-          background: radial-gradient(circle,
+          background: radial-gradient(
+            circle,
             rgba(255, 255, 255, 0.6) 0%,
             rgba(173, 216, 230, 0.3) 50%,
             transparent 100%
@@ -734,8 +719,7 @@ const HomePage = () => {
             transform: translateY(0) translateX(0) rotateZ(360deg);
             opacity: 0;
           }
-        }
-        /* Sand Particles */
+        } /* Sand Particles */
         .sand-particle {
           position: absolute;
           width: 2px;
@@ -745,7 +729,8 @@ const HomePage = () => {
           animation: sand-drift 15s ease-in-out infinite;
         }
         @keyframes sand-drift {
-          0%, 100% {
+          0%,
+          100% {
             transform: translateX(0) scale(1);
             opacity: 0.3;
           }
@@ -753,8 +738,7 @@ const HomePage = () => {
             transform: translateX(20px) scale(1.2);
             opacity: 0.6;
           }
-        }
-        /* Performance Optimizations */
+        } /* Performance Optimizations */
         @media (prefers-reduced-motion: no-preference) {
           .ocean-layer,
           .wave-3d,
@@ -786,7 +770,10 @@ const HomePage = () => {
           }
         }
       `}</style>
-      {/* Featured Products Section */}
+
+      {/* ====================================================================== */}
+      {/* =================== FEATURED PRODUCTS SECTION ====================== */}
+      {/* ====================================================================== */}
       <section className="py-16 bg-gradient-to-b from-white/90 to-blue-50/90 backdrop-blur-sm relative z-10">
         <div className="container mx-auto px-4">
           <AnimatedSection className="text-center mb-12">
@@ -798,23 +785,49 @@ const HomePage = () => {
             </p>
             <div className="h-1 w-24 bg-blue-500 mx-auto mt-6"></div>
           </AnimatedSection>
-          <AnimatedSection
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 lg:gap-8"
-            direction="up"
-          >
-            {featuredProducts.map((product) => (
-              <PackageCard
-                key={product.id}
-                title={product.title}
-                description={product.subtitle || product.description}
-                imageUrl={product.imageUrl || product.image_url || "/assets/About/about-us.png"}
-                buttonLink={`/products/${product.id}`}
-                category={product.category}
-                price={product.price}
-                rating={product.rating}
-              />
-            ))}
-          </AnimatedSection>
+
+          {popularProducts.length > 0 ? (
+            <AnimatedSection
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 lg:gap-8"
+              direction="up"
+            >
+              {popularProducts.map((product) => (
+                <Card
+                  key={product.id}
+                  title={product.title}
+                  subtitle={product.description}
+                  imageUrls={product.imageUrls}
+                  price={product.price}
+                  category={product.categoryName}
+                  rating={product.rating}
+                  footer={
+                    <>
+                      <span
+                        className={`px-4 py-1.5 rounded-full text-sm font-bold ${
+                          product.inStock
+                            ? "bg-teal-300 text-black"
+                            : "bg-rose-500 text-black"
+                        }`}
+                      >
+                        {product.inStock ? "In Stock" : "Out of Stock"}
+                      </span>
+                      <a
+                        href={`/products/${product.id}`}
+                        className="px-5 py-2.5 rounded-full bg-blue-600 text-white font-semibold text-sm cursor-pointer transition-all duration-300 ease-out hover:bg-blue-700 hover:-translate-y-0.5 transform-gpu shadow-sm hover:shadow-lg shadow-blue-500/20"
+                      >
+                        View Details
+                      </a>
+                    </>
+                  }
+                />
+              ))}
+            </AnimatedSection>
+          ) : (
+            <div className="text-center text-gray-500 mt-8 py-10 bg-gray-50/50 rounded-lg">
+              <p>目前没有热门产品，请稍后再来看看！</p>
+            </div>
+          )}
+
           <div className="text-center mt-12">
             <a
               href="/products"
@@ -825,7 +838,10 @@ const HomePage = () => {
           </div>
         </div>
       </section>
-      {/* About Section */}
+
+      {/* ====================================================================== */}
+      {/* ======================== ABOUT US SECTION ========================== */}
+      {/* ====================================================================== */}
       <section className="py-16 bg-gradient-to-br from-blue-50/90 to-white/90 backdrop-blur-sm relative z-10">
         <div className="container mx-auto px-4">
           <div className="text-center mb-6">
@@ -865,7 +881,10 @@ const HomePage = () => {
           </div>
         </div>
       </section>
-      {/* CTA Section */}
+
+      {/* ====================================================================== */}
+      {/* =========================== CTA SECTION ============================ */}
+      {/* ====================================================================== */}
       <div className="relative z-10">
         <CTA />
       </div>

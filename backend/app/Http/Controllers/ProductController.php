@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\OrderItem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
@@ -204,6 +206,74 @@ class ProductController extends Controller
                 'message' => 'Search failed',
                 'error' => app()->environment('local') ? $e->getMessage() : 'Internal server error'
             ], 500);
+        }
+    }
+
+    public function products_popular()
+    {
+        try {
+            // 1. 从 order_items 表中获取销量最高的前 8 个产品 ID
+            $topProductIds = OrderItem::where('item_type', 'product')
+                ->select('item_id', DB::raw('SUM(quantity) as total_quantity'))
+                ->groupBy('item_id')
+                ->orderByDesc('total_quantity')
+                ->take(8)
+                ->pluck('item_id');
+
+            if ($topProductIds->isEmpty()) {
+                return response()->json(['success' => true, 'data' => []]);
+            }
+
+            // 2. 获取这些热门产品的详细信息
+            $products = Product::whereIn('id', $topProductIds)
+                ->with(['category', 'productImages', 'productReviews'])
+                ->where('is_active', true)
+                ->get();
+
+            // 3. 按销量顺序对产品进行排序
+            $popularProducts = $products->sortBy(function ($product) use ($topProductIds) {
+                return array_search($product->id, $topProductIds->toArray());
+            });
+
+            // 4. 格式化产品数据以供前端使用
+            $popularProducts->each(function ($product) {
+                // 格式化图片 URL
+                $product->imageUrls = $product->productImages
+                    ->sortBy('sort_order')
+                    ->pluck('image_path')
+                    ->map(function ($path) {
+                        return Storage::disk('public')->exists($path)
+                            ? Storage::disk('public')->url($path)
+                            : asset('images/placeholder.jpg');
+                    })
+                    ->values()
+                    ->all();
+                if (empty($product->imageUrls) && $product->image) {
+                     $product->imageUrls = [Storage::disk('public')->exists($product->image) ? Storage::disk('public')->url($product->image) : asset('images/placeholder.jpg')];
+                }
+                if (empty($product->imageUrls)) {
+                    $product->imageUrls = [asset('images/placeholder.jpg')];
+                }
+
+                // 设置前端期望的字段
+                $product->title = $product->name; // 将 'name' 复制到 'title'
+                $product->categoryName = $product->category->name ?? 'Uncategorized';
+                $product->rating = $product->productReviews->avg('rating') ? round($product->productReviews->avg('rating'), 1) : 0;
+                $product->inStock = $product->is_active;
+
+                // 移除不需要的加载关系，保持响应干净
+                $product->makeHidden(['productImages', 'category', 'productReviews', 'image', 'name']);
+            });
+
+            return response()->json([
+                'success' => true,
+                // 使用 values() 重置数组键，确保返回的是一个 JSON 数组
+                'data' => $popularProducts->values(),
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error fetching popular products: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to fetch popular products'], 500);
         }
     }
 }

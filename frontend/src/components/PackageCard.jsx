@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 
 // --- 定义常量 ---
 // 定义一个默认的图片 URL，当传入的图片数组为空或图片加载失败时用作备用
-const DEFAULT_IMAGE_URL = "/assets/About/about-us.png";
+const DEFAULT_IMAGE_URL = "/assets/placeholder.png";
 
 // [优化] 将左箭头 SVG 图标提取为常量，以便复用和保持 JSX 清洁
 const PrevIcon = (
