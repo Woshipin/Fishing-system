@@ -5,10 +5,8 @@
             background-color: white;
             border: 1px solid #e5e7eb;
             border-radius: 0.75rem;
-            /* 稍微增大了圆角 */
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.07), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
             transition: all 0.3s ease-in-out;
-            /* 平滑过渡效果 */
         }
 
         .dark .order-item {
@@ -19,37 +17,31 @@
         /* --- 状态辉光边框样式 --- */
         .border-glow-pending {
             border-color: #fcd34d;
-            /* Amber-300 */
             box-shadow: 0 0 12px 1px rgba(251, 191, 36, 0.4);
         }
 
         .dark .border-glow-pending {
             border-color: #f59e0b;
-            /* Amber-500 */
             box-shadow: 0 0 12px 1px rgba(245, 158, 11, 0.3);
         }
 
         .border-glow-completed {
             border-color: #6ee7b7;
-            /* Emerald-300 */
             box-shadow: 0 0 12px 1px rgba(52, 211, 153, 0.5);
         }
 
         .dark .border-glow-completed {
             border-color: #10b981;
-            /* Emerald-500 */
             box-shadow: 0 0 12px 1px rgba(16, 185, 129, 0.4);
         }
 
         .border-glow-cancelled {
             border-color: #fca5a5;
-            /* Red-300 */
             box-shadow: 0 0 12px 1px rgba(239, 68, 68, 0.4);
         }
 
         .dark .border-glow-cancelled {
             border-color: #ef4444;
-            /* Red-500 */
             box-shadow: 0 0 12px 1px rgba(239, 68, 68, 0.3);
         }
 
@@ -61,7 +53,6 @@
 
         .order-details.show {
             max-height: 2000px;
-            /* 确保有足够的高度展开 */
         }
 
         /* 按钮样式 */
@@ -176,10 +167,19 @@
             </div>
         @endif
 
-        <!-- Search Input -->
-        <div class="mb-4">
-            <input type="text" id="searchInput" placeholder="Search by Order ID, Customer Name, Status..."
-                class="search-input" onkeyup="filterOrders()">
+        <!-- Search and Filter Controls -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <input wire:model.live.debounce.300ms="search" type="text" placeholder="Search by Price or Customer Name..." class="search-input">
+            </div>
+            <div>
+                <select wire:model.live="dateFilter" class="search-input">
+                    <option value="">All Time</option>
+                    <option value="today">Today's Orders</option>
+                    <option value="week">This Week's Orders</option>
+                    <option value="month">This Month's Orders</option>
+                </select>
+            </div>
         </div>
 
         <!-- Orders List -->
@@ -413,18 +413,8 @@
             }
         }
 
-        function filterOrders() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const orderItems = document.querySelectorAll('.order-item');
-            orderItems.forEach(item => {
-                const text = item.textContent.toLowerCase();
-                if (text.includes(searchTerm)) {
-                    item.style.display = 'block';
-                } else {
-                    item.style.display = 'none';
-                }
-            });
-        }
+        // This function is no longer needed as Livewire handles filtering.
+        // function filterOrders() { ... }
 
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.order-details').forEach(detail => detail.classList.remove('show'));
