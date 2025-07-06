@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Order extends Model
 {
@@ -25,40 +28,37 @@ class Order extends Model
         'updated_at' => 'datetime',
     ];
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function duration()
+    public function duration(): BelongsTo
     {
         return $this->belongsTo(Duration::class);
     }
 
-    public function tableNumber()
+    public function tableNumber(): BelongsTo
     {
         return $this->belongsTo(TableNumber::class);
     }
 
-    public function orderItems()
+    public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
     }
 
-    // Add a scope to filter orders by product
-    public function scopeWithProduct($query, $productId)
-    {
-        return $query->whereHas('orderItems', function($q) use ($productId) {
-            $q->where('item_type', 'product')->where('item_id', $productId);
-        });
-    }
+    // ... existing scopes ...
 
-    // Add a scope to filter orders by package
-    public function scopeWithPackage($query, $packageId)
+    /**
+     * [NEW] Accessor to get the display image URL of the first item in the order.
+     *
+     * @return string|null
+     */
+    public function getFirstItemImageUrlAttribute(): ?string
     {
-        return $query->whereHas('orderItems', function($q) use ($packageId) {
-            $q->where('item_type', 'package')->where('item_id', $packageId);
-        });
+        $this->loadMissing('orderItems');
+        $firstItem = $this->orderItems->first();
     }
 
     // Helper method to get order type

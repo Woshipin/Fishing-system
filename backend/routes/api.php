@@ -14,6 +14,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\AboutPageController;
 use App\Http\Controllers\FishingCMSController;
+use App\Http\Controllers\FilamentController;
 use Illuminate\Support\Facades\Route;
 
 // Auth 认证路由
@@ -21,6 +22,40 @@ use Illuminate\Support\Facades\Route;
 // Route::post('/login', [UserController::class, 'login'])->name('login');
 // Route::post('/logout', [UserController::class, 'logout'])->name('logout');
 
+// Route::get('/orders/{order}/items', function (Order $order) {
+//     $order->load(['orderItems', 'user', 'tableNumber']);
+
+//     return response()->json([
+//         'order_id' => $order->id,
+//         'customer' => $order->user->name,
+//         'table' => $order->tableNumber->table_number,
+//         'status' => $order->status,
+//         'subtotal' => $order->subtotal,
+//         'total' => $order->total,
+//         'order_items' => $order->orderItems->map(function ($item) {
+//             return [
+//                 'item_name' => $item->item_name,
+//                 'item_type' => $item->item_type,
+//                 'item_price' => $item->item_price,
+//                 'quantity' => $item->quantity,
+//                 'total_price' => $item->total_price,
+//             ];
+//         }),
+//     ]);
+// });
+
+
+// Filament routes
+// Route to view all orders
+Route::get('/orders/{order}/items', [FilamentController::class, 'filamentshowOrderItems'])->name('filament.orders.items.show');
+
+// Route to cancel an order
+Route::put('/cancel-order/{order}', [FilamentController::class, 'filamentcancelOrder'])->name('filament.orders.cancel');
+
+// Route to complete an order
+Route::put('/complete-order/{order}', [FilamentController::class, 'filamentcompleteOrder'])->name('filament.orders.complete');
+
+// React API routes
 // 公开路由（不需要认证）
 Route::post('/register', [UserController::class, 'register'])->name('register');
 Route::post('/login', [UserController::class, 'login'])->name('login');
