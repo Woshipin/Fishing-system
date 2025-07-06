@@ -323,4 +323,47 @@ class CartController extends Controller
         }
     }
 
+    /**
+     * [NEW] Update the quantity of an item in the cart.
+     */
+    public function updateCartItem(Request $request, $id)
+    {
+        try {
+            $validatedData = $request->validate([
+                'user_id'  => 'required|integer|exists:users,id',
+                'quantity' => 'required|integer|min:1',
+            ]);
+
+            $cartItem = Cart::where('id', $id)
+                ->where('user_id', $validatedData['user_id'])
+                ->firstOrFail();
+
+            $cartItem->quantity = $validatedData['quantity'];
+            $cartItem->save();
+
+            return response()->json([
+                'success'  => true,
+                'message'  => 'Cart item updated successfully.',
+                'cartItem' => $cartItem,
+            ]);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed.',
+                'errors'  => $e->errors(),
+            ], 422);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cart item not found or you do not have permission to update it.',
+            ], 404);
+        } catch (\Exception $e) {
+            Log::error('Error updating cart item: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An unexpected error occurred.',
+            ], 500);
+        }
+    }
 }

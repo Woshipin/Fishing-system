@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Route;
 
 // Route::get('/orders/{order}/items', function (Order $order) {
 //     $order->load(['orderItems', 'user', 'tableNumber']);
-
+//
 //     return response()->json([
 //         'order_id' => $order->id,
 //         'customer' => $order->user->name,
@@ -138,7 +138,7 @@ Route::get('/about-page-cms', [AboutPageController::class, 'getAboutPageData']);
 Route::get('/fishing-cms', [FishingCMSController::class, 'getCMSData']);
 
 // 更新购物车项目数量
-// Route::put('/cart/{id}', [CartController::class, 'updateCartItem']);
+Route::put('/cart/{id}', [CartController::class, 'updateCartItem']);
 
 // 清空购物车
 // Route::delete('/cart', [CartController::class, 'clearCart']);

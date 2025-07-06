@@ -327,15 +327,19 @@ const CartPage = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to update item quantity");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update item quantity");
       }
+      
+      const { cartItem } = await response.json();
 
       const listSetter = type === "product" ? setProductCart : setPackageCart;
       listSetter((prev) =>
         prev.map((item) =>
-          item.id === id ? { ...item, quantity: newQuantity } : item
+          item.id === id ? { ...item, quantity: cartItem.quantity } : item
         )
       );
+      showToast("Quantity updated!", "success");
     } catch (error) {
       console.error("Error updating quantity:", error);
       const errorMsg = error.message || "Failed to update item quantity";
